@@ -13,7 +13,8 @@ float *x_vel; // meters/second
 float *y_vel; // meters/second
 float *weight;
 
-float frand( float );
+float frand0( float );
+float frand( float, float );
 
 void init_particle_mem( int );
 void init_particle_val( int, float, float );
@@ -26,13 +27,20 @@ int main( int argc, char* argv )
 {
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
+  time_update( NUM_PARTICLES, 20.0 );
   write_particles( OUTPUT_NAME, NUM_PARTICLES );
 }
 
 // return a random float value between 0 and max
-float frand( float max )
+float frand0( float max )
 {
   return ( float ) rand( ) / ( float ) RAND_MAX * max ;
+}
+
+float frand( float min, float max )
+{
+  float diff = max - min;
+  return frand0( diff ) + min;
 }
 
 // allocate memory for num particles
@@ -52,10 +60,10 @@ void init_particle_val( int num, float max_range, float max_vel )
 
   for ( i = 0 ; i < num ; i++ )
   {
-    x_pos[i]  = frand( max_range );
-    y_pos[i]  = frand( max_range );
-    x_vel[i]  = frand( max_vel );
-    y_vel[i]  = frand( max_vel );
+    x_pos[i]  = frand( -max_range, max_range );
+    y_pos[i]  = frand( -max_range, max_range );
+    x_vel[i]  = frand( -max_vel, max_vel );
+    y_vel[i]  = frand( -max_vel, max_vel );
     weight[i] = 1;
   }
 }
