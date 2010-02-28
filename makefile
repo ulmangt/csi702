@@ -1,3 +1,14 @@
+all: filter_serial
+
+filter_serial: filter_serial.o
+	gcc src/serial/filter_serial.o -o bin/filter_serial
+
+filter_serial.o:
+	gcc -c src/serial/filter_serial.c -o src/serial/filter_serial.o
+
+clean:
+	rm bin/filter_serial src/serial/filter_serial.o
+
 examples: cudaMallocAndMemcpy myFirstKernel reverseArray_singleblock reverseArray_multiblock
 
 reverseArray_multiblock:
@@ -15,7 +26,7 @@ cudaMallocAndMemcpy:
 report:
 	pdflatex -output-directory docs report.tex
 
-clean:
+clean_examples:
 	rm bin/cudaMallocAndMemcpy bin/myFirstKernel bin/reverseArray_singleblock bin/reverseArray_multiblock
 
 clean-docs:
