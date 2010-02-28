@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_PARTICLES 1000
+#define NUM_PARTICLES 10000
 #define MAX_RANGE 8000
 #define MAX_VEL 15
 
@@ -34,7 +34,7 @@ int main( int argc, char* argv )
 {
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
-  time_update( NUM_PARTICLES, 20.0, MEAN_MANEUVER_TIME );
+  time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
   write_particles( OUTPUT_NAME, NUM_PARTICLES );
 }
 
@@ -52,10 +52,9 @@ float frand( float min, float max )
 }
 
 // return an exponentially distributed random float
-float erand( float lambda )
+float erand( float inv_lambda )
 {
-  float inv_lambda = 1.0 / lambda;
-  return -log( rand( ) ) * inv_lambda;
+  return -log( frand0( 1.0 ) ) * inv_lambda;
 }
 
 // allocate memory for num particles
@@ -119,6 +118,8 @@ void time_update( int num, float seconds, float mean_maneuver )
 
         time_update_index( i, remaining_time );
         next_maneuver -= remaining_time;
+
+        printf("next maneuver %f\n", next_maneuver);
         break;
       }
     }
