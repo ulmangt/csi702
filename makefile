@@ -4,7 +4,7 @@ filter_serial: filter_serial.o
 	gcc src/serial/filter_serial.o -o bin/filter_serial
 
 filter_serial.o:
-	gcc -c src/serial/filter_serial.c -o src/serial/filter_serial.o
+	gcc -c -lm src/serial/filter_serial.c -o src/serial/filter_serial.o
 
 clean:
 	rm bin/filter_serial src/serial/filter_serial.o
