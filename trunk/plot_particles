@@ -1,0 +1,3 @@
+#!/usr/bin/gnuplot -persist
+plot "particles.out" using 1:2 with points title 'Particle Positions'
+#    EOF

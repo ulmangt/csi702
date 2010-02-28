@@ -13,9 +13,13 @@ float *x_vel; // meters/second
 float *y_vel; // meters/second
 float *weight;
 
+float frand( float );
+
 void init_particle_mem( int );
 void init_particle_val( int, float, float );
-float frand( float );
+
+void time_update( int, float );
+
 void write_particles( char*, int );
 
 int main( int argc, char* argv )
@@ -56,6 +60,20 @@ void init_particle_val( int num, float max_range, float max_vel )
   }
 }
 
+// time update the particles
+// adjust positions based on velocity
+// velocity changes occur exponentially distributed in time
+void time_update( int num, float seconds )
+{
+  int i;  
+
+  for ( i = 0 ; i < num ; i++ )
+  {
+    x_pos[i]  = x_pos[i] + x_vel[i] * seconds;
+    y_pos[i]  = y_pos[i] + y_vel[i] * seconds;
+  }
+}
+
 void write_particles( char* out_name, int num )
 {
   FILE* file = fopen( out_name, "w" );
@@ -64,7 +82,7 @@ void write_particles( char* out_name, int num )
 
   for ( i = 0 ; i < num ; i++ )
   {
-    fprintf( file, "%f,%f,%f,%f,%f\n", x_pos[i], y_pos[i], x_vel[i], y_vel[i], weight[i] );
+    fprintf( file, "%f\t%f\t%f\t%f\t%f\n", x_pos[i], y_pos[i], x_vel[i], y_vel[i], weight[i] );
   }
 
   int success = fclose( file );
