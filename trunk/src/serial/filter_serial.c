@@ -8,8 +8,24 @@
 
 #define MEAN_MANEUVER_TIME 3600
 
+#define INITIAL_MAX_WAYPOINTS 10
+
 #define OUTPUT_NAME "particles.out"
 
+// used to describe ownship and target motion
+// as a series of time, x, y tuples
+struct waypoint
+{
+  float time;
+  float x_pos;
+  float y_pos;
+};
+
+struct waypoint_list
+{
+  int size;
+  struct waypoint* waypoints;
+};
 
 float *x_pos; // meters
 float *y_pos; // meters
@@ -29,13 +45,19 @@ void time_update_index( int, float );
 void maneuver_index( int );
 
 void write_particles( char*, int );
+struct waypoint_list *read_waypoints( char* );
+void print_waypoints( struct waypoint_list *waypoint_list );
 
 int main( int argc, char* argv )
 {
+  print_waypoints( read_waypoints( "data/waypoints1.txt" ) );
+
+/*
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
   time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
   write_particles( OUTPUT_NAME, NUM_PARTICLES );
+*/
 }
 
 // return a random float value evenly distributed between 0 and max
@@ -153,4 +175,50 @@ void write_particles( char* out_name, int num )
   }
 
   int success = fclose( file );
+}
+
+// reads the path of a vessel as a series of time, x, y waypoints from a file
+// vessel positions at any time may be derived by interpolating between waypoints
+struct waypoint_list *read_waypoints( char* in_name )
+{
+  FILE* file = fopen( in_name, "r" );
+
+  int max_waypoints = 10;
+  int num_waypoints = 0;
+
+  struct waypoint_list *waypoint_list = malloc( sizeof( struct waypoint_list ) );
+  waypoint_list->waypoints = malloc( sizeof( struct waypoint ) * max_waypoints );
+
+  while ( 1 )
+  {
+    struct waypoint *waypoint = (waypoint_list->waypoints) + num_waypoints;    
+
+    int success = fscanf( file, "%f%f%f", &waypoint->time, &waypoint->x_pos, &waypoint->y_pos );
+
+    if ( success == EOF )
+      break;
+
+    num_waypoints++;
+
+    if ( num_waypoints == max_waypoints )
+    {
+      max_waypoints = 2 * max_waypoints;
+      waypoint_list->waypoints = realloc( waypoint_list->waypoints , sizeof( struct waypoint ) * max_waypoints );
+    }
+  }
+
+  waypoint_list->size = num_waypoints;
+
+  return waypoint_list;
+}
+
+void print_waypoints( struct waypoint_list *waypoint_list )
+{
+  int i;
+
+  for ( i = 0 ; i < waypoint_list->size ; i++ )
+  {
+    struct waypoint *waypoint = waypoint_list->waypoints;
+    printf( "%f %f %f\n", (waypoint+i)->time, (waypoint+i)->x_pos, (waypoint+i)->y_pos );
+  }
 }
