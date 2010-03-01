@@ -46,18 +46,22 @@ void maneuver_index( int );
 
 void write_particles( char*, int );
 struct waypoint_list *read_waypoints( char* );
-void print_waypoints( struct waypoint_list *waypoint_list );
-int interpolate( struct waypoint_list *waypoint_list , float time , float *x_pos, float *y_pos );
-int interpolate_waypoints( struct waypoint *end, struct waypoint *start, float time, float *x_pos, float *y_pos );
+void print_waypoints( struct waypoint_list* );
+void print_waypoint( struct waypoint* );
+int interpolate( struct waypoint_list* , float, float*, float* );
+int interpolate_waypoints( struct waypoint*, struct waypoint*, float, float*, float*);
 
 int main( int argc, char* argv )
 {
   struct waypoint_list *waypoints = read_waypoints( "data/waypoints1.txt" );
   print_waypoints( waypoints );
   float x_pos, y_pos, time;
-  time = 200;
-  interpolate( waypoints, time, &x_pos, &y_pos );
-  printf( "at time %f x_pos %f y_pos %f\n", time, x_pos, y_pos );
+  
+  for ( time = 0 ; time < 2000.0 ; time += 100 )
+  {
+    interpolate( waypoints, time, &x_pos, &y_pos );
+    printf( "at time %f x_pos %f y_pos %f\n", time, x_pos, y_pos );
+  }
 
 /*
   init_particle_mem( NUM_PARTICLES );
@@ -228,9 +232,15 @@ void print_waypoints( struct waypoint_list *waypoint_list )
 
   for ( i = 0 ; i < waypoint_list->size ; i++ )
   {
-    struct waypoint *waypoint = waypoint_list->waypoints;
-    printf( "%f %f %f\n", (waypoint+i)->time, (waypoint+i)->x_pos, (waypoint+i)->y_pos );
+    //struct waypoint *waypoint = waypoint_list->waypoints;
+    print_waypoint( (waypoint_list->waypoints)+i );
+    //printf( "%f %f %f\n", (waypoint+i)->time, (waypoint+i)->x_pos, (waypoint+i)->y_pos );
   }
+}
+
+void print_waypoint( struct waypoint *waypoint )
+{
+  printf( "%f %f %f\n", waypoint->time, waypoint->x_pos, waypoint->y_pos );
 }
 
 // interpolates between the waypoints in waypoint list to determine the x_pos and y_pos at the given tim
