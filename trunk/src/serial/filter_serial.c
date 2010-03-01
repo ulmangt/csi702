@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "obs_math.h"
 #include "filter_math.h"
+#include "filter_io.h"
 
 #define NUM_PARTICLES 10000
 #define MAX_RANGE 8000
@@ -12,21 +14,6 @@
 #define INITIAL_MAX_WAYPOINTS 10
 
 #define OUTPUT_NAME "particles.out"
-
-// used to describe ownship and target motion
-// as a series of time, x, y tuples
-struct waypoint
-{
-  float time;
-  float x_pos;
-  float y_pos;
-};
-
-struct waypoint_list
-{
-  int size;
-  struct waypoint* waypoints;
-};
 
 float *x_pos; // meters
 float *y_pos; // meters
@@ -42,11 +29,6 @@ void time_update_index( int, float );
 void maneuver_index( int );
 
 void write_particles( char*, int );
-struct waypoint_list *read_waypoints( char* );
-void print_waypoints( struct waypoint_list* );
-void print_waypoint( struct waypoint* );
-int interpolate( struct waypoint_list* , float, float*, float* );
-int interpolate_waypoints( struct waypoint*, struct waypoint*, float, float*, float*);
 
 int main( int argc, char* argv )
 {
@@ -166,110 +148,4 @@ void write_particles( char* out_name, int num )
   }
 
   int success = fclose( file );
-}
-
-// reads the path of a vessel as a series of time, x, y waypoints from a file
-// vessel positions at any time may be derived by interpolating between waypoints
-struct waypoint_list *read_waypoints( char* in_name )
-{
-  FILE* file = fopen( in_name, "r" );
-
-  int max_waypoints = 10;
-  int num_waypoints = 0;
-
-  struct waypoint_list *waypoint_list = malloc( sizeof( struct waypoint_list ) );
-  waypoint_list->waypoints = malloc( sizeof( struct waypoint ) * max_waypoints );
-
-  while ( 1 )
-  {
-    struct waypoint *waypoint = (waypoint_list->waypoints) + num_waypoints;    
-
-    int success = fscanf( file, "%f%f%f", &waypoint->time, &waypoint->x_pos, &waypoint->y_pos );
-
-    if ( success == EOF )
-      break;
-
-    num_waypoints++;
-
-    if ( num_waypoints == max_waypoints )
-    {
-      max_waypoints = 2 * max_waypoints;
-      waypoint_list->waypoints = realloc( waypoint_list->waypoints , sizeof( struct waypoint ) * max_waypoints );
-    }
-  }
-
-  waypoint_list->size = num_waypoints;
-
-  return waypoint_list;
-}
-
-// prints a waypoint_list structure (for debugging / verification)
-void print_waypoints( struct waypoint_list *waypoint_list )
-{
-  int i;
-
-  for ( i = 0 ; i < waypoint_list->size ; i++ )
-  {
-    //struct waypoint *waypoint = waypoint_list->waypoints;
-    print_waypoint( (waypoint_list->waypoints)+i );
-    //printf( "%f %f %f\n", (waypoint+i)->time, (waypoint+i)->x_pos, (waypoint+i)->y_pos );
-  }
-}
-
-void print_waypoint( struct waypoint *waypoint )
-{
-  printf( "%f %f %f\n", waypoint->time, waypoint->x_pos, waypoint->y_pos );
-}
-
-// interpolates between the waypoints in waypoint list to determine the x_pos and y_pos at the given tim
-// values are returned by setting the x_pos and y_pos pointers
-// a return value of 1 indicates success, a return value of 0 indicates an error
-int interpolate( struct waypoint_list *waypoint_list , float time , float *x_pos, float *y_pos )
-{
-  int i;
-
-  struct waypoint *previous_waypoint;
-
-  for ( i = 0 ; i < waypoint_list->size ; i++ )
-  {
-    struct waypoint *current_waypoint = (waypoint_list->waypoints)+i;
-
-    if ( current_waypoint->time > time )
-    {
-      // the first waypoint timestamp is after the requested time thus
-      // we don't have two points to interpolate between
-      if ( i == 0 )
-        return 0;
-
-      return interpolate_waypoints( previous_waypoint, current_waypoint, time, x_pos, y_pos);
-    }
-
-    previous_waypoint = current_waypoint;
-  }
-
-  // the last waypoint timestamp is before the requested time
-  return 0;
-}
-
-// interpolates between two given waypoints
-// time should be between start->time and end->time
-int interpolate_waypoints( struct waypoint *start, struct waypoint *end, float time, float *x_pos, float *y_pos )
-{
-  float time_diff = end->time - start->time;
-  float weight = ( time - start->time ) / time_diff;
-
-  *x_pos = end->x_pos * ( weight ) + start->x_pos * ( 1 - weight );
-  *y_pos = end->y_pos * ( weight ) + start->y_pos * ( 1 - weight );
-
-  return 1;
-}
-
-float azimuth( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
-{
-  float x_diff = from_x_pos - to_x_pos;
-  float y_diff = from_y_pos - to_y_pos;
-
-  if ( x_diff == 0 && y_diff > 0 ) return M_PI / 2.0;
-  if ( x_diff == 0 && y_diff < 0 ) return -M_PI / 2.0;
-  return atan2( y_diff, x_diff );
 }
