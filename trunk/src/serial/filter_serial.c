@@ -286,3 +286,12 @@ int interpolate_waypoints( struct waypoint *start, struct waypoint *end, float t
   return 1;
 }
 
+float azimuth( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
+{
+  float x_diff = from_x_pos - to_x_pos;
+  float y_diff = from_y_pos - to_y_pos;
+
+  if ( x_diff == 0 && y_diff > 0 ) return M_PI / 2.0;
+  if ( x_diff == 0 && y_diff < 0 ) return -M_PI / 2.0;
+  return atan2( y_diff, x_diff );
+}
