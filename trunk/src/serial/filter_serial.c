@@ -36,6 +36,7 @@ float *weight;
 float frand0( float );
 float frand( float, float );
 float erand( float );
+float grand( );
 
 void init_particle_mem( int );
 void init_particle_val( int, float, float );
@@ -56,19 +57,19 @@ int main( int argc, char* argv )
   struct waypoint_list *waypoints = read_waypoints( "data/waypoints1.txt" );
   print_waypoints( waypoints );
   float x_pos, y_pos, time;
-  
+
   for ( time = 0 ; time < 2000.0 ; time += 100 )
   {
     interpolate( waypoints, time, &x_pos, &y_pos );
     printf( "at time %f x_pos %f y_pos %f\n", time, x_pos, y_pos );
   }
 
-/*
-  init_particle_mem( NUM_PARTICLES );
-  init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
-  time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
-  write_particles( OUTPUT_NAME, NUM_PARTICLES );
-*/
+  /*
+     init_particle_mem( NUM_PARTICLES );
+     init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
+     time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
+     write_particles( OUTPUT_NAME, NUM_PARTICLES );
+   */
 }
 
 // return a random float value evenly distributed between 0 and max
@@ -88,6 +89,28 @@ float frand( float min, float max )
 float erand( float inv_lambda )
 {
   return -log( frand0( 1.0 ) ) * inv_lambda;
+}
+
+// return a float value chosen from the normal distribution
+// algorithm from polar method of G. E. P. Box, M. E. Muller, and G. Marsaglia, 
+// as described by Donald E. Knuth in The Art of Computer Programming,
+// Volume 2: Seminumerical Algorithms, section 3.4.1, subsection C, algorithm P
+// also the implementation used by java.util.Random.nextGaussian
+float grand( )
+{
+  double v1, v2, s;
+  
+  do
+  { 
+    v1 = frand(-1,1);
+    v2 = frand(-1,1);
+    s = v1 * v1 + v2 * v2;
+  }
+  while ( s >= 1 || s == 0 );
+  
+  double multiplier = sqrt(-2 * log(s)/s);
+  
+  return v1 * multiplier;
 }
 
 // allocate memory for num particles
@@ -179,7 +202,7 @@ void maneuver_index( int i )
 void write_particles( char* out_name, int num )
 {
   FILE* file = fopen( out_name, "w" );
-  
+
   int i;
 
   for ( i = 0 ; i < num ; i++ )
