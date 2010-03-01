@@ -1,13 +1,16 @@
 all: filter_serial
 
-filter_serial: filter_serial.o
-	gcc -lm src/serial/filter_serial.o -o bin/filter_serial
+filter_serial: filter_math.o filter_serial.o
+	gcc -I hdr -lm src/serial/filter_serial.o src/common/filter_math.o -o bin/filter_serial
 
 filter_serial.o:
-	gcc -c -lm src/serial/filter_serial.c -o src/serial/filter_serial.o
+	gcc -I hdr -c -lm src/serial/filter_serial.c -o src/serial/filter_serial.o
+
+filter_math.o:
+	gcc -I hdr -c -lm src/common/filter_math.c -o src/common/filter_math.o
 
 clean:
-	rm bin/filter_serial src/serial/filter_serial.o
+	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o
 
 examples: cudaMallocAndMemcpy myFirstKernel reverseArray_singleblock reverseArray_multiblock
 
