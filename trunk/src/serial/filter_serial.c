@@ -260,7 +260,7 @@ int interpolate( struct waypoint_list *waypoint_list , float time , float *x_pos
     {
       // the first waypoint timestamp is after the requested time thus
       // we don't have two points to interpolate between
-      if ( i == 0 || i == waypoint_list->size - 1 )
+      if ( i == 0 )
         return 0;
 
       return interpolate_waypoints( previous_waypoint, current_waypoint, time, x_pos, y_pos);
@@ -280,8 +280,8 @@ int interpolate_waypoints( struct waypoint *start, struct waypoint *end, float t
   float time_diff = end->time - start->time;
   float weight = ( time - start->time ) / time_diff;
 
-  *x_pos = end->x_pos * ( weight ) - start->x_pos * ( 1 - weight );
-  *y_pos = end->y_pos * ( weight ) - start->y_pos * ( 1 - weight );
+  *x_pos = end->x_pos * ( weight ) + start->x_pos * ( 1 - weight );
+  *y_pos = end->y_pos * ( weight ) + start->y_pos * ( 1 - weight );
 
   return 1;
 }
