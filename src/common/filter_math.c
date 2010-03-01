@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "filter_math.h"
 
 // return a random float value evenly distributed between 0 and max
 float frand0( float max )
