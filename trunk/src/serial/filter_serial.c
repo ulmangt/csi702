@@ -47,10 +47,17 @@ void maneuver_index( int );
 void write_particles( char*, int );
 struct waypoint_list *read_waypoints( char* );
 void print_waypoints( struct waypoint_list *waypoint_list );
+int interpolate( struct waypoint_list *waypoint_list , float time , float *x_pos, float *y_pos );
+int interpolate_waypoints( struct waypoint *end, struct waypoint *start, float time, float *x_pos, float *y_pos );
 
 int main( int argc, char* argv )
 {
-  print_waypoints( read_waypoints( "data/waypoints1.txt" ) );
+  struct waypoint_list *waypoints = read_waypoints( "data/waypoints1.txt" );
+  print_waypoints( waypoints );
+  float x_pos, y_pos, time;
+  time = 200;
+  interpolate( waypoints, time, &x_pos, &y_pos );
+  printf( "at time %f x_pos %f y_pos %f\n", time, x_pos, y_pos );
 
 /*
   init_particle_mem( NUM_PARTICLES );
@@ -163,6 +170,8 @@ void maneuver_index( int i )
   y_vel[i] = frand( -MAX_VEL, MAX_VEL );
 }
 
+// writes the current set of particles out to disk as
+// a tab delimited text file
 void write_particles( char* out_name, int num )
 {
   FILE* file = fopen( out_name, "w" );
@@ -212,6 +221,7 @@ struct waypoint_list *read_waypoints( char* in_name )
   return waypoint_list;
 }
 
+// prints a waypoint_list structure (for debugging / verification)
 void print_waypoints( struct waypoint_list *waypoint_list )
 {
   int i;
@@ -222,3 +232,47 @@ void print_waypoints( struct waypoint_list *waypoint_list )
     printf( "%f %f %f\n", (waypoint+i)->time, (waypoint+i)->x_pos, (waypoint+i)->y_pos );
   }
 }
+
+// interpolates between the waypoints in waypoint list to determine the x_pos and y_pos at the given tim
+// values are returned by setting the x_pos and y_pos pointers
+// a return value of 1 indicates success, a return value of 0 indicates an error
+int interpolate( struct waypoint_list *waypoint_list , float time , float *x_pos, float *y_pos )
+{
+  int i;
+
+  struct waypoint *previous_waypoint;
+
+  for ( i = 0 ; i < waypoint_list->size ; i++ )
+  {
+    struct waypoint *current_waypoint = (waypoint_list->waypoints)+i;
+
+    if ( current_waypoint->time > time )
+    {
+      // the first waypoint timestamp is after the requested time thus
+      // we don't have two points to interpolate between
+      if ( i == 0 || i == waypoint_list->size - 1 )
+        return 0;
+
+      return interpolate_waypoints( previous_waypoint, current_waypoint, time, x_pos, y_pos);
+    }
+
+    previous_waypoint = current_waypoint;
+  }
+
+  // the last waypoint timestamp is before the requested time
+  return 0;
+}
+
+// interpolates between two given waypoints
+// time should be between start->time and end->time
+int interpolate_waypoints( struct waypoint *start, struct waypoint *end, float time, float *x_pos, float *y_pos )
+{
+  float time_diff = end->time - start->time;
+  float weight = ( time - start->time ) / time_diff;
+
+  *x_pos = end->x_pos * ( weight ) - start->x_pos * ( 1 - weight );
+  *y_pos = end->y_pos * ( weight ) - start->y_pos * ( 1 - weight );
+
+  return 1;
+}
+
