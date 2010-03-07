@@ -46,9 +46,7 @@ void print_waypoints( struct waypoint_list *waypoint_list )
 
   for ( i = 0 ; i < waypoint_list->size ; i++ )
   {
-    //struct waypoint *waypoint = waypoint_list->waypoints;
     print_waypoint( (waypoint_list->waypoints)+i );
-    //printf( "%f %f %f\n", (waypoint+i)->time, (waypoint+i)->x_pos, (waypoint+i)->y_pos );
   }
 }
 
