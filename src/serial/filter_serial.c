@@ -54,13 +54,13 @@ int main( int argc, char* argv )
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
   time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
   write_particles( OUTPUT_NAME, NUM_PARTICLES );
-  print_particles( NUM_PARTICLES );
+  //print_particles( NUM_PARTICLES );
   
   for ( i = 0 ; i < NUM_PARTICLES - 1 ; i++ )
   {
     print_particle( i );
     print_particle( i + 1 );
-    printf( "%f\n" , toDegrees( azimuth( x_pos[i], y_pos[i], x_pos[i+1], y_pos[i+1] ) ) );
+    printf( "%f\n" , toNavyDegrees( azimuth( x_pos[i], y_pos[i], x_pos[i+1], y_pos[i+1] ) ) );
   }
 }
 
