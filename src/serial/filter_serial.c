@@ -37,20 +37,15 @@ int main( int argc, char* argv )
 {
   struct waypoint_list *waypoints = read_waypoints( "data/waypoints1.txt" );
   print_waypoints( waypoints );
-  float x_pos, y_pos, time;
+  float x_pos_interp, y_pos_interp, time;
 
   int i;
-
-  for ( i = 0 ; i < NUM_PARTCLES - 1 ; i++ )
-  {
-    printf(
-  }
 
   /*
      for ( time = 0 ; time < 2000.0 ; time += 100 )
      {
-     interpolate( waypoints, time, &x_pos, &y_pos );
-     printf( "at time %f x_pos %f y_pos %f\n", time, x_pos, y_pos );
+     interpolate( waypoints, time, &x_pos_interp, &y_pos_interp );
+     printf( "at time %f x_pos %f y_pos %f\n", time, x_pos_interp, y_pos_interp );
      }
    */
 
@@ -59,6 +54,13 @@ int main( int argc, char* argv )
   time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
   write_particles( OUTPUT_NAME, NUM_PARTICLES );
   print_particles( NUM_PARTICLES );
+  
+  for ( i = 0 ; i < NUM_PARTICLES - 1 ; i++ )
+  {
+    print_particle( i );
+    print_particle( i + 1 );
+    printf( "%f\n" , azimuth( x_pos[i], y_pos[i], x_pos[i+1], y_pos[i+1] ) );
+  }
 }
 
 // allocate memory for num particles
