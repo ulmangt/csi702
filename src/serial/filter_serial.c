@@ -4,6 +4,7 @@
 #include "obs_math.h"
 #include "filter_math.h"
 #include "filter_io.h"
+#include "convert.h"
 
 #define NUM_PARTICLES 10
 #define MAX_RANGE 8000
@@ -59,7 +60,7 @@ int main( int argc, char* argv )
   {
     print_particle( i );
     print_particle( i + 1 );
-    printf( "%f\n" , azimuth( x_pos[i], y_pos[i], x_pos[i+1], y_pos[i+1] ) );
+    printf( "%f\n" , toDegrees( azimuth( x_pos[i], y_pos[i], x_pos[i+1], y_pos[i+1] ) ) );
   }
 }
 

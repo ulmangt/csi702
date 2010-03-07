@@ -1,7 +1,7 @@
 all: filter_serial
 
 filter_serial: filter_io.o obs_math.o filter_math.o filter_serial.o convert.o
-	gcc -I hdr -lm src/serial/filter_serial.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_serial
+	gcc -I hdr -lm src/serial/filter_serial.o src/common/convert.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_serial
 
 filter_serial.o:
 	gcc -I hdr -c -lm src/serial/filter_serial.c -o src/serial/filter_serial.o
