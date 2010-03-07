@@ -1,6 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#ifndef CONVERT_H_INCLUDED
+#define CONVERT_H_INCLUDED
 
 #define PI acos(-1)
 #define RAD_TO_DEG 90.0 / PI
@@ -8,3 +7,7 @@
 
 float toRadians( float );
 float toDegrees( float );
+float fromRadians( float );
+float fromDegrees( float );
+
+#endif
