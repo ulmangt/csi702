@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "filter_math.h"
+#include "convert.h"
 
 // return a random float value evenly distributed between 0 and max
 float frand0( float max )
@@ -44,9 +45,17 @@ float grand0( )
   return v1 * multiplier;
 }
 
-// returns a random float value from a normal distribution
+// returns a random float value from a gaussian distribution
 // with the given mean and sigma
 float grand( float mean, float sigma )
 {
   return mean + sigma * grand0( );
+}
+
+// calculates the probability density function for the gaussian
+// distribution with given mean and sigma
+float gvalue( float value, float mean, float sigma )
+{
+  float z = ( value - mean ) / sigma ;
+  return exp( -0.5 * z * z ) / ( sqrt( 2.0 * PI ) * sigma );
 }
