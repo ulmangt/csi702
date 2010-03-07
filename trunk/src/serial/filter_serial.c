@@ -5,7 +5,7 @@
 #include "filter_math.h"
 #include "filter_io.h"
 
-#define NUM_PARTICLES 10000
+#define NUM_PARTICLES 10
 #define MAX_RANGE 8000
 #define MAX_VEL 15
 
@@ -30,24 +30,35 @@ void maneuver_index( int );
 
 void write_particles( char*, int );
 
+void print_particles( int );
+void print_particle( int );
+
 int main( int argc, char* argv )
 {
   struct waypoint_list *waypoints = read_waypoints( "data/waypoints1.txt" );
   print_waypoints( waypoints );
   float x_pos, y_pos, time;
 
-  for ( time = 0 ; time < 2000.0 ; time += 100 )
+  int i;
+
+  for ( i = 0 ; i < NUM_PARTCLES - 1 ; i++ )
   {
-    interpolate( waypoints, time, &x_pos, &y_pos );
-    printf( "at time %f x_pos %f y_pos %f\n", time, x_pos, y_pos );
+    printf(
   }
 
   /*
-     init_particle_mem( NUM_PARTICLES );
-     init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
-     time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
-     write_particles( OUTPUT_NAME, NUM_PARTICLES );
+     for ( time = 0 ; time < 2000.0 ; time += 100 )
+     {
+     interpolate( waypoints, time, &x_pos, &y_pos );
+     printf( "at time %f x_pos %f y_pos %f\n", time, x_pos, y_pos );
+     }
    */
+
+  init_particle_mem( NUM_PARTICLES );
+  init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
+  time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
+  write_particles( OUTPUT_NAME, NUM_PARTICLES );
+  print_particles( NUM_PARTICLES );
 }
 
 // allocate memory for num particles
@@ -148,4 +159,21 @@ void write_particles( char* out_name, int num )
   }
 
   int success = fclose( file );
+}
+
+// prints information on all particles to the console
+void print_particles( int num )
+{
+  int i;
+
+  for ( i = 0 ; i < num ; i++ )
+  {
+    print_particle( i );
+  }
+}
+
+// prints a single particle's information to the console
+void print_particle( int i )
+{
+  printf( "%f\t%f\t%f\t%f\t%f\n", x_pos[i], y_pos[i], x_vel[i], y_vel[i], weight[i] );
 }
