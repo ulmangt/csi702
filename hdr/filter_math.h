@@ -4,6 +4,7 @@
 float frand0( float );
 float frand( float, float );
 float erand( float );
-float grand( );
+float grand0( );
+float grand( float mean, float sigma );
 
 #endif

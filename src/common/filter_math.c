@@ -27,7 +27,7 @@ float erand( float inv_lambda )
 // as described by Donald E. Knuth in The Art of Computer Programming,
 // Volume 2: Seminumerical Algorithms, section 3.4.1, subsection C, algorithm P
 // also the implementation used by java.util.Random.nextGaussian
-float grand( )
+float grand0( )
 {
   double v1, v2, s;
   
@@ -42,4 +42,11 @@ float grand( )
   double multiplier = sqrt(-2 * log(s)/s);
   
   return v1 * multiplier;
+}
+
+// returns a random float value from a normal distribution
+// with the given mean and sigma
+float grand( float mean, float sigma )
+{
+  return mean + sigma * grand0( );
 }
