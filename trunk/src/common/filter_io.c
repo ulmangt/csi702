@@ -54,3 +54,18 @@ void print_waypoint( struct waypoint *waypoint )
 {
   printf( "%f %f %f\n", waypoint->time, waypoint->x_pos, waypoint->y_pos );
 }
+
+void print_observations( struct observation_list *observation_list )
+{
+  int i;
+
+  for ( i = 0 ; i < observation_list->size ; i++ )
+  {
+    print_waypoint( (observation_list->observations)+i );
+  }
+}
+
+void print_observation( struct observation *obs )
+{
+  printf( "%d %f %f %f %f %f\n", obs->type, obs->time, obs->x_pos, obs->y_pos, obs->value, obs->error );
+}

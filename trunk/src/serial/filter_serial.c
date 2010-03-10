@@ -46,6 +46,7 @@ int main( int argc, char* argv )
 
   struct observation_list *obs = generate_observations( waypoints1, waypoints2, 1, 0.0, 2.0, 9.9, 0.0 );
   printf("obs %d\n", obs->size);
+  print_observations( obs );
 
   /*
      for ( time = 0 ; time < 2000.0 ; time += 100 )
