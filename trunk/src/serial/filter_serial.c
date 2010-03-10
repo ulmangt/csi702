@@ -36,44 +36,40 @@ void print_particle( int );
 
 int main( int argc, char* argv )
 {
-  struct waypoint_list *waypoints1 = read_waypoints( "data/waypoints1.txt" );
-  struct waypoint_list *waypoints2 = read_waypoints( "data/waypoints2.txt" );
-  print_waypoints( waypoints1 );
-  print_waypoints( waypoints2 );
   float x_pos_interp, y_pos_interp, time;
 
   int i;
 
-  for ( i = 0 ; i < 10 ; i++) {
-    float r = grand0( );
-    printf("grand %f\n" , r );
-  }
+  struct waypoint_list *waypoints1 = read_waypoints( "data/waypoints1.txt" );
+  struct waypoint_list *waypoints2 = read_waypoints( "data/waypoints2.txt" );
 
+  printf("Sensor Waypoints:\n");
+  print_waypoints( waypoints1 );
 
-  struct observation_list *obs = generate_observations( waypoints1, waypoints2, 1, fromDegrees(2.0), 0.0, 200.0, 1800.0 );
-  printf("obs %d\n", obs->size);
-  print_observations( obs );
+  printf("Target Waypoints:\n");
+  print_waypoints( waypoints2 );
 
-  /*
-     for ( time = 0 ; time < 2000.0 ; time += 100 )
-     {
-     interpolate( waypoints, time, &x_pos_interp, &y_pos_interp );
-     printf( "at time %f x_pos %f y_pos %f\n", time, x_pos_interp, y_pos_interp );
-     }
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(2.0), 0.0, 200.0, 1800.0 );
+  printf("Observations:\n");
+  print_observations( obs_list );
 
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
-  time_update( NUM_PARTICLES, 100.0, MEAN_MANEUVER_TIME );
-  write_particles( OUTPUT_NAME, NUM_PARTICLES );
-  //print_particles( NUM_PARTICLES );
-  
-  for ( i = 0 ; i < NUM_PARTICLES - 1 ; i++ )
+
+  float previous_time = 0.0;
+  float current_time = 0.0;
+  for ( i = 0 ; i < obs_list->size ; i++ )
   {
-    print_particle( i );
-    print_particle( i + 1 );
-    printf( "%f\n" , toNavyDegrees( azimuth( x_pos[i], y_pos[i], x_pos[i+1], y_pos[i+1] ) ) );
+    struct observation *obs = (obs_list->observations) + i;
+    previous_time = current_time;
+    current_time = obs->time;
+    time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
+    // information update
+    // resample
   }
-  */
+
+  write_particles( OUTPUT_NAME, NUM_PARTICLES );
+  print_particles( NUM_PARTICLES );
 }
 
 // allocate memory for num particles
