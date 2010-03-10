@@ -61,7 +61,7 @@ void print_observations( struct observation_list *observation_list )
 
   for ( i = 0 ; i < observation_list->size ; i++ )
   {
-    print_waypoint( (observation_list->observations)+i );
+    print_observation( (observation_list->observations)+i );
   }
 }
 

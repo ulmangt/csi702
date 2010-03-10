@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "obs_math.h"
+#include "filter_math.h"
 
 // interpolates between the waypoints in waypoint list to determine the x_pos and y_pos at the given tim
 // values are returned by setting the x_pos and y_pos pointers
@@ -56,7 +57,9 @@ int interpolate_waypoints( struct waypoint *start, struct waypoint *end, float t
 // error : the random error to add to each observation
 struct observation_list *generate_observations( struct waypoint_list *sensor, struct waypoint_list *target, int type, float error, float start_time, float interval_time, float end_time )
 {
-  int observation_count = (int) floor( (end_time - start_time) / interval_time ) + 1;
+  int observation_count = (int) ( floor( (end_time - start_time) / interval_time ) + 1 );
+
+  //printf("obs count %d\n", observation_count );
 
   struct observation_list *observation_list = malloc( sizeof(struct observation_list) );
   observation_list->observations = malloc( sizeof(struct observation) * observation_count );
@@ -68,19 +71,21 @@ struct observation_list *generate_observations( struct waypoint_list *sensor, st
 
   for ( i = 0 ; i < observation_count ; i++ )
   {
-    struct observation obs = observation_list->observations[i];
+    struct observation *obs = (observation_list->observations) + i;
 
-    obs.time = start_time + i * interval_time;
-    obs.error = error;
-    obs.type = type;
+    obs->time = start_time + i * interval_time;
+    obs->error = error;
+    obs->type = type;
+
+    printf( "generating obs %d %f\n", i, obs->time );
     
-    interpolate( sensor, obs.time, &x_pos_sensor, &y_pos_sensor );
-    interpolate( target, obs.time, &x_pos_target, &y_pos_target );
+    interpolate( sensor, obs->time, &x_pos_sensor, &y_pos_sensor );
+    interpolate( target, obs->time, &x_pos_target, &y_pos_target );
 
-    obs.x_pos = x_pos_sensor;
-    obs.y_pos = y_pos_sensor;
+    obs->x_pos = x_pos_sensor;
+    obs->y_pos = y_pos_sensor;
 
-    obs.value = generate_observation( type, error, x_pos_sensor, y_pos_sensor, x_pos_target, y_pos_target );
+    obs->value = generate_observation( type, error, x_pos_sensor, y_pos_sensor, x_pos_target, y_pos_target );
   }
 
   return observation_list;
@@ -93,14 +98,14 @@ float generate_observation( int type, float error, float x_pos_sensor, float y_p
     case AZIMUTH:
       return generate_azimuth_observation( error, x_pos_sensor, y_pos_sensor, x_pos_target, y_pos_target );
     default:
-      return -1;
+      return -1.0;
   }
 }
 
 float generate_azimuth_observation( float error, float x_pos_sensor, float y_pos_sensor, float x_pos_target, float y_pos_target )
 {
   float true_value = azimuth( x_pos_sensor, y_pos_sensor, x_pos_target, y_pos_target );
-  float observed_value = grand( true_value , error );
+  float observed_value = grand( true_value, error );
   return observed_value;
 }
 
@@ -111,5 +116,6 @@ float azimuth( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_po
 
   if ( x_diff == 0 && y_diff > 0 ) return M_PI / 2.0;
   if ( x_diff == 0 && y_diff < 0 ) return -M_PI / 2.0;
+
   return atan2( y_diff, x_diff );
 }
