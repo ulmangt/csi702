@@ -36,11 +36,16 @@ void print_particle( int );
 
 int main( int argc, char* argv )
 {
-  struct waypoint_list *waypoints = read_waypoints( "data/waypoints1.txt" );
-  print_waypoints( waypoints );
+  struct waypoint_list *waypoints1 = read_waypoints( "data/waypoints1.txt" );
+  struct waypoint_list *waypoints2 = read_waypoints( "data/waypoints2.txt" );
+  print_waypoints( waypoints1 );
+  print_waypoints( waypoints2 );
   float x_pos_interp, y_pos_interp, time;
 
   int i;
+
+  struct observation_list *obs = generate_observations( waypoints1, waypoints2, 1, 0.0, 2.0, 9.9, 0.0 );
+  printf("obs %d\n", obs->size);
 
   /*
      for ( time = 0 ; time < 2000.0 ; time += 100 )
@@ -48,7 +53,6 @@ int main( int argc, char* argv )
      interpolate( waypoints, time, &x_pos_interp, &y_pos_interp );
      printf( "at time %f x_pos %f y_pos %f\n", time, x_pos_interp, y_pos_interp );
      }
-   */
 
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
@@ -62,6 +66,7 @@ int main( int argc, char* argv )
     print_particle( i + 1 );
     printf( "%f\n" , toNavyDegrees( azimuth( x_pos[i], y_pos[i], x_pos[i+1], y_pos[i+1] ) ) );
   }
+  */
 }
 
 // allocate memory for num particles

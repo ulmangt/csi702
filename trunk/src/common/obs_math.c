@@ -46,6 +46,64 @@ int interpolate_waypoints( struct waypoint *start, struct waypoint *end, float t
   return 1;
 }
 
+// generates observations based on the given sensor and target positions
+// sensor : a list of position waypoints for the sensor making the observations
+// target : a list of position waypoints for the target being observed
+// type : the type of observations being made (see observation_type enum)
+// start_time : the time of the first observation
+// interval_time : the time between observations
+// end_time : no observations will be recorded after end_time
+// error : the random error to add to each observation
+struct observation_list *generate_observations( struct waypoint_list *sensor, struct waypoint_list *target, int type, float error, float start_time, float interval_time, float end_time )
+{
+  int observation_count = (int) floor( (end_time - start_time) / interval_time ) + 1;
+
+  struct observation_list *observation_list = malloc( sizeof(struct observation_list) );
+  observation_list->observations = malloc( sizeof(struct observation) * observation_count );
+  observation_list->size = observation_count;
+
+  int i;
+
+  float x_pos_target, y_pos_target, x_pos_sensor, y_pos_sensor;
+
+  for ( i = 0 ; i < observation_count ; i++ )
+  {
+    struct observation obs;
+
+    obs.time = start_time + i * interval_time;
+    obs.error = error;
+    obs.type = type;
+    
+    interpolate( sensor, obs.time, &x_pos_sensor, &y_pos_sensor );
+    interpolate( target, obs.time, &x_pos_target, &y_pos_target );
+
+    obs.x_pos = x_pos_sensor;
+    obs.y_pos = y_pos_sensor;
+
+    
+  }
+
+  return observation_list;
+}
+
+float generate_observation( int type, float error, float x_pos_sensor, float y_pos_sensor, float x_pos_target, float y_pos_target )
+{
+  switch( type )
+  {
+    case AZIMUTH:
+      return generate_azimuth_observation( error, x_pos_sensor, y_pos_sensor, x_pos_target, y_pos_target );
+    default:
+      return -1;
+  }
+}
+
+float generate_azimuth_observation( float error, float x_pos_sensor, float y_pos_sensor, float x_pos_target, float y_pos_target )
+{
+  float true_value = azimuth( x_pos_sensor, y_pos_sensor, x_pos_target, y_pos_target );
+  float observed_value = grand( true_value , error );
+  return observed_value;
+}
+
 float azimuth( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
 {
   float x_diff = from_x_pos - to_x_pos;
