@@ -30,7 +30,7 @@ float erand( float inv_lambda )
 // also the implementation used by java.util.Random.nextGaussian
 float grand0( )
 {
-  double v1, v2, s;
+  float v1, v2, s;
   
   do
   { 
@@ -40,7 +40,7 @@ float grand0( )
   }
   while ( s >= 1 || s == 0 );
   
-  double multiplier = sqrt(-2 * log(s)/s);
+  float multiplier = sqrt(-2 * log(s)/s);
   
   return v1 * multiplier;
 }
@@ -49,7 +49,7 @@ float grand0( )
 // with the given mean and sigma
 float grand( float mean, float sigma )
 {
-  return mean + sigma * grand0( );
+  return mean + sigma * grand0();
 }
 
 // calculates the probability density function for the gaussian

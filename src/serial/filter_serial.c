@@ -44,7 +44,13 @@ int main( int argc, char* argv )
 
   int i;
 
-  struct observation_list *obs = generate_observations( waypoints1, waypoints2, 1, 0.0, 2.0, 9.9, 0.0 );
+  for ( i = 0 ; i < 10 ; i++) {
+    float r = grand0( );
+    printf("grand %f\n" , r );
+  }
+
+
+  struct observation_list *obs = generate_observations( waypoints1, waypoints2, 1, fromDegrees(2.0), 0.0, 200.0, 1800.0 );
   printf("obs %d\n", obs->size);
   print_observations( obs );
 
