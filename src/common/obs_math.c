@@ -68,7 +68,7 @@ struct observation_list *generate_observations( struct waypoint_list *sensor, st
 
   for ( i = 0 ; i < observation_count ; i++ )
   {
-    struct observation obs;
+    struct observation obs = observation_list->observations[i];
 
     obs.time = start_time + i * interval_time;
     obs.error = error;
@@ -80,7 +80,7 @@ struct observation_list *generate_observations( struct waypoint_list *sensor, st
     obs.x_pos = x_pos_sensor;
     obs.y_pos = y_pos_sensor;
 
-    
+    obs.value = generate_observation( type, error, x_pos_sensor, y_pos_sensor, x_pos_target, y_pos_target );
   }
 
   return observation_list;
