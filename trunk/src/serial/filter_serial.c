@@ -6,11 +6,14 @@
 #include "filter_io.h"
 #include "convert.h"
 
-#define NUM_PARTICLES 10
-#define MAX_RANGE 8000
-#define MAX_VEL 15
+#define NUM_PARTICLES 100
+#define MAX_RANGE 8000 // meters
+#define MAX_VEL 15 // meters per second
 
-#define MEAN_MANEUVER_TIME 3600
+#define MAX_POS_PERTURB 10.0 // meters
+#define MAX_VEL_PERTURB  0.1 // meters per second
+
+#define MEAN_MANEUVER_TIME 3600 // seconds
 
 #define INITIAL_MAX_WAYPOINTS 10
 
@@ -55,7 +58,7 @@ int main( int argc, char* argv )
   printf("Target Waypoints:\n");
   print_waypoints( waypoints2 );
 
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(30.0), 0.0, 200.0, 1800.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(30.0), 0.0, 200.0, 0.0 );
   printf("Observations:\n");
   print_observations( obs_list );
 
@@ -205,7 +208,7 @@ void resample( int num )
   // current target weight
   float wcutoff = wcutoff_increment * frand0( 1.0 );
   // cumulative sum of particle weights
-  float wsum = 0.0;
+  float wsum = weight[0];
   // resample target index, the particle being replaced  
   int rt = 0;
   // resample source index, the particle being copied
@@ -225,6 +228,7 @@ void resample( int num )
 
     copy_particle( rs, rt, wcutoff_increment );
     perturb_particle( rt );
+
     wcutoff += wcutoff_increment;
   }
 }
@@ -235,12 +239,15 @@ void copy_particle( int source_index, int target_index, float particle_weight )
   y_pos[target_index]  = y_pos[source_index];
   x_vel[target_index]  = x_vel[source_index];
   y_vel[target_index]  = y_vel[source_index];
-  weight[target_index] = particle_weight;
+  //weight[target_index] = particle_weight;
 }
 
 void perturb_particle( int index )
 {
-  // do nothing for now
+  x_pos[index] += frand( -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  y_pos[index] += frand( -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  x_vel[index] += frand( -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  y_vel[index] += frand( -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
 }
 
 
