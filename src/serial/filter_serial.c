@@ -35,6 +35,7 @@ void maneuver_index( int );
 void information_update( int, struct observation* );
 
 void resample( int );
+void mark_particle( int, int );
 void copy_particle( int, int, float );
 void perturb_particle( int );
 
@@ -213,23 +214,65 @@ void resample( int num )
   int rt = 0;
   // resample source index, the particle being copied
   int rs = 0;
+  
+  // Step forward through the particles keeping track of
+  // the cumulative weight of all particles encountered (wsum)
+  // and the desired cumulative weight (wcutoff) (if all
+  // particles were renormalized to have equal weight).
+  //
+  // When wsum is greater than wcutoff, we've enountered
+  // particles with higher than average weights that should
+  // be duplicated, spreading their weight over multiple
+  // particles. When wcutoff is greater than wsum, we step
+  // through the particles, summing weights, until wsum is greater
+  // (i.e. until we find a particle with too much weight).
   for ( ; rt < num ; rt++ )
   {
     printf("rt %d\n", rt);
 
-    while( wsum < wcutoff && rs < num )
+    while( wsum < wcutoff )
     {
       wsum += weight[++rs];
 
       printf( "rs %d wsum %f wcutoff %f\n", rs, wsum, wcutoff );
     }
 
-    printf( "copying %d to %d\n", rs, rt );
-
-    copy_particle( rs, rt, wcutoff_increment );
-    perturb_particle( rt );
-
+    mark_particle( rs, rt );
     wcutoff += wcutoff_increment;
+  }
+
+  // In order to perform the above algorithm in place,
+  // particles are not duplicated immediately. Instead,
+  // source particles are marked with the index of
+  int high_target_index = num - 1;
+  for ( rs = num - 1 ; rs >= 0 ; rs-- )
+  {
+    if ( weight[rs] < 1.0 )
+      continue;
+
+    int low_target_index = weight[rs];
+
+    for ( rt = low_target_index ; rt < high_target_index ; rt++ )
+    {
+      printf( "copying %d to %d\n", rs, rt );
+      copy_particle( rs , rt , wcutoff_increment );
+      perturb_particle( rt );
+    }
+
+    high_target_index = low_target_index;
+  }
+}
+
+void mark_particle( int source_index, int target_index )
+{
+  // the weight array of particles that are slated to
+  // be duplicated is used to store the smallest particle
+  // index it will be copied into
+
+  if ( weight[source_index] < 1.0 )
+  {
+    printf( "marked %d with %d\n", source_index, target_index );
+    weight[source_index] = target_index;
   }
 }
 
@@ -239,7 +282,7 @@ void copy_particle( int source_index, int target_index, float particle_weight )
   y_pos[target_index]  = y_pos[source_index];
   x_vel[target_index]  = x_vel[source_index];
   y_vel[target_index]  = y_vel[source_index];
-  //weight[target_index] = particle_weight;
+  weight[target_index] = particle_weight;
 }
 
 void perturb_particle( int index )
