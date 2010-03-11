@@ -6,7 +6,7 @@
 #include "filter_io.h"
 #include "convert.h"
 
-#define NUM_PARTICLES 1
+#define NUM_PARTICLES 10
 #define MAX_RANGE 8000
 #define MAX_VEL 15
 
@@ -55,28 +55,25 @@ int main( int argc, char* argv )
   printf("Target Waypoints:\n");
   print_waypoints( waypoints2 );
 
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(2.0), 0.0, 200.0, 1800.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(30.0), 0.0, 200.0, 1800.0 );
   printf("Observations:\n");
   print_observations( obs_list );
 
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
 
-  //time_update( NUM_PARTICLES, 800.0, MEAN_MANEUVER_TIME );
-
-  //write_particles( OUTPUT_NAME, NUM_PARTICLES );
-  //print_particles( NUM_PARTICLES );
-
   float previous_time = 0.0;
   float current_time = 0.0;
   for ( i = 0 ; i < obs_list->size ; i++ )
   {
+    printf("observation %d\n", i);
+
     struct observation *obs = (obs_list->observations) + i;
     previous_time = current_time;
     current_time = obs->time;
     time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
     information_update( NUM_PARTICLES, obs );
-    // resample
+    resample( NUM_PARTICLES );
   }
 
   write_particles( OUTPUT_NAME, NUM_PARTICLES );
@@ -193,11 +190,14 @@ void resample( int num )
   {
     weight_sum += weight[i];
   }
+  
+  printf( "weight_sum %f\n", weight_sum );
 
   // normalize weights to sum to 1.0
   for ( i = 0 ; i < num ; i++ )
   {
     weight[i] = weight[i] / weight_sum;
+    printf("normalized weight %d = %f\n", i, weight[i] );
   }
 
   // weight of an average particle
@@ -210,13 +210,18 @@ void resample( int num )
   int rt = 0;
   // resample source index, the particle being copied
   int rs = 0;
-  for ( ; i < num ; i++ )
+  for ( ; rt < num ; rt++ )
   {
-    while( wsum < wcutoff )
+    printf("rt %d\n", rt);
+
+    while( wsum < wcutoff && rs < num )
     {
-      rs++;
-      wsum += weight[i];
+      wsum += weight[++rs];
+
+      printf( "rs %d wsum %f wcutoff %f\n", rs, wsum, wcutoff );
     }
+
+    printf( "copying %d to %d\n", rs, rt );
 
     copy_particle( rs, rt, wcutoff_increment );
     perturb_particle( rt );

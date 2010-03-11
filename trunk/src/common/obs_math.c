@@ -112,7 +112,6 @@ float generate_azimuth_observation( float error, float x_pos_sensor,
 float apply_observation( struct observation *obs, float x_pos_particle, float y_pos_particle,
                          float x_vel_particle, float y_vel_particle, float weight_particle )
 {
-  printf("observation weight %f\n", weight_particle);
   switch( obs->type )
   {
     case AZIMUTH:
