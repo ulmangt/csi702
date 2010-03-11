@@ -226,19 +226,25 @@ void resample( int num )
   // particles. When wcutoff is greater than wsum, we step
   // through the particles, summing weights, until wsum is greater
   // (i.e. until we find a particle with too much weight).
-  for ( ; rt < num ; rt++ )
+  for ( ; rt < num ; )
   {
     printf("rt %d\n", rt);
 
     while( wsum < wcutoff )
     {
-      wsum += weight[++rs];
+      rs++;
+      wsum += weight[rs];
 
       printf( "rs %d wsum %f wcutoff %f\n", rs, wsum, wcutoff );
     }
 
     mark_particle( rs, rt );
-    wcutoff += wcutoff_increment;
+
+    while ( wsum > wcutoff )
+    {
+      rt++;
+      wcutoff += wcutoff_increment;
+    }
   }
 
   // In order to perform the above algorithm in place,
@@ -247,10 +253,10 @@ void resample( int num )
   int high_target_index = num - 1;
   for ( rs = num - 1 ; rs >= 0 ; rs-- )
   {
-    if ( weight[rs] < 1.0 )
+    if ( weight[rs] >= 0.0 )
       continue;
 
-    int low_target_index = weight[rs];
+    int low_target_index = -(weight[rs]+1);
 
     for ( rt = low_target_index ; rt < high_target_index ; rt++ )
     {
@@ -263,17 +269,16 @@ void resample( int num )
   }
 }
 
+// the weight array of particles that are slated to
+// be duplicated is used to store the smallest particle
+// index it will be copied into
+//
+// the index is encoded as -(index+1) so it cannot be
+// mistaken as a normalized weight
 void mark_particle( int source_index, int target_index )
 {
-  // the weight array of particles that are slated to
-  // be duplicated is used to store the smallest particle
-  // index it will be copied into
-
-  if ( weight[source_index] < 1.0 )
-  {
-    printf( "marked %d with %d\n", source_index, target_index );
-    weight[source_index] = target_index;
-  }
+  printf( "marked %d with %d\n", source_index, target_index );
+  weight[source_index] = -(target_index + 1);
 }
 
 void copy_particle( int source_index, int target_index, float particle_weight )
