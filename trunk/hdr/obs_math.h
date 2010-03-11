@@ -51,6 +51,9 @@ struct observation_list *generate_observations( struct waypoint_list*, struct wa
 float generate_observation( int, float, float, float, float, float );
 float generate_azimuth_observation( float, float, float, float, float );
 
+float apply_observation( struct observation*, float, float, float, float, float );
+float apply_azimuth_observation( struct observation*, float, float, float, float, float );
+
 int interpolate( struct waypoint_list* , float, float*, float* );
 int interpolate_waypoints( struct waypoint*, struct waypoint*, float, float*, float*);
 

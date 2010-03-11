@@ -55,11 +55,11 @@ int interpolate_waypoints( struct waypoint *start, struct waypoint *end, float t
 // interval_time : the time between observations
 // end_time : no observations will be recorded after end_time
 // error : the random error to add to each observation
-struct observation_list *generate_observations( struct waypoint_list *sensor, struct waypoint_list *target, int type, float error, float start_time, float interval_time, float end_time )
+struct observation_list *generate_observations(
+                               struct waypoint_list *sensor, struct waypoint_list *target,
+                               int type, float error, float start_time, float interval_time, float end_time )
 {
   int observation_count = (int) ( floor( (end_time - start_time) / interval_time ) + 1 );
-
-  //printf("obs count %d\n", observation_count );
 
   struct observation_list *observation_list = malloc( sizeof(struct observation_list) );
   observation_list->observations = malloc( sizeof(struct observation) * observation_count );
@@ -76,8 +76,6 @@ struct observation_list *generate_observations( struct waypoint_list *sensor, st
     obs->time = start_time + i * interval_time;
     obs->error = error;
     obs->type = type;
-
-    printf( "generating obs %d %f\n", i, obs->time );
     
     interpolate( sensor, obs->time, &x_pos_sensor, &y_pos_sensor );
     interpolate( target, obs->time, &x_pos_target, &y_pos_target );
@@ -91,7 +89,8 @@ struct observation_list *generate_observations( struct waypoint_list *sensor, st
   return observation_list;
 }
 
-float generate_observation( int type, float error, float x_pos_sensor, float y_pos_sensor, float x_pos_target, float y_pos_target )
+float generate_observation( int type, float error, float x_pos_sensor,
+                            float y_pos_sensor, float x_pos_target, float y_pos_target )
 {
   switch( type )
   {
@@ -102,12 +101,37 @@ float generate_observation( int type, float error, float x_pos_sensor, float y_p
   }
 }
 
-float generate_azimuth_observation( float error, float x_pos_sensor, float y_pos_sensor, float x_pos_target, float y_pos_target )
+float generate_azimuth_observation( float error, float x_pos_sensor,
+                                    float y_pos_sensor, float x_pos_target, float y_pos_target )
 {
   float true_value = azimuth( x_pos_sensor, y_pos_sensor, x_pos_target, y_pos_target );
   float observed_value = grand( true_value, error );
   return observed_value;
 }
+
+float apply_observation( struct observation *obs, float x_pos_particle, float y_pos_particle,
+                         float x_vel_particle, float y_vel_particle, float weight_particle )
+{
+  printf("observation weight %f\n", weight_particle);
+  switch( obs->type )
+  {
+    case AZIMUTH:
+      return apply_azimuth_observation( obs, x_pos_particle, y_pos_particle, x_vel_particle, y_vel_particle, weight_particle );
+    default:
+      return -1.0;
+  }
+}
+
+float apply_azimuth_observation( struct observation *obs, float x_pos_particle, float y_pos_particle,
+                                 float x_vel_particle, float y_vel_particle, float weight_particle )
+{
+  float particle_azimuth = azimuth( obs->x_pos , obs->y_pos , x_pos_particle , y_pos_particle );
+  float observed_azimuth = obs->value;
+  float likelihood = gvalue( particle_azimuth - observed_azimuth , 0.0 , obs->error );
+  printf("likelihood %0.10f prior weight %f\n", likelihood, weight_particle );
+  return weight_particle * likelihood;
+}
+
 
 float azimuth( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
 {

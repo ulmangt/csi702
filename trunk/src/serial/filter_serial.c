@@ -6,7 +6,7 @@
 #include "filter_io.h"
 #include "convert.h"
 
-#define NUM_PARTICLES 10
+#define NUM_PARTICLES 1
 #define MAX_RANGE 8000
 #define MAX_VEL 15
 
@@ -28,6 +28,8 @@ void init_particle_val( int, float, float );
 void time_update( int, float, float );
 void time_update_index( int, float );
 void maneuver_index( int );
+
+void information_update( int, struct observation* );
 
 void write_particles( char*, int );
 
@@ -56,6 +58,11 @@ int main( int argc, char* argv )
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
 
+  //time_update( NUM_PARTICLES, 800.0, MEAN_MANEUVER_TIME );
+
+  //write_particles( OUTPUT_NAME, NUM_PARTICLES );
+  //print_particles( NUM_PARTICLES );
+
   float previous_time = 0.0;
   float current_time = 0.0;
   for ( i = 0 ; i < obs_list->size ; i++ )
@@ -64,7 +71,7 @@ int main( int argc, char* argv )
     previous_time = current_time;
     current_time = obs->time;
     time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
-    // information update
+    information_update( NUM_PARTICLES, obs );
     // resample
   }
 
@@ -93,7 +100,7 @@ void init_particle_val( int num, float max_range, float max_vel )
     y_pos[i]  = frand( -max_range, max_range );
     x_vel[i]  = frand( -max_vel, max_vel );
     y_vel[i]  = frand( -max_vel, max_vel );
-    weight[i] = 1;
+    weight[i] = 1.0;
   }
 }
 
@@ -112,7 +119,7 @@ void time_update( int num, float seconds, float mean_maneuver )
 
   for ( i = 0 ; i < num ; i++ )
   {
-    printf("Updating particle %d seconds %f\n", i, seconds);
+    //printf("Updating particle %d seconds %f\n", i, seconds);
 
     remaining_time = seconds;
 
@@ -120,7 +127,7 @@ void time_update( int num, float seconds, float mean_maneuver )
     {
       if ( next_maneuver < remaining_time )
       {
-        printf("Particle %d maneuvering update time (next_maneuver) %f remaining_time %f\n", i, next_maneuver, remaining_time);
+        //printf("Particle %d maneuvering update time (next_maneuver) %f remaining_time %f\n", i, next_maneuver, remaining_time);
 
         time_update_index( i, next_maneuver );
         maneuver_index( i );
@@ -129,12 +136,12 @@ void time_update( int num, float seconds, float mean_maneuver )
       }
       else
       {
-        printf("Particle %d finished time update time %f\n", i, remaining_time);
+        //printf("Particle %d finished time update time %f\n", i, remaining_time);
 
         time_update_index( i, remaining_time );
         next_maneuver -= remaining_time;
 
-        printf("next maneuver %f\n", next_maneuver);
+        //printf("next maneuver %f\n", next_maneuver);
         break;
       }
     }
@@ -155,6 +162,26 @@ void maneuver_index( int i )
   x_vel[i] = frand( -MAX_VEL, MAX_VEL );
   y_vel[i] = frand( -MAX_VEL, MAX_VEL );
 }
+
+
+
+void information_update( int num, struct observation *obs )
+{
+  int i;
+
+  for ( i = 0 ; i < num ; i++ )
+  {
+    weight[i] = apply_observation( obs, x_pos[i], y_pos[i], x_vel[i], y_vel[i], weight[i] );
+  }
+}
+
+
+
+
+
+
+
+
 
 // writes the current set of particles out to disk as
 // a tab delimited text file
