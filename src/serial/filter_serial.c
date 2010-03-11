@@ -6,11 +6,11 @@
 #include "filter_io.h"
 #include "convert.h"
 
-#define NUM_PARTICLES 100
+#define NUM_PARTICLES 10000
 #define MAX_RANGE 8000 // meters
 #define MAX_VEL 15 // meters per second
 
-#define MAX_POS_PERTURB 10.0 // meters
+#define MAX_POS_PERTURB 100.0 // meters
 #define MAX_VEL_PERTURB  0.1 // meters per second
 
 #define MEAN_MANEUVER_TIME 3600 // seconds
@@ -59,7 +59,7 @@ int main( int argc, char* argv )
   printf("Target Waypoints:\n");
   print_waypoints( waypoints2 );
 
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(30.0), 0.0, 200.0, 0.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(10.0), 0.0, 10.0, 30.0 );
   printf("Observations:\n");
   print_observations( obs_list );
 
@@ -195,13 +195,13 @@ void resample( int num )
     weight_sum += weight[i];
   }
   
-  printf( "weight_sum %f\n", weight_sum );
+  //printf( "weight_sum %f\n", weight_sum );
 
   // normalize weights to sum to 1.0
   for ( i = 0 ; i < num ; i++ )
   {
     weight[i] = weight[i] / weight_sum;
-    printf("normalized weight %d = %f\n", i, weight[i] );
+    //printf("normalized weight %d = %f\n", i, weight[i] );
   }
 
   // weight of an average particle
@@ -228,14 +228,14 @@ void resample( int num )
   // (i.e. until we find a particle with too much weight).
   for ( ; rt < num ; )
   {
-    printf("rt %d\n", rt);
+    //printf("rt %d\n", rt);
 
     while( wsum < wcutoff )
     {
       rs++;
       wsum += weight[rs];
 
-      printf( "rs %d wsum %f wcutoff %f\n", rs, wsum, wcutoff );
+      //printf( "rs %d wsum %f wcutoff %f\n", rs, wsum, wcutoff );
     }
 
     mark_particle( rs, rt );
@@ -260,7 +260,7 @@ void resample( int num )
 
     for ( rt = low_target_index ; rt < high_target_index ; rt++ )
     {
-      printf( "copying %d to %d\n", rs, rt );
+      //printf( "copying %d to %d\n", rs, rt );
       copy_particle( rs , rt , wcutoff_increment );
       perturb_particle( rt );
     }
@@ -277,7 +277,7 @@ void resample( int num )
 // mistaken as a normalized weight
 void mark_particle( int source_index, int target_index )
 {
-  printf( "marked %d with %d\n", source_index, target_index );
+  //printf( "marked %d with %d\n", source_index, target_index );
   weight[source_index] = -(target_index + 1);
 }
 
