@@ -127,7 +127,7 @@ float apply_azimuth_observation( struct observation *obs, float x_pos_particle, 
   float particle_azimuth = azimuth( obs->x_pos , obs->y_pos , x_pos_particle , y_pos_particle );
   float observed_azimuth = obs->value;
   float likelihood = gvalue( particle_azimuth - observed_azimuth , 0.0 , obs->error );
-  printf("likelihood %0.10f prior weight %f\n", likelihood, weight_particle );
+  //printf("likelihood %0.10f prior weight %f\n", likelihood, weight_particle );
   return weight_particle * likelihood;
 }
 
