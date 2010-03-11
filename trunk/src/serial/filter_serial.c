@@ -31,6 +31,10 @@ void maneuver_index( int );
 
 void information_update( int, struct observation* );
 
+void resample( int );
+void copy_particle( int, int, float );
+void perturb_particle( int );
+
 void write_particles( char*, int );
 
 void print_particles( int );
@@ -92,6 +96,8 @@ void init_particle_mem( int num )
 // initialize positions, velocities, and weights of num particles
 void init_particle_val( int num, float max_range, float max_vel )
 {
+  float particle_weight = 1.0 / num;
+
   int i;
 
   for ( i = 0 ; i < num ; i++ )
@@ -100,7 +106,7 @@ void init_particle_val( int num, float max_range, float max_vel )
     y_pos[i]  = frand( -max_range, max_range );
     x_vel[i]  = frand( -max_vel, max_vel );
     y_vel[i]  = frand( -max_vel, max_vel );
-    weight[i] = 1.0;
+    weight[i] = particle_weight;
   }
 }
 
@@ -177,9 +183,60 @@ void information_update( int num, struct observation *obs )
 
 
 
+void resample( int num )
+{
+  int i;
 
+  // sum weights
+  float weight_sum = 0.0;
+  for ( i = 0 ; i < num ; i++ )
+  {
+    weight_sum += weight[i];
+  }
 
+  // normalize weights to sum to 1.0
+  for ( i = 0 ; i < num ; i++ )
+  {
+    weight[i] = weight[i] / weight_sum;
+  }
 
+  // weight of an average particle
+  float wcutoff_increment = 1.0 / num;
+  // current target weight
+  float wcutoff = wcutoff_increment * frand0( 1.0 );
+  // cumulative sum of particle weights
+  float wsum = 0.0;
+  // resample target index, the particle being replaced  
+  int rt = 0;
+  // resample source index, the particle being copied
+  int rs = 0;
+  for ( ; i < num ; i++ )
+  {
+    while( wsum < wcutoff )
+    {
+      rs++;
+      wsum += weight[i];
+    }
+
+    copy_particle( rs, rt, wcutoff_increment );
+    perturb_particle( rt );
+    wcutoff += wcutoff_increment;
+  }
+}
+
+void copy_particle( int source_index, int target_index, float particle_weight )
+{
+  x_pos[target_index]  = x_pos[source_index];
+  y_pos[target_index]  = y_pos[source_index];
+  x_vel[target_index]  = x_vel[source_index];
+  y_vel[target_index]  = y_vel[source_index];
+  weight[target_index] = particle_weight;
+}
+
+void perturb_particle( int index )
+{
+  // do nothing for now
+}
 
 
 
