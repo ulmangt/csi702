@@ -1,3 +1,5 @@
 #!/usr/bin/gnuplot -persist
+set xrange [0:30000]
+set yrange [-10000:10000]
 plot "particles.out" using 1:2 with points title 'Particle Positions'
 #    EOF
