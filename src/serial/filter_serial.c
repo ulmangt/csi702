@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include "obs_math.h"
 #include "filter_math.h"
 #include "filter_io.h"
 #include "convert.h"
 
-#define NUM_PARTICLES 100000
+#define NUM_PARTICLES 1000
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
 
@@ -35,20 +36,19 @@ void maneuver_index( int );
 void information_update( int, struct observation* );
 
 void resample( int );
+void resample2( int );
 void mark_particle( int, int );
 void copy_particle( int, int, float );
 void perturb_particle( int );
 
-void write_particles( char*, int );
+void write_particles( char*, int, int );
 
-void print_particles( int );
+void print_particles( int, int );
 void print_particle( int );
 
 int main( int argc, char* argv )
 {
-  float x_pos_interp, y_pos_interp, time;
-
-  int i;
+  srand( time( NULL ) );
 
   struct waypoint_list *waypoints1 = read_waypoints( "data/waypoints1.txt" );
   struct waypoint_list *waypoints2 = read_waypoints( "data/waypoints2.txt" );
@@ -59,13 +59,14 @@ int main( int argc, char* argv )
   printf("Target Waypoints:\n");
   print_waypoints( waypoints2 );
 
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(20.0), 0.0, 100.0, 2000.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(10.0), 0.0, 100.0, 2000.0 );
   printf("Observations:\n");
   print_observations( obs_list );
 
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
 
+  int i;
   float previous_time = 0.0;
   float current_time = 0.0;
   for ( i = 0 ; i < obs_list->size ; i++ )
@@ -77,10 +78,10 @@ int main( int argc, char* argv )
     current_time = obs->time;
     time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
     information_update( NUM_PARTICLES, obs );
-    resample( NUM_PARTICLES );
+    resample2( NUM_PARTICLES );
   }
 
-  write_particles( OUTPUT_NAME, NUM_PARTICLES );
+  write_particles( OUTPUT_NAME, NUM_PARTICLES, 10 );
   //print_particles( NUM_PARTICLES );
 }
 
@@ -166,8 +167,8 @@ void time_update_index( int i, float seconds )
 // this is an instantanious change (no time elapses)
 void maneuver_index( int i )
 {
-  x_vel[i] = frand( -MAX_VEL, MAX_VEL );
-  y_vel[i] = frand( -MAX_VEL, MAX_VEL );
+  x_vel[i] = x_vel[i] + frand( -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  y_vel[i] = y_vel[i] + frand( -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
 }
 
 
@@ -182,7 +183,62 @@ void information_update( int num, struct observation *obs )
   }
 }
 
+void resample2( int num )
+{
+  int i;
+  // sum weights
+  float weight_sum = 0.0;
+  for ( i = 0 ; i < num ; i++ )
+  {
+    weight_sum += weight[i];
+  }
 
+  // weight of an average particle
+  float wcutoff_increment = 1.0 / num;
+  // running total of weight
+  float wsum = 0.0;
+  // running total of resampled particles
+  int rsum = 0;
+  // running total of discarded particles
+  int dsum = 0;
+  for ( i = 0 ; i < num ; i++ )
+  {
+    wsum += wcutoff_increment * weight[i];
+    int r = (int) floor(wsum - rsum + 0.5);
+
+    if ( r < 0 )
+      r = 0;
+
+    weight[i] = r;
+    rsum += r;
+
+    if ( r == 0 )
+      dsum++;
+  }
+
+  int overwrite = -1;
+  for ( i = 0 ; i < num ; i++ )
+  {
+    if ( weight[i] <= 1 )
+      continue;
+
+    printf("source %d weight %f\n", i, weight[i]);
+
+    int j;
+    for ( j = 0 ; j < weight[i] - 1 ; j++ )
+    {
+      do {
+        overwrite++;
+      }
+      while ( weight[overwrite] != 0 );
+      
+      printf("source %d target %d\n", i, overwrite);
+
+      copy_particle( i , overwrite , 1.0 );
+      perturb_particle( overwrite );
+    }
+  }
+}
 
 void resample( int num )
 {
@@ -230,7 +286,7 @@ void resample( int num )
   {
     //printf("rt %d %f %f\n", rt, wsum, wcutoff);
 
-    while( wsum < wcutoff && rs < num )
+    while( wsum < wcutoff && rs < num-1 )
     {
       rs++;
       wsum += weight[rs];
@@ -258,6 +314,13 @@ void resample( int num )
       continue;
 
     int low_target_index = -(weight[rs]+1);
+
+    // how does this happen? is it a problem?
+    if ( low_target_index >= num || low_target_index < 0 )
+    {
+      continue;
+      printf("bad low target index %d\n", low_target_index);
+    }
 
     for ( rt = low_target_index ; rt < high_target_index ; rt++ )
     {
@@ -303,13 +366,13 @@ void perturb_particle( int index )
 
 // writes the current set of particles out to disk as
 // a tab delimited text file
-void write_particles( char* out_name, int num )
+void write_particles( char* out_name, int num, int downsample )
 {
   FILE* file = fopen( out_name, "w" );
 
   int i;
 
-  for ( i = 0 ; i < num ; i++ )
+  for ( i = 0 ; i < num ; i = i + downsample )
   {
     fprintf( file, "%f\t%f\t%f\t%f\t%f\n", x_pos[i], y_pos[i], x_vel[i], y_vel[i], weight[i] );
   }
@@ -318,11 +381,11 @@ void write_particles( char* out_name, int num )
 }
 
 // prints information on all particles to the console
-void print_particles( int num )
+void print_particles( int num, int downsample )
 {
   int i;
 
-  for ( i = 0 ; i < num ; i++ )
+  for ( i = 0 ; i < num ; i = i + downsample )
   {
     print_particle( i );
   }
