@@ -7,12 +7,12 @@
 #include "filter_io.h"
 #include "convert.h"
 
-#define NUM_PARTICLES 1000
+#define NUM_PARTICLES 100000
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
 
-#define MAX_POS_PERTURB 100.0 // meters
-#define MAX_VEL_PERTURB  0.1 // meters per second
+#define MAX_POS_PERTURB 1000.0 // meters
+#define MAX_VEL_PERTURB    2.0 // meters per second
 
 #define MEAN_MANEUVER_TIME 3600 // seconds
 
@@ -59,7 +59,7 @@ int main( int argc, char* argv )
   printf("Target Waypoints:\n");
   print_waypoints( waypoints2 );
 
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(10.0), 0.0, 100.0, 2000.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(2.0), 0.0, 100.0, 2000.0 );
   printf("Observations:\n");
   print_observations( obs_list );
 
@@ -81,6 +81,8 @@ int main( int argc, char* argv )
     resample2( NUM_PARTICLES );
   }
 
+  //time_update( NUM_PARTICLES, 300.0 , MEAN_MANEUVER_TIME );
+
   write_particles( OUTPUT_NAME, NUM_PARTICLES, 10 );
   //print_particles( NUM_PARTICLES );
 }
@@ -98,7 +100,7 @@ void init_particle_mem( int num )
 // initialize positions, velocities, and weights of num particles
 void init_particle_val( int num, float max_range, float max_vel )
 {
-  float particle_weight = 1.0 / num;
+  float particle_weight = 1.0;
 
   int i;
 
@@ -194,7 +196,7 @@ void resample2( int num )
   }
 
   // weight of an average particle
-  float wcutoff_increment = 1.0 / num;
+  float wcutoff_increment = num / weight_sum;
   // running total of weight
   float wsum = 0.0;
   // running total of resampled particles
@@ -212,6 +214,8 @@ void resample2( int num )
     weight[i] = r;
     rsum += r;
 
+    //printf("i %d wsum %f rsum %d weight %d\n", i, wsum, rsum, r);
+
     if ( r == 0 )
       dsum++;
   }
@@ -219,10 +223,10 @@ void resample2( int num )
   int overwrite = -1;
   for ( i = 0 ; i < num ; i++ )
   {
+    //printf("source %d weight %f\n", i, weight[i]);
+
     if ( weight[i] <= 1 )
       continue;
-
-    printf("source %d weight %f\n", i, weight[i]);
 
     int j;
     for ( j = 0 ; j < weight[i] - 1 ; j++ )
@@ -232,11 +236,13 @@ void resample2( int num )
       }
       while ( weight[overwrite] != 0 );
       
-      printf("source %d target %d\n", i, overwrite);
+      //printf("source %d target %d\n", i, overwrite);
 
       copy_particle( i , overwrite , 1.0 );
       perturb_particle( overwrite );
     }
+
+    weight[i] = 1.0;
   }
 }
 
