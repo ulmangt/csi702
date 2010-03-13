@@ -89,6 +89,33 @@ struct observation_list *generate_observations(
   return observation_list;
 }
 
+struct observation_list *combine_observations( struct observation_list *l1, struct observation_list *l2 )
+{
+  int total_size = l1->size + l2->size;
+  struct observation_list *observation_list = malloc( sizeof(struct observation_list) );
+  observation_list->observations = malloc( sizeof(struct observation) * total_size );
+  observation_list->size = total_size;
+
+  struct observation *observations = observation_list->observations;
+
+  int l1i = 0;
+  int l2i = 0;
+  int i;
+  for ( i = 0 ; i < total_size ; i++ )
+  {
+    if ( l1i < l1->size && ( l2i >= l2->size || l1->observations[l1i].time < l2->observations[l2i].time ) )
+    {
+      observations[i] = l1->observations[l1i++];
+    }
+    else 
+    {
+      observations[i] = l2->observations[l2i++];
+    }
+  }
+
+  return observation_list;
+}
+
 float generate_observation( int type, float error, float x_pos_sensor,
                             float y_pos_sensor, float x_pos_target, float y_pos_target )
 {
@@ -150,7 +177,6 @@ float apply_range_observation( struct observation *obs, float x_pos_particle, fl
   float likelihood = gvalue( particle_range - observed_range , 0.0 , obs->error );
   return weight_particle * likelihood;
 }
-
 
 float range( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
 {

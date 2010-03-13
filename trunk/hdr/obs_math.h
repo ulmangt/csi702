@@ -52,6 +52,8 @@ float generate_observation( int, float, float, float, float, float );
 float generate_azimuth_observation( float, float, float, float, float );
 float generate_range_observation( float, float, float, float, float );
 
+struct observation_list *combine_observations( struct observation_list *, struct observation_list*v);
+
 float apply_observation( struct observation*, float, float, float, float, float );
 float apply_azimuth_observation( struct observation*, float, float, float, float, float );
 float apply_range_observation( struct observation*, float, float, float, float, float );
