@@ -50,13 +50,16 @@ struct observation_list
 struct observation_list *generate_observations( struct waypoint_list*, struct waypoint_list*, int, float, float, float, float );
 float generate_observation( int, float, float, float, float, float );
 float generate_azimuth_observation( float, float, float, float, float );
+float generate_range_observation( float, float, float, float, float );
 
 float apply_observation( struct observation*, float, float, float, float, float );
 float apply_azimuth_observation( struct observation*, float, float, float, float, float );
+float apply_range_observation( struct observation*, float, float, float, float, float );
 
 int interpolate( struct waypoint_list* , float, float*, float* );
 int interpolate_waypoints( struct waypoint*, struct waypoint*, float, float*, float*);
 
+float range( float, float, float, float );
 float azimuth( float, float, float, float );
 
 #endif

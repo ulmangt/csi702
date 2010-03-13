@@ -59,7 +59,7 @@ int main( int argc, char* argv )
   printf("Target Waypoints:\n");
   print_waypoints( waypoints2 );
 
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(2.0), 0.0, 100.0, 2000.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 2, 100, 0.0, 100.0, 2000.0 );
   printf("Observations:\n");
   print_observations( obs_list );
 
