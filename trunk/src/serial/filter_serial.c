@@ -6,8 +6,8 @@
 #include "filter_io.h"
 #include "convert.h"
 
-#define NUM_PARTICLES 10000
-#define MAX_RANGE 8000 // meters
+#define NUM_PARTICLES 100000
+#define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
 
 #define MAX_POS_PERTURB 100.0 // meters
@@ -59,7 +59,7 @@ int main( int argc, char* argv )
   printf("Target Waypoints:\n");
   print_waypoints( waypoints2 );
 
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(10.0), 0.0, 10.0, 30.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(20.0), 0.0, 100.0, 2000.0 );
   printf("Observations:\n");
   print_observations( obs_list );
 
@@ -81,7 +81,7 @@ int main( int argc, char* argv )
   }
 
   write_particles( OUTPUT_NAME, NUM_PARTICLES );
-  print_particles( NUM_PARTICLES );
+  //print_particles( NUM_PARTICLES );
 }
 
 // allocate memory for num particles
@@ -228,9 +228,9 @@ void resample( int num )
   // (i.e. until we find a particle with too much weight).
   for ( ; rt < num ; )
   {
-    //printf("rt %d\n", rt);
+    //printf("rt %d %f %f\n", rt, wsum, wcutoff);
 
-    while( wsum < wcutoff )
+    while( wsum < wcutoff && rs < num )
     {
       rs++;
       wsum += weight[rs];
@@ -240,11 +240,12 @@ void resample( int num )
 
     mark_particle( rs, rt );
 
-    while ( wsum > wcutoff )
+    do
     {
       rt++;
       wcutoff += wcutoff_increment;
     }
+    while ( wsum >= wcutoff );
   }
 
   // In order to perform the above algorithm in place,
