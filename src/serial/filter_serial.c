@@ -81,8 +81,6 @@ int main( int argc, char* argv )
     resample2( NUM_PARTICLES );
   }
 
-  //time_update( NUM_PARTICLES, 300.0 , MEAN_MANEUVER_TIME );
-
   write_particles( OUTPUT_NAME, NUM_PARTICLES, 10 );
   //print_particles( NUM_PARTICLES );
 }
