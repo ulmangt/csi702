@@ -9,6 +9,13 @@ float frand( )
   return ( float ) rand( ) / ( float ) RAND_MAX ;
 }
 
+char *get_particle_file_name( int num )
+{
+  char *file_name = malloc( sizeof(char) * 100 );
+  sprintf( file_name, "particle%d", num );
+  return file_name;
+}
+
 void write_particles( char *file_name, int num_particles )
 {
   FILE *file = fopen( file_name, "w" );
