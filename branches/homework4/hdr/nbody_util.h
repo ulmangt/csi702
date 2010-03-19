@@ -4,6 +4,6 @@
 float frand( );
 char *get_particle_file_name( int );
 void write_particles( char*, int );
-void load_particles ( char*, float*, float*, float* );
+void load_particles ( char*, float**, float**, float** );
 
 #endif

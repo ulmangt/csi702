@@ -33,7 +33,7 @@ void write_particles( char *file_name, int num_particles )
   close( file );
 }
 
-void load_particles( char *file_name, float *x_pos, float *y_pos, float *z_pos )
+void load_particles( char *file_name, float **x_pos, float **y_pos, float **z_pos )
 {
   FILE *file = fopen( file_name, "r" );
   
@@ -45,13 +45,13 @@ void load_particles( char *file_name, float *x_pos, float *y_pos, float *z_pos )
     return;
   }
 
-  x_pos = malloc( sizeof( float ) * total );
-  y_pos = malloc( sizeof( float ) * total );
-  z_pos = malloc( sizeof( float ) * total );
+  *x_pos = malloc( sizeof( float ) * total );
+  *y_pos = malloc( sizeof( float ) * total );
+  *z_pos = malloc( sizeof( float ) * total );
 
   for ( count = 0 ; count < total ; count++ )
   {
-    int success = fscanf( file, "%f%f%f" , x_pos++, y_pos++, z_pos++ );
+    int success = fscanf( file, "%f%f%f" , (*x_pos) + count, (*y_pos) + count, (*z_pos) + count );
 
     if ( success == EOF )
       break;
