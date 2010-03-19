@@ -28,6 +28,7 @@ float *weight;
 
 void init_particle_mem( int );
 void init_particle_val( int, float, float );
+void free_particle_mem( );
 
 void time_update( int, float, float );
 void time_update_index( int, float );
@@ -85,16 +86,29 @@ int main( int argc, char* argv )
 
   write_particles( OUTPUT_NAME, NUM_PARTICLES, 10 );
   //print_particles( NUM_PARTICLES );
+
+  free_particle_mem( );
 }
 
 // allocate memory for num particles
 void init_particle_mem( int num )
 {
-  x_pos  = ( float* ) malloc( sizeof( float ) * num );
-  y_pos  = ( float* ) malloc( sizeof( float ) * num );
-  x_vel  = ( float* ) malloc( sizeof( float ) * num );
-  y_vel  = ( float* ) malloc( sizeof( float ) * num );
-  weight = ( float* ) malloc( sizeof( float ) * num );
+  int size = sizeof( float ) * num;
+
+  x_pos  = ( float* ) malloc( size );
+  y_pos  = ( float* ) malloc( size );
+  x_vel  = ( float* ) malloc( size );
+  y_vel  = ( float* ) malloc( size );
+  weight = ( float* ) malloc( size );
+}
+
+void free_particle_mem( )
+{
+  free( x_pos );
+  free( y_pos );
+  free( x_vel );
+  free( y_vel );
+  free( weight );
 }
 
 // initialize positions, velocities, and weights of num particles

@@ -1,7 +1,13 @@
-all: filter_serial
+all: filter_serial filter_cuda
+
+filter_cuda: filter_io.o obs_math.o filter_math.o filter_serial.o convert.o
+	nvcc -I hdr -lm src/cuda/filter_cuda.o src/common/convert.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_cuda
 
 filter_serial: filter_io.o obs_math.o filter_math.o filter_serial.o convert.o
 	gcc -I hdr -lm src/serial/filter_serial.o src/common/convert.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_serial
+
+filter_cuda.o:
+	nvcc -I hdr -c -lm src/cuda/filter_cuda.cu -o src/cuda/filter_cuda.o
 
 filter_serial.o:
 	gcc -I hdr -c -lm src/serial/filter_serial.c -o src/serial/filter_serial.o
