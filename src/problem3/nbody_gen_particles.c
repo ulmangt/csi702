@@ -4,7 +4,7 @@
 
 #include "nbody_util.h"
 
-#define PARTICLES_PER_PROC 100
+#define PARTICLES_PER_PROC 10
 #define NUM_PROC 10
 
 int main( )
