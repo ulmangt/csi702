@@ -2,7 +2,8 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define NUM_PARTICLES 100
+#define PARTICLES_PER_PROC 100
+#define NUM_PROC 10
 
 float frand( );
 void write_particles( char *, int );
@@ -13,7 +14,14 @@ int main( )
   // initialize random seed
   srand( time( NULL ) );
 
-  write_particles( "particle0", NUM_PARTICLES ); 
+  char file_name[100];
+
+  int i;
+  for ( i = 0 ; i < NUM_PROC ; i++ )
+  {
+    sprintf( file_name, "particle%d", i );
+    write_particles( file_name, PARTICLES_PER_PROC );
+  }
 }
 
 // generate a random float between 0 and 1
