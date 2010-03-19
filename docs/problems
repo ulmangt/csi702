@@ -1,0 +1,9 @@
+host functions cannot be called from device code -- means none of c standard libraries are available to cuda
+makes code reuse very difficult
+forced implemenation of linear congruential random number generator
+
+
+hard to write clean code because of reuse limitations
+
+Error: External calls are not supported (found non-inlined call to _Z12device_frandiff)
+(device functions called from kernel are inlined, semantics on what is able to be inlined is unclear -- does this mean code has to be in a single file?)
