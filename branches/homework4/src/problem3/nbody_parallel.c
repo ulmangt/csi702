@@ -45,9 +45,9 @@ int main( int argc, char** argv )
   float *send_buf;
 
   // allocates space for all the particles ( both guest and host particles )
-  float *potential = malloc( sizeof( float ) * PARTICLES_PER_PROC );
-  float *host_particles  = malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
-  float *guest_particles = malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
+  float *potential = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC );
+  float *host_particles  = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
+  float *guest_particles = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
 
   // initialize the potential array
   int i;
@@ -65,7 +65,7 @@ int main( int argc, char** argv )
   float *guest_z = guest_particles + PARTICLES_PER_PROC * 2;
 
   // load particles from file based on id
-  load_particles( get_particle_file_name( myid ), host_x, host_y, host_z );
+  load_particles( get_file_name("../particle", myid), host_x, host_y, host_z );
 
   // at the start, the guest particles are the host particles
   copy_buf( PARTICLES_PER_PROC * 3, host_particles, guest_particles );
