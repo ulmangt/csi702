@@ -11,6 +11,7 @@ int main( int argc, char** argv )
 {
   int numprocs, myid;
 
+  // initialize mpi
   MPI_Init( &argc, &argv );
   MPI_Comm_size( MPI_COMM_WORLD, &numprocs );
   MPI_Comm_rank( MPI_COMM_WORLD, &myid );
@@ -43,8 +44,19 @@ int main( int argc, char** argv )
 
   int data = mycartid;
 
+  // allocates space for all the particles
+  float *x_proc = malloc( sizeof( float ) * PARTICLES_PER_PROC );
+  float *y_proc = malloc( sizeof( float ) * PARTICLES_PER_PROC );
+  float *z_proc = malloc( sizeof( float ) * PARTICLES_PER_PROC );
+  float *potential = malloc( sizeof( float ) * PARTICLES_PER_PROC );
+
+  // load particles from file based on id
+  load_particles( get_particle_file_name( myid ), x_proc, y_proc, z_proc );
+
+  // pass data around numprocs - 1 times, the last time we will
+  // be getting our own data back
   int i;
-  for ( i = 0 ; i < numprocs ; i++ )
+  for ( i = 0 ; i < numprocs - 1 ; i++ )
   {
     // place the message in the send buffer
     *send_buf = data;
@@ -55,6 +67,8 @@ int main( int argc, char** argv )
 
     printf(" node %d send/recv complete\n", mycartid ); 
   
+    // do work on current data
+
     // wait for communications to complete
     MPI_Waitall( 2, req, stat );
 
