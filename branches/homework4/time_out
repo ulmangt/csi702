@@ -1,9 +1,21 @@
+nbody_parallel 10 / 10000
+
+max potential: 238754.468750
+min potential: 121458.757812
+
+real  1m23.229s
+user  0m0.088s
+sys 0m0.076s
+
+--------------------------------------
+
 nbody_serial 10 / 10000
 
-max potential: 237942.250000
-min potential: 121292.914062
+max potential: 238754.484375
+min potential: 121459.585938
 
-real  12m25.348s
-user  12m25.199s
-sys 0m0.096s
+real  12m24.866s
+user  12m24.807s
+sys 0m0.068s
+
 

@@ -7,8 +7,8 @@ else
   num=$1
 fi
 
-for (( i=1 ; i<="$num"; i++))
+for (( i=2 ; i<="$num"; i++))
 do
   proc=`printf "%02d\n" "$i"`
-  echo "ssh particles$((i-1)) cds$proc:~/Documents/homework4"
+  `scp particle$((i-1)) cds$proc:~/Documents/homework4/particle0`
 done
