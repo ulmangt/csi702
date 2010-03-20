@@ -107,6 +107,10 @@ int main( int argc, char** argv )
   // shutdown
   MPI_Finalize();
 
+  // TEMPORARY TEST CODE
+  // write all particle potentials to file
+  write_potentials( get_file_name("potential", myid), PARTICLES_PER_PROC, potential );
+
   return 0;
 }
 

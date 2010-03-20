@@ -20,8 +20,13 @@ float distance( float x1, float y1, float z1, float x2, float y2, float z2 )
 // returns the name of the particle data file for the num process
 char *get_particle_file_name( int num )
 {
+  return get_file_name( "particle", num );
+}
+
+char *get_file_name( char* name_prefix, int num )
+{
   char *file_name = malloc( sizeof(char) * 100 );
-  sprintf( file_name, "particle%d", num );
+  sprintf( file_name, "%s%d", name_prefix, num );
   return file_name;
 }
 
