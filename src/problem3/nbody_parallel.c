@@ -83,15 +83,21 @@ int main( int argc, char** argv )
   // pass data around numprocs - 1 times, the last time we will
   // be getting our own data back
   int j, k;
-  for ( k = 0 ; k < numprocs - 1 ; k++ )
+  for ( k = 0 ; k < numprocs ; k++ )
   {
     // place the guest particles in the send buffer
     send_buf = guest_particles;
 
-    // perform a non blocking send and non blocking receive
-    MPI_Irecv( recv_buf, PARTICLES_PER_PROC * 3, MPI_FLOAT, bottom, 1, cart_comm, req );
-    MPI_Isend( send_buf, PARTICLES_PER_PROC * 3, MPI_FLOAT, top, 1, cart_comm, req + 1 );
-  
+    // there is nothing to send/receive on the last iteration
+    // (we would be sending a nodes particles back it itself)
+    // so just process the last batch of guest particles we received
+    if ( k != numprocs - 1)
+    {
+      // perform a non blocking send and non blocking receive
+      MPI_Irecv( recv_buf, PARTICLES_PER_PROC * 3, MPI_FLOAT, bottom, 1, cart_comm, req );
+      MPI_Isend( send_buf, PARTICLES_PER_PROC * 3, MPI_FLOAT, top, 1, cart_comm, req + 1 );
+    }  
+
     // perform the gravitational potential calculation for the
     // host particles against the guest particles
     for ( i = 0 ; i < PARTICLES_PER_PROC ; i++ )
@@ -107,11 +113,14 @@ int main( int argc, char** argv )
       }
     }
 
-    // wait for communications to complete
-    MPI_Waitall( 2, req, stat );
+    if ( k != numprocs - 1)
+    {
+      // wait for communications to complete
+      MPI_Waitall( 2, req, stat );
     
-    // place the received particles in the guest particles array
-    copy_buf( PARTICLES_PER_PROC * 3, recv_buf, guest_particles );
+      // place the received particles in the guest particles array
+      copy_buf( PARTICLES_PER_PROC * 3, recv_buf, guest_particles );
+    }
   }
 
   // shutdown
