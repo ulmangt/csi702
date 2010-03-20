@@ -34,7 +34,7 @@ int main( )
       {
         float R_ij = distance( x_proc[i], x_proc[j], y_proc[i], y_proc[j], z_proc[i], z_proc[j] );
         // G, M[i], and M[j] are all assumed to be 1
-        potential[j] = potential[j] + 1.0 / R_ij;
+        potential[i] = potential[i] + 1.0 / R_ij;
       }
     }
   }
