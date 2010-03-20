@@ -7,6 +7,8 @@
 
 #include "nbody_util.h"
 
+void copy_buf( int, float*, float* );
+
 int main( int argc, char** argv )
 {
   int numprocs, myid;
@@ -39,46 +41,80 @@ int main( int argc, char** argv )
   // intitialize request, status, send, and receive buffers
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * 2 );
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * 2 );
-  int *recv_buf = (int *) malloc( sizeof(int) );
-  int *send_buf = (int *) malloc( sizeof(int) );
+  float *recv_buf = (float *) malloc( sizeof(float) * PARTICLES_PER_PROC * 3 );
+  float *send_buf;
 
-  int data = mycartid;
-
-  // allocates space for all the particles
-  float *x_proc = malloc( sizeof( float ) * PARTICLES_PER_PROC );
-  float *y_proc = malloc( sizeof( float ) * PARTICLES_PER_PROC );
-  float *z_proc = malloc( sizeof( float ) * PARTICLES_PER_PROC );
+  // allocates space for all the particles ( both guest and host particles )
   float *potential = malloc( sizeof( float ) * PARTICLES_PER_PROC );
+  float *host_particles  = malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
+  float *guest_particles = malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
+
+  // initialize the potential array
+  int i;
+  for ( i = 0 ; i < PARTICLES_PER_PROC ; i++ )
+  {
+    potential[i] = 0.0;
+  }
+
+  float *host_x = host_particles;
+  float *host_y = host_particles + PARTICLES_PER_PROC;
+  float *host_z = host_particles + PARTICLES_PER_PROC * 2;
+
+  float *guest_x = guest_particles;
+  float *guest_y = guest_particles + PARTICLES_PER_PROC;
+  float *guest_z = guest_particles + PARTICLES_PER_PROC * 2;
 
   // load particles from file based on id
-  load_particles( get_particle_file_name( myid ), x_proc, y_proc, z_proc );
+  load_particles( get_particle_file_name( myid ), host_x, host_y, host_z );
+
+  // at the start, the guest particles are the host particles
+  copy_buf( PARTICLES_PER_PROC * 3, host_particles, guest_particles );
 
   // pass data around numprocs - 1 times, the last time we will
   // be getting our own data back
-  int i;
-  for ( i = 0 ; i < numprocs - 1 ; i++ )
+  int j, k;
+  for ( k = 0 ; k < numprocs - 1 ; k++ )
   {
-    // place the message in the send buffer
-    *send_buf = data;
+    // place the guest particles in the send buffer
+    send_buf = guest_particles;
 
     // perform a non blocking send and non blocking receive
-    MPI_Irecv( recv_buf, 1, MPI_INT, bottom, 1, cart_comm, req );
-    MPI_Isend( send_buf, 1, MPI_INT, top, 1, cart_comm, req + 1 );
-
-    printf(" node %d send/recv complete\n", mycartid ); 
+    MPI_Irecv( recv_buf, PARTICLES_PER_PROC * 3, MPI_FLOAT, bottom, 1, cart_comm, req );
+    MPI_Isend( send_buf, PARTICLES_PER_PROC * 3, MPI_FLOAT, top, 1, cart_comm, req + 1 );
   
-    // do work on current data
+    // perform the gravitational potential calculation for the
+    // host particles against the guest particles
+    for ( i = 0 ; i < PARTICLES_PER_PROC ; i++ )
+    {
+      for( j = 0 ; j < PARTICLES_PER_PROC ; j++ )
+      {
+        if ( i != j )
+        {
+          float R_ij = distance( host_x[i], guest_x[j], host_y[i], guest_y[j], host_z[i], guest_z[j] );
+          // G, M[i], and M[j] are all assumed to be 1
+          potential[i] = potential[i] + 1.0 / R_ij;
+        }
+      }
+    }
 
     // wait for communications to complete
     MPI_Waitall( 2, req, stat );
-
-    data = *recv_buf;
-  
-    printf(" node %d got message: %d\n", mycartid, data );
+    
+    // place the received particles in the guest particles array
+    copy_buf( PARTICLES_PER_PROC * 3, recv_buf, guest_particles );
   }
 
   // shutdown
   MPI_Finalize();
 
   return 0;
+}
+
+void copy_buf( int size, float *src, float *dest )
+{
+  int i;
+  for ( i = 0 ; i < size ; i++ )
+  {
+    dest[i] = src[i];
+  }
 }
