@@ -1,4 +1,10 @@
-all: nbody_serial nbody_gen_particles
+all: nbody_serial nbody_parallel nbody_gen_particles
+
+nbody_parallel: nbody_parallel.o nbody_util.o
+	mpicc -I hdr -lm src/problem3/nbody_parallel.o src/problem3/nbody_util.o -o bin/nbody_parallel
+
+nbody_parallel.o:
+	mpicc -I hdr -c src/problem3/nbody_parallel.c -o src/problem3/nbody_parallel.o
 
 nbody_serial: nbody_serial.o nbody_util.o
 	gcc -I hdr -lm src/problem3/nbody_serial.o src/problem3/nbody_util.o -o bin/nbody_serial
