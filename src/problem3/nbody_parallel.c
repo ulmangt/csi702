@@ -49,12 +49,16 @@ int main( int argc, char** argv )
   float *host_particles  = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
   float *guest_particles = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
 
+  printf( " done allocate %d\n", myid );
+
   // initialize the potential array
   int i;
   for ( i = 0 ; i < PARTICLES_PER_PROC ; i++ )
   {
     potential[i] = 0.0;
   }
+
+  printf( " done init %d\n", myid );
 
   float *host_x = host_particles;
   float *host_y = host_particles + PARTICLES_PER_PROC;
@@ -64,11 +68,17 @@ int main( int argc, char** argv )
   float *guest_y = guest_particles + PARTICLES_PER_PROC;
   float *guest_z = guest_particles + PARTICLES_PER_PROC * 2;
 
+  printf( " starting load %d\n", myid );
+
   // load particles from file based on id
-  load_particles( get_file_name("../particle", myid), host_x, host_y, host_z );
+  load_particles( get_file_name("particle", myid), host_x, host_y, host_z );
+
+  printf( " done load %d\n", myid );
 
   // at the start, the guest particles are the host particles
   copy_buf( PARTICLES_PER_PROC * 3, host_particles, guest_particles );
+
+  printf( " done copy %d\n", myid );
 
   // pass data around numprocs - 1 times, the last time we will
   // be getting our own data back
