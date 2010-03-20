@@ -42,14 +42,13 @@ int main( int argc, char** argv )
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * 2 );
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * 2 );
   float *recv_buf = (float *) malloc( sizeof(float) * PARTICLES_PER_PROC * 3 );
-  float *send_buf;
+  float *send_buf; 
+
 
   // allocates space for all the particles ( both guest and host particles )
   float *potential = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC );
   float *host_particles  = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
   float *guest_particles = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
-
-  printf( " done allocate %d\n", myid );
 
   // initialize the potential array
   int i;
@@ -57,8 +56,6 @@ int main( int argc, char** argv )
   {
     potential[i] = 0.0;
   }
-
-  printf( " done init %d\n", myid );
 
   float *host_x = host_particles;
   float *host_y = host_particles + PARTICLES_PER_PROC;
@@ -68,17 +65,11 @@ int main( int argc, char** argv )
   float *guest_y = guest_particles + PARTICLES_PER_PROC;
   float *guest_z = guest_particles + PARTICLES_PER_PROC * 2;
 
-  printf( " starting load %d\n", myid );
-
   // load particles from file based on id
   load_particles( get_file_name("particle", myid), host_x, host_y, host_z );
 
-  printf( " done load %d\n", myid );
-
   // at the start, the guest particles are the host particles
   copy_buf( PARTICLES_PER_PROC * 3, host_particles, guest_particles );
-
-  printf( " done copy %d\n", myid );
 
   // pass data around numprocs - 1 times, the last time we will
   // be getting our own data back
@@ -86,6 +77,9 @@ int main( int argc, char** argv )
   for ( k = 0 ; k < numprocs ; k++ )
   {
     // place the guest particles in the send buffer
+    // there is no need to copy the particles because
+    // the guest particles array will not change until
+    // after the send operation has completed
     send_buf = guest_particles;
 
     // there is nothing to send/receive on the last iteration
@@ -131,6 +125,15 @@ int main( int argc, char** argv )
   // TEMPORARY TEST CODE
   // write all particle potentials to file
   write_potentials( get_file_name("potential", myid), PARTICLES_PER_PROC, potential );
+
+  // free allocated memory
+  free( req );
+  free( stat );
+  free( send_buf );
+  free( recv_buf );
+  free( potential );
+  free( host_particles );
+  free( guest_particles );
 
   return 0;
 }
