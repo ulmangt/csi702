@@ -1,5 +1,11 @@
 all: nbody_serial nbody_parallel nbody_gen_particles
 
+run_parallel: nbody_parallel
+	mmpirun -np 10 -hostfile hostfile bin/nbody_parallel
+
+run_serial: nbody_serial
+	bin/nbody_serial
+
 nbody_parallel: nbody_parallel.o nbody_util.o
 	mpicc -I hdr -lm src/problem3/nbody_parallel.o src/problem3/nbody_util.o -o bin/nbody_parallel
 
