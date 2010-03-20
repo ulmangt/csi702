@@ -104,7 +104,9 @@ int main( int argc, char** argv )
     {
       for( j = 0 ; j < PARTICLES_PER_PROC ; j++ )
       {
-        if ( i != j )
+        // particles can only be the same particle during the first iteration
+        // when the guest particles are the host particles
+        if ( k != 0 || i != j )
         {
           float R_ij = distance( host_x[i], guest_x[j], host_y[i], guest_y[j], host_z[i], guest_z[j] );
           // G, M[i], and M[j] are all assumed to be 1
