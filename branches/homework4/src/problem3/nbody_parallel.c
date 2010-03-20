@@ -41,19 +41,27 @@ int main( int argc, char** argv )
   int *recv_buf = (int *) malloc( sizeof(int) );
   int *send_buf = (int *) malloc( sizeof(int) );
 
-  // place the message in the send buffer
-  *send_buf = mycartid;
-  
-  // perform a non blocking send and non blocking receive
-  MPI_Irecv( recv_buf, 1, MPI_INT, bottom, 1, cart_comm, req );
-  MPI_Isend( send_buf, 1, MPI_INT, top, 1, cart_comm, req + 1 );
+  int data = mycartid;
 
-  printf(" node %d send/recv complete\n", mycartid ); 
-  
-  // wait for communications to complete
-  MPI_Waitall( 2, req, stat );
+  int i;
+  for ( i = 0 ; i < numprocs ; i++ )
+  {
+    // place the message in the send buffer
+    *send_buf = data;
 
-  printf(" node %d got message: %d\n", mycartid, *recv_buf );
+    // perform a non blocking send and non blocking receive
+    MPI_Irecv( recv_buf, 1, MPI_INT, bottom, 1, cart_comm, req );
+    MPI_Isend( send_buf, 1, MPI_INT, top, 1, cart_comm, req + 1 );
+
+    printf(" node %d send/recv complete\n", mycartid ); 
+  
+    // wait for communications to complete
+    MPI_Waitall( 2, req, stat );
+
+    data = *recv_buf;
+  
+    printf(" node %d got message: %d\n", mycartid, data );
+  }
 
   // shutdown
   MPI_Finalize();
