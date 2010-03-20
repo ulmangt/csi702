@@ -65,8 +65,9 @@ int main( int argc, char** argv )
   float *guest_y = guest_particles + PARTICLES_PER_PROC;
   float *guest_z = guest_particles + PARTICLES_PER_PROC * 2;
 
-  // load particles from file based on id
-  load_particles( get_file_name("particle", myid), host_x, host_y, host_z );
+  // load particles from file, the files on each node are
+  // all named particle0
+  load_particles( get_file_name("particle", 0), host_x, host_y, host_z );
 
   // at the start, the guest particles are the host particles
   copy_buf( PARTICLES_PER_PROC * 3, host_particles, guest_particles );
