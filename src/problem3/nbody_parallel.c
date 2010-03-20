@@ -35,22 +35,27 @@ int main( int argc, char** argv )
   int coords;
   MPI_Cart_coords( cart_comm, mycartid, 1, &coords );
 
+  // intitialize request, status, send, and receive buffers
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * 2 );
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * 2 );
   int *recv_buf = (int *) malloc( sizeof(int) );
   int *send_buf = (int *) malloc( sizeof(int) );
 
+  // place the message in the send buffer
   *send_buf = mycartid;
-
+  
+  // perform a non blocking send and non blocking receive
   MPI_Irecv( recv_buf, 1, MPI_INT, bottom, 1, cart_comm, req );
   MPI_Isend( send_buf, 1, MPI_INT, top, 1, cart_comm, req + 1 );
 
   printf(" node %d send/recv complete\n", mycartid ); 
-
+  
+  // wait for communications to complete
   MPI_Waitall( 2, req, stat );
 
   printf(" node %d got message: %d\n", mycartid, *recv_buf );
 
+  // shutdown
   MPI_Finalize();
 
   return 0;
