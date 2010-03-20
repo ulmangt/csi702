@@ -35,18 +35,21 @@ int main( int argc, char** argv )
   int coords;
   MPI_Cart_coords( cart_comm, mycartid, 1, &coords );
 
-  if ( coords % 2 == 0 )
-  {
-    printf("even\n");
-  }
-  else
-  {
-    printf("odd\n");
-  }
+  MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * 2 );
+  MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * 2 );
+  int *recv_buf = (int *) malloc( sizeof(int) );
+  int *send_buf = (int *) malloc( sizeof(int) );
 
-  void * buf = malloc( sizeof(int) );
-  
-  
+  *send_buf = mycartid;
+
+  MPI_Irecv( recv_buf, 1, MPI_INT, bottom, 1, cart_comm, req );
+  MPI_Isend( send_buf, 1, MPI_INT, top, 1, cart_comm, req + 1 );
+
+  printf(" node %d send/recv complete\n", mycartid ); 
+
+  MPI_Waitall( 2, req, stat );
+
+  printf(" node %d got message: %d\n", mycartid, *recv_buf );
 
   MPI_Finalize();
 
