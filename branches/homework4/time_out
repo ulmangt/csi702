@@ -1,0 +1,9 @@
+nbody_serial 10 / 10000
+
+max potential: 237942.250000
+min potential: 121292.914062
+
+real  12m25.348s
+user  12m25.199s
+sys 0m0.096s
+

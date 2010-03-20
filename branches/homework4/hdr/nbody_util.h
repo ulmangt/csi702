@@ -1,7 +1,7 @@
 #ifndef NBODY_UTIL_H_INCLUDED
 #define NBODY_UTIL_H_INCLUDED
 
-#define PARTICLES_PER_PROC 10
+#define PARTICLES_PER_PROC 10000
 #define NUM_PROC 10
 
 float frand( );
