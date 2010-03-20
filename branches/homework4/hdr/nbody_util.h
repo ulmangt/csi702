@@ -5,8 +5,13 @@
 #define NUM_PROC 10
 
 float frand( );
-char *get_particle_file_name( int );
+float distance( float, float, float, float, float, float );
+
+char* get_particle_file_name( int );
+
 void write_particles( char*, int );
+void write_potentials( char*, int num_particles, float* );
+
 void load_particles ( char*, float*, float*, float* );
 
 #endif
