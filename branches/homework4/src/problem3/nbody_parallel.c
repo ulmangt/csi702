@@ -18,13 +18,13 @@ int main( int argc, char** argv )
   MPI_Comm_size( MPI_COMM_WORLD, &numprocs );
   MPI_Comm_rank( MPI_COMM_WORLD, &myid );
 
-  printf( "id %d of %d\n", myid, numprocs );
+  //printf( "id %d of %d\n", myid, numprocs );
 
   // create a 1 dimensional periodic cartesian grid
   // with numprocs nodes and store in cart_comm
   MPI_Comm cart_comm;
   int periods = 1;
-  MPI_Cart_create( MPI_COMM_WORLD, 1, &numprocs, &periods, 1, &cart_comm );
+  MPI_Cart_create( MPI_COMM_WORLD, 1, &numprocs, &periods, 0, &cart_comm );
 
   // get rank in the new comm group
   int mycartid;
@@ -39,8 +39,8 @@ int main( int argc, char** argv )
   MPI_Cart_coords( cart_comm, mycartid, 1, &coords );
 
   // intitialize request, status, send, and receive buffers
-  MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * 2 );
-  MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * 2 );
+  MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * numprocs );
+  MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * numprocs );
   float *recv_buf = (float *) malloc( sizeof(float) * PARTICLES_PER_PROC * 3 );
   float *send_buf; 
 
@@ -118,18 +118,57 @@ int main( int argc, char** argv )
       copy_buf( PARTICLES_PER_PROC * 3, recv_buf, guest_particles );
     }
   }
+  
+  // node 0 listens for all the nodes reporting their potential data
+  // all other nodes send potential data
+  if ( mycartid == 0 )
+  {
+    // allocate space for the potentials from all processors
+    float *all_potential = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * numprocs );
+    // copy node 0 potentials into the first section of the all_potential array
+    copy_buf( PARTICLES_PER_PROC, potential, all_potential );
+
+    // receive potential data from all other nodes
+    for ( i = 1 ; i < numprocs ; i++ )
+    {
+      MPI_Irecv( all_potential + i * PARTICLES_PER_PROC, PARTICLES_PER_PROC, MPI_FLOAT, i, 2, MPI_COMM_WORLD, req + i - 1 );
+    }
+
+    MPI_Waitall( numprocs - 1, req, stat );
+
+    // calculate particle with maximum and minimum potential
+    float max_potential = all_potential[0];
+    float min_potential = all_potential[0];
+    for ( i = 0 ; i < PARTICLES_PER_PROC * numprocs ; i++ )
+    {
+      if ( max_potential < all_potential[i] )
+        max_potential = all_potential[i];
+   
+      if ( min_potential > all_potential[i] )
+        min_potential = all_potential[i];
+    }
+
+    printf( "max potential: %f\n", max_potential );
+    printf( "min potential: %f\n", min_potential );
+
+    // write out potential array to file
+    write_potentials( "potential_parallel", PARTICLES_PER_PROC * numprocs, all_potential );
+  
+    free( all_potential );
+  }
+  else {
+    // all other processors send their potential array to node 0
+    MPI_Isend( potential , PARTICLES_PER_PROC, MPI_FLOAT, 0, 2, MPI_COMM_WORLD, req );
+    MPI_Waitall( 1, req, stat );
+  }
+
 
   // shutdown
   MPI_Finalize();
 
-  // TEMPORARY TEST CODE
-  // write all particle potentials to file
-  write_potentials( get_file_name("potential", myid), PARTICLES_PER_PROC, potential );
-
   // free allocated memory
   free( req );
   free( stat );
-  free( send_buf );
   free( recv_buf );
   free( potential );
   free( host_particles );

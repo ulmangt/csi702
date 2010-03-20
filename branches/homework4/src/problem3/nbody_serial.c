@@ -51,8 +51,8 @@ int main( )
       min_potential = potential[i];
   }
 
-  printf( "max potential: %f ", max_potential );
-  printf( "min potential: %f ", min_potential );
+  printf( "max potential: %f\n", max_potential );
+  printf( "min potential: %f\n", min_potential );
 
   // write all particles to file
   write_potentials( "potential", total, potential );
