@@ -12,4 +12,8 @@ int check_sorted( int, int* );
 void swap_array( int*, int, int );
 void swap( int*, int* );
 
+void serial_sort( int*, int , int , int (*)( int, int ) );
+int partition( int*, int, int, int (*)( int , int ) );
+int compare_integers( int , int );
+
 #endif
