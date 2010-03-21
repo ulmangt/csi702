@@ -1,7 +1,7 @@
 #ifndef SORT_UTIL_H_INCLUDED
 #define SORT_UTIL_H_INCLUDED
 
-#define ARRAY_SIZE 10
+#define ARRAY_SIZE 4
 
 int randn( int );
 

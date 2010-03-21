@@ -8,6 +8,8 @@
 
 #define SUBSAMPLE 5
 
+#define MAX_VALUE 1000
+
 int *calculate_bins( int, int*, int, int );
 
 int main( int argc, char** argv )
@@ -27,13 +29,13 @@ int main( int argc, char** argv )
   if ( numprocs == 1 )
   {
     srand( time( NULL ) );
-    all_values = generate_random_array( ARRAY_SIZE , 100000000 );
+    all_values = generate_random_array( ARRAY_SIZE , MAX_VALUE );
     serial_sort( all_values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
     print_array( ARRAY_SIZE, values );
     exit(0);
   }
 
-  //printf( "id %d of %d\n", myid, numprocs );
+  printf( "id %d of %d\n", myid, numprocs );
 
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * numprocs );
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * numprocs );
@@ -51,7 +53,7 @@ int main( int argc, char** argv )
   {
     // set the random seed and generate the random array
     srand( time( NULL ) );
-    all_values = generate_random_array( ARRAY_SIZE , 100000000 );
+    all_values = generate_random_array( ARRAY_SIZE , MAX_VALUE );
 
     // no need to send our values to ourself, we simply take the first values
     values = all_values;
@@ -71,6 +73,9 @@ int main( int argc, char** argv )
     // calculate bin edges
     bin_edges = calculate_bins( ARRAY_SIZE, all_values, numprocs, SUBSAMPLE );
 
+    printf( "bin edges\n" );
+    print_array( numprocs - 1 , bin_edges );
+
     // send the calculated bins to all nodes
     MPI_Bcast( bin_edges, numprocs - 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
 
@@ -78,6 +83,8 @@ int main( int argc, char** argv )
   else
   {
     num_values = values_per_proc;
+
+    printf("node %d getting data\n", myid );
 
     // listen for our portion of the array being sent from node 0
     values = (int *) malloc( sizeof(int) * values_per_proc );
@@ -94,16 +101,30 @@ int main( int argc, char** argv )
 
   // go through all our data and sort it into bins to send to the appropriate processor
   // for simplicity, create enough space in each processor's bin to hold all the data
-  int **bin_values = (int **) malloc( sizeof(int *) * numprocs );
+  int **all_bin_values = (int **) malloc( sizeof(int *) * numprocs );
+  // the current free index into bin_values for each processor
+  int *bin_index = (int *) malloc( sizeof(int) * numprocs );
   for ( i = 0 ; i < numprocs ; i++ )
   {
-    bin_values[i] = (int *) malloc( sizeof(int) * ARRAY_SIZE );
+    bin_index[i] = 0;
+    all_bin_values[i] = (int *) malloc( sizeof(int) * ARRAY_SIZE );
   }
+
+  printf( "node %d allocated\n", myid );
 
   for ( i = 0 ; i < num_values ; i++ )
   {
     int value = values[i];
-    int index = binary_search( value, numprocs - 1, bin_edges, compare_integers );
+printf("1 %d\n", value);
+    int index = binary_search( value, numprocs - 1, bin_edges, compare_integers ) + 1;
+printf("2 %d\n", index);
+    int *bin_values = all_bin_values[index];
+printf("3\n");
+    int free_index = bin_index[index]++;
+printf("4 %d\n", free_index);
+    bin_values[free_index] = value;
+
+    printf( " node %d put value %d in bin %d (free index %d) \n", myid, value, index, free_index );
   }
   
 
