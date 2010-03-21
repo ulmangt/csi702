@@ -1,7 +1,7 @@
 #ifndef SORT_UTIL_H_INCLUDED
 #define SORT_UTIL_H_INCLUDED
 
-#define ARRAY_SIZE 100000
+#define ARRAY_SIZE 10
 
 int randn( int );
 
@@ -16,6 +16,6 @@ void serial_sort( int*, int , int , int (*)( int, int ) );
 int partition( int*, int, int, int (*)( int , int ) );
 int compare_integers( int , int );
 
-int binary_search( int, int* , int (*)( int , int ) );
+int binary_search( int, int, int* , int (*)( int , int ) );
 
 #endif

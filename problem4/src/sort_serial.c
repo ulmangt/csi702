@@ -8,7 +8,7 @@ int main( int argc, char** argv )
 {
   srand( time( NULL ) );
 
-  int *values = generate_random_array( ARRAY_SIZE , 100000000 );
+  int *values = generate_random_array( ARRAY_SIZE , 100 );
 
   print_array( ARRAY_SIZE, values );
 
@@ -24,6 +24,8 @@ int main( int argc, char** argv )
     //print_array( ARRAY_SIZE, values );
     printf("trouble index %d\n", -check);
   }
+
+  printf( " index of 50 %d\n", binary_search( 50, ARRAY_SIZE, values, compare_integers ) );
 
   free( values );
 }
