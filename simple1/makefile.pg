@@ -1,0 +1,8 @@
+pmandel: pmandel.o
+	gcc -pg -lm -lpthread pmandel.o -o pmandel
+
+pmandel.o: pmandel.c
+	gcc -pg -c pmandel.c
+
+clean:
+	rm pmandel pmandel.o
