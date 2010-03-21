@@ -9,6 +9,7 @@
 int main( int argc, char** argv )
 {
   int *all_values;
+  int *values;
   int numprocs, myid;
 
   // initialize mpi
@@ -22,7 +23,6 @@ int main( int argc, char** argv )
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * numprocs );
 
   int values_per_proc = ARRAY_SIZE / numprocs;
-  int *values = (int *) malloc( sizeof(int) * values_per_proc );
 
   if ( myid == 0 )
   {
@@ -50,6 +50,8 @@ int main( int argc, char** argv )
   }
   else
   {
+    values = (int *) malloc( sizeof(int) * values_per_proc );
+
     printf("%d listening\n", myid);
     // listen for our portion of the array being sent from node 0
     MPI_Recv( values, values_per_proc, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, stat );
@@ -57,12 +59,18 @@ int main( int argc, char** argv )
 
   printf( "id %d of %d\n", myid, numprocs );
 
-  if ( myid == 0 ) free( all_values );
+  if ( myid == 0 )
+  {
+    free( all_values );
+  }
+  else
+  {
+    free( values );
+  }
 
   // free allocated memory
   free( req );
   free( stat );
-  free( values );
 
   // shutdown
   MPI_Finalize();
