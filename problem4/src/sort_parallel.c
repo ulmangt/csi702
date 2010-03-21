@@ -170,20 +170,23 @@ int main( int argc, char** argv )
 
       printf( "got data %d from node %d (total %d)\n", num_received, i, free_index);
     }
+
+    ///////// TEMPORARY TEST CODE ///////////
+    // check that final array is sorted
+    int sort_check = check_sorted( ARRAY_SIZE, my_bin_values );
+    if ( sort_check < 1 )
+    {
+      printf("WARNING: array not sorted at index %d\n", -sort_check);
+    }
+
+    write_array("parallel_sorted", ARRAY_SIZE, my_bin_values );
+    ///////// TEMPORARY TEST CODE ///////////
+ 
   }
   else
   {
     MPI_Send( my_bin_values, free_index, MPI_INTEGER, 0, 3, MPI_COMM_WORLD );
   }
-
-  // check that final array is sorted
-  int sort_check = check_sorted( ARRAY_SIZE, my_bin_values );
-  if ( sort_check < 1 )
-  {
-    printf("WARNING: array not sorted at index %d\n", -sort_check);
-  }
-
-  write_array("parallel_sorted", ARRAY_SIZE, my_bin_values );
 
   // free allocated memory
   if ( myid == 0 )
