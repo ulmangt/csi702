@@ -12,6 +12,7 @@ int *calculate_bins( int, int*, int, int );
 
 int main( int argc, char** argv )
 {
+  int i;
   int *all_values;
   int *values;
   int *bin_edges;
@@ -37,7 +38,13 @@ int main( int argc, char** argv )
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * numprocs );
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * numprocs );
 
+  // number of values on most procs
   int values_per_proc = ARRAY_SIZE / numprocs;
+  // if there are any extra values, they go on node 0
+  int extra_values = ARRAY_SIZE % numprocs;
+  // the actual number of values on this proc (either 
+  // values_per_proc or values_per_proc + extra_values
+  int num_values;
 
   // divide the data among the processors
   if ( myid == 0 )
@@ -49,11 +56,9 @@ int main( int argc, char** argv )
     // no need to send our values to ourself, we simply take the first values
     values = all_values;
 
-    // if there are any extra values, they go on node 0
-    int extra_values = ARRAY_SIZE % numprocs;
+    num_values = values_per_proc + extra_values;
 
     // send sections of the array to each proc
-    int i;
     for ( i = 1 ; i < numprocs ; i++ )
     {
       int index = i * values_per_proc + extra_values;
@@ -72,6 +77,8 @@ int main( int argc, char** argv )
   }
   else
   {
+    num_values = values_per_proc;
+
     // listen for our portion of the array being sent from node 0
     values = (int *) malloc( sizeof(int) * values_per_proc );
     MPI_Recv( values, values_per_proc, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, stat );
@@ -85,6 +92,13 @@ int main( int argc, char** argv )
     printf("node %d got bin edges\n", myid );
   }
 
+  // go through all our data and sort it into bins to send to the appropriate processor
+  int bin_values[numprocs];
+
+  for ( i = 0 ; i < num_values ; i++ )
+  {
+    
+  }
   
 
   if ( myid == 0 )
