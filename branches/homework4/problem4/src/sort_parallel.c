@@ -6,6 +6,8 @@
 
 #include "sort_util.h"
 
+#define SUBSAMPLE 32
+
 int main( int argc, char** argv )
 {
   int *all_values;
@@ -17,6 +19,16 @@ int main( int argc, char** argv )
   MPI_Comm_size( MPI_COMM_WORLD, &numprocs );
   MPI_Comm_rank( MPI_COMM_WORLD, &myid );
 
+  // special case the 1 processor (i.e. serial) case
+  if ( numprocs == 1 )
+  {
+    srand( time( NULL ) );
+    all_values = generate_random_array( ARRAY_SIZE , 100000000 );
+    serial_sort( all_values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
+    print_array( ARRAY_SIZE, values );
+    exit(0);
+  }
+
   //printf( "id %d of %d\n", myid, numprocs );
 
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * numprocs );
@@ -24,6 +36,7 @@ int main( int argc, char** argv )
 
   int values_per_proc = ARRAY_SIZE / numprocs;
 
+  // divide the data among the processors
   if ( myid == 0 )
   {
     // set the random seed and generate the random array
@@ -40,24 +53,61 @@ int main( int argc, char** argv )
     int i;
     for ( i = 1 ; i < numprocs ; i++ )
     {
-      printf("%d sending %d\n", myid, i);
       int index = i * values_per_proc + extra_values;
       MPI_Isend( all_values + index , values_per_proc, MPI_INTEGER, i, 1, MPI_COMM_WORLD, req + i - 1 );
     }
     
     // wait for all the nodes to receive their data
     MPI_Waitall( numprocs-1, req, stat );
+
+    // choose bins
+    // so that we get some idea of the distribution of the array,
+    // choose SUBSAMPLE * (numprocs - 1) values, sort them, and
+    // use SUBSAMPLE, 2 * SUBSAMPLE, ... as the bins
+    int subsample_size = SUBSAMPLE * ( numprocs - 1 );
+
+    if ( subsample_size > ARRAY_SIZE )
+      subsample_size = ARRAY_SIZE;
+
+    int subsample_step = ARRAY_SIZE / subsample_size;
+
+    if ( subsample_step < 1 )
+      subsample_step = 1;
+
+    printf( "size %d step %d\n", subsample_size, subsample_step );    
+
+    int *subsample = (int *) malloc( sizeof(int) * subsample_size );
+
+    for ( i = 0 ; i < subsample_size ; i++ )
+    {
+      subsample[i] = all_values[subsample_step*i];
+    }
+
+    serial_sort( subsample, 0, subsample_size-1, (int (*)( int , int )) compare_integers );
+
+    printf("subsample");
+    print_array( subsample_size , subsample );
+
+    int *low_bin = (int *) malloc( sizeof(int) * ( numprocs - 1 ) );
+
+    for ( i = 0 ; i < numprocs - 1 ; i++ )
+    {
+      low_bin[i] = subsample[subsample_step*i];
+    }
+
+    printf("bin low edges");
+    print_array( numprocs - 1 , low_bin );
   }
   else
   {
-    values = (int *) malloc( sizeof(int) * values_per_proc );
-
-    printf("%d listening\n", myid);
     // listen for our portion of the array being sent from node 0
+    values = (int *) malloc( sizeof(int) * values_per_proc );
     MPI_Recv( values, values_per_proc, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, stat );
+
+    // choose 
   }
 
-  printf( "id %d of %d\n", myid, numprocs );
+  
 
   if ( myid == 0 )
   {
