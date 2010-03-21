@@ -129,15 +129,30 @@ int main( int argc, char** argv )
 
   // send binned data to appropriate nodes
   // everyone starts by sending to node 0, then 1, etc...
+  int *my_bin_values = all_bin_values[ myid ];
+  int free_index = bin_index[ myid ];
+  int remaining_size = ARRAY_SIZE - free_index;
   for ( i = 0 ; i < numprocs ; i++ )
   {
     if ( myid == i )
     {
-      //TODO FILL IN
+      int j, count;
+      for ( j = 0, count = 0 ; j < numprocs ; j++ )
+      {
+        if ( i != j )
+        { 
+          MPI_Recv( my_bin_values + free_index, remaining_size, MPI_INTEGER, j, 1, MPI_COMM_WORLD, status );
+          int num_received = status.count;
+          free_index += num_received;
+          remaining_size -= num_received;
+          printf( "node: %d received from: %d num values: %d\n", i , j , num_received );
+        }
+      }
     }
     else
     {
-      //TODO FILL IN
+      printf( "node: %d sent to: %d num values: %d\n", myid , i , bin_index[i] );
+      MPI_Send( all_bin_values[i], bin_index[i], MPI_INTEGER, i, 1, MPI_COMM_WORLD );
     }
   }
   
