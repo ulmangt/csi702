@@ -123,3 +123,31 @@ int compare_integers( int i1, int i2 )
   else if ( i1 > i2) return 1;
   else return 0;
 }
+
+int binary_search( int key, int size, int* values , int (*comp)( int , int ) )
+{
+  int min = 0; // inclusive
+  int max = size; // exclusive
+  int index = (max - min) / 2 + min;
+
+  while ( max > min )
+  {
+    int comparison = comp( values[index], key );
+    if ( comparison == 0 )
+    {
+      return index;
+    }
+    else if ( comparison < 0 )
+    {
+      min = index + 1;
+      index = (max - min) / 2 + min;
+    }
+    else
+    {
+      max = index;
+      index = (max - min) / 2 + min;
+    }
+  }
+
+  return -1;
+}

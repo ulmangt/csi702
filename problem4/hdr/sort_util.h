@@ -16,4 +16,6 @@ void serial_sort( int*, int , int , int (*)( int, int ) );
 int partition( int*, int, int, int (*)( int , int ) );
 int compare_integers( int , int );
 
+int binary_search( int, int* , int (*)( int , int ) );
+
 #endif
