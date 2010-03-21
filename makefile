@@ -1,61 +1,10 @@
-all: filter_serial filter_cuda
+all: mutex_barrier
 
-filter_cuda: filter_io.o obs_math.o device_filter_math.o filter_cuda.o convert.o
-	nvcc -I hdr -lm src/cuda/filter_cuda.o src/common/convert.o src/cuda/device_filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_cuda
+mutex_barrier: mutex_barrier.o
+	gcc -I hdr -lm src/mutex_barrier.o -o bin/mutex_barrier
 
-filter_cuda.o:
-	nvcc -I hdr -c -lm src/cuda/filter_cuda.cu -o src/cuda/filter_cuda.o
-
-device_filter_math.o:
-	nvcc -I hdr -c -lm src/cuda/device_filter_math.cu -o src/cuda/device_filter_math.o
-
-
-
-
-
-filter_serial: filter_io.o obs_math.o filter_math.o filter_serial.o convert.o
-	gcc -I hdr -lm src/serial/filter_serial.o src/common/convert.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_serial
-
-filter_serial.o:
-	gcc -I hdr -c -lm src/serial/filter_serial.c -o src/serial/filter_serial.o
-
-filter_math.o:
-	gcc -I hdr -c -lm src/common/filter_math.c -o src/common/filter_math.o
-
-obs_math.o:
-	gcc -I hdr -c -lm src/common/obs_math.c -o src/common/obs_math.o
-
-filter_io.o:
-	gcc -I hdr -c -lm src/common/filter_io.c -o src/common/filter_io.o
-
-convert.o:
-	gcc -I hdr -c -lm src/common/convert.c -o src/common/convert.o
+mutex_barrier.o:
+	gcc -I hdr -c src/mutex_barrier.c -o src/mutex_barrier.o
 
 clean:
-	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o src/cuda/device_filter_math.o src/cuda/filter_cuda.o
-
-
-
-
-examples: cudaMallocAndMemcpy myFirstKernel reverseArray_singleblock reverseArray_multiblock
-
-reverseArray_multiblock:
-	nvcc src/examples/reverseArray_multiblock.cu -o bin/reverseArray_multiblock
-	
-reverseArray_singleblock:
-	nvcc src/examples/reverseArray_singleblock.cu -o bin/reverseArray_singleblock
-
-myFirstKernel:
-	nvcc src/examples/myFirstKernel.cu -o bin/myFirstKernel
-
-cudaMallocAndMemcpy:
-	nvcc src/examples/cudaMallocAndMemcpy.cu -o bin/cudaMallocAndMemcpy
-
-report:
-	pdflatex -output-directory docs report.tex
-
-clean_examples:
-	rm bin/cudaMallocAndMemcpy bin/myFirstKernel bin/reverseArray_singleblock bin/reverseArray_multiblock
-
-clean-docs:
-	rm docs/report.aux docs/report.log docs/report.pdf docs/report.toc
+	rm bin/mutex_barrier src/mutex_barrier.o 
