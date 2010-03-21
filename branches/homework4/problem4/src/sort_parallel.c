@@ -51,6 +51,13 @@ int main( int argc, char** argv )
     srand( time( NULL ) );
     all_values = generate_random_array( ARRAY_SIZE , MAX_VALUE );
 
+    ///////// TEMPORARY TEST CODE ///////////
+    int *copy_all_values = (int*) malloc( sizeof(int) * ARRAY_SIZE );
+    copy_buf( ARRAY_SIZE, all_values, copy_all_values );
+    serial_sort( copy_all_values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
+    write_array("serial_sorted", ARRAY_SIZE, copy_all_values );
+    ///////// TEMPORARY TEST CODE ///////////
+
     // no need to send our values to ourself, we simply take the first values
     values = all_values;
 
@@ -127,7 +134,7 @@ int main( int argc, char** argv )
       {
         if ( i != j )
         { 
-          MPI_Recv( my_bin_values + free_index, remaining_size, MPI_INTEGER, j, 1, MPI_COMM_WORLD, stat );
+          MPI_Recv( my_bin_values + free_index, remaining_size, MPI_INTEGER, j, 2, MPI_COMM_WORLD, stat );
           int num_received;
           MPI_Get_count( stat, MPI_INTEGER, &num_received );
           free_index += num_received;
@@ -140,17 +147,45 @@ int main( int argc, char** argv )
     else
     {
       //printf( "node: %d sent to: %d num values: %d\n", myid , i , bin_index[i] );
-      MPI_Send( all_bin_values[i], bin_index[i], MPI_INTEGER, i, 1, MPI_COMM_WORLD );
+      MPI_Send( all_bin_values[i], bin_index[i], MPI_INTEGER, i, 2, MPI_COMM_WORLD );
     }
   }
 
   printf("binned data for node %d (size %d)\n", myid, free_index);
-  //print_array( free_index, my_bin_values );
-  
-  //TODO combine data from all other procs and do local sort
 
-  //TODO send sorted data back to node 0
+  // perform a local serial sort on the data in our bin
+  serial_sort( my_bin_values, 0, free_index-1, (int (*)( int , int )) compare_integers );
 
+  // send the sorted bin data back to node 0
+  if ( myid == 0 )
+  {
+    printf("free %d remaining %d\n", free_index, remaining_size );
+    for ( i = 1 ; i < numprocs ; i++ )
+    {
+      MPI_Recv( my_bin_values + free_index, remaining_size, MPI_INTEGER, i, 3, MPI_COMM_WORLD, stat );
+      int num_received;
+      MPI_Get_count( stat, MPI_INTEGER, &num_received );
+      free_index += num_received;
+      remaining_size -= num_received;
+
+      printf( "got data %d from node %d (total %d)\n", num_received, i, free_index);
+    }
+  }
+  else
+  {
+    MPI_Send( my_bin_values, free_index, MPI_INTEGER, 0, 3, MPI_COMM_WORLD );
+  }
+
+  // check that final array is sorted
+  int sort_check = check_sorted( ARRAY_SIZE, my_bin_values );
+  if ( sort_check < 1 )
+  {
+    printf("WARNING: array not sorted at index %d\n", -sort_check);
+  }
+
+  write_array("parallel_sorted", ARRAY_SIZE, my_bin_values );
+
+  // free allocated memory
   if ( myid == 0 )
   {
     free( all_values );
@@ -160,7 +195,6 @@ int main( int argc, char** argv )
     free( values );
   }
 
-  // free allocated memory
   free( req );
   free( stat );
   free( bin_edges );

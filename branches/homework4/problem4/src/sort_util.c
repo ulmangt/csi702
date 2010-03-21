@@ -22,6 +22,20 @@ int *generate_random_array( int size , int n )
   return r;
 }
 
+// writes the specified file to file_name
+void write_array( char *file_name, int size, int *values )
+{
+  FILE *file = fopen( file_name, "w" );
+
+  int i;
+  for ( i = 0 ; i < size ; i++ )
+  {
+    fprintf( file, "%d\n", values[i] );
+  }
+
+  close( file );
+}
+
 // prints the values in the provided array to stdout
 void print_array( int size, int *values )
 {
@@ -160,4 +174,14 @@ int binary_search( int key, int size, int* values , int (*comp)( int , int ) )
   }
 
   return index;
+}
+
+// copy size values from src to dest
+void copy_buf( int size, int *src, int *dest )
+{
+  int i;
+  for ( i = 0 ; i < size ; i++ )
+  {
+    dest[i] = src[i];
+  }
 }
