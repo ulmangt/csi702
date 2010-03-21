@@ -35,7 +35,7 @@ int main( int argc, char** argv )
     exit(0);
   }
 
-  printf( "id %d of %d\n", myid, numprocs );
+  //printf( "id %d of %d\n", myid, numprocs );
 
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * numprocs );
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * numprocs );
@@ -110,23 +110,40 @@ int main( int argc, char** argv )
     all_bin_values[i] = (int *) malloc( sizeof(int) * ARRAY_SIZE );
   }
 
-  printf( "node %d allocated\n", myid );
+  //printf( "node %d allocated\n", myid );
 
   for ( i = 0 ; i < num_values ; i++ )
   {
     int value = values[i];
-printf("1 %d\n", value);
+//printf("1 %d\n", value);
     int index = binary_search( value, numprocs - 1, bin_edges, compare_integers ) + 1;
-printf("2 %d\n", index);
+//printf("2 %d\n", index);
     int *bin_values = all_bin_values[index];
-printf("3\n");
+//printf("3\n");
     int free_index = bin_index[index]++;
-printf("4 %d\n", free_index);
+//printf("4 %d\n", free_index);
     bin_values[free_index] = value;
 
     printf( " node %d put value %d in bin %d (free index %d) \n", myid, value, index, free_index );
   }
+
+  // send binned data to appropriate nodes
+  // everyone starts by sending to node 0, then 1, etc...
+  for ( i = 0 ; i < numprocs ; i++ )
+  {
+    if ( myid == i )
+    {
+      //TODO FILL IN
+    }
+    else
+    {
+      //TODO FILL IN
+    }
+  }
   
+  //TODO combine data from all other procs and do local sort
+
+  //TODO send sorted data back to node 0
 
   if ( myid == 0 )
   {

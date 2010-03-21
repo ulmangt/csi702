@@ -134,8 +134,6 @@ int binary_search( int key, int size, int* values , int (*comp)( int , int ) )
 
   while ( max > min )
   {
-    printf("1 min %d max %d index %d\n", min, max, index);
-
     int comparison = comp( values[index], key );
     if ( comparison == 0 )
     {
@@ -153,8 +151,6 @@ int binary_search( int key, int size, int* values , int (*comp)( int , int ) )
     }
   }
 
-  printf("2 min %d max %d index %d\n", min, max, index);
-
   while ( index >= 0 )
   {
     if ( index >= size || comp( values[index], key ) > 0 )
@@ -162,8 +158,6 @@ int binary_search( int key, int size, int* values , int (*comp)( int , int ) )
     else
       return index;
   }
-
-  printf("3 min %d max %d index %d\n", min, max, index);
 
   return index;
 }
