@@ -93,11 +93,17 @@ int main( int argc, char** argv )
   }
 
   // go through all our data and sort it into bins to send to the appropriate processor
-  int bin_values[numprocs];
+  // for simplicity, create enough space in each processor's bin to hold all the data
+  int **bin_values = (int **) malloc( sizeof(int *) * numprocs );
+  for ( i = 0 ; i < numprocs ; i++ )
+  {
+    bin_values[i] = (int *) malloc( sizeof(int) * ARRAY_SIZE );
+  }
 
   for ( i = 0 ; i < num_values ; i++ )
   {
-    
+    int value = values[i];
+    int index = binary_search( value, numprocs - 1, bin_edges, compare_integers );
   }
   
 

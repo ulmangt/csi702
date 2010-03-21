@@ -124,6 +124,8 @@ int compare_integers( int i1, int i2 )
   else return 0;
 }
 
+// return the index of the key in the values array, if it exists, or
+// the index of the next smallest number in the array
 int binary_search( int key, int size, int* values , int (*comp)( int , int ) )
 {
   int min = 0; // inclusive
@@ -149,5 +151,13 @@ int binary_search( int key, int size, int* values , int (*comp)( int , int ) )
     }
   }
 
-  return -1;
+  while ( index >= 0 )
+  {
+    if ( comp( values[index], key ) > 0 )
+      index--;
+    else
+      return index;
+  }
+
+  return index;
 }
