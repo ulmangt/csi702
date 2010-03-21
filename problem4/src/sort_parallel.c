@@ -8,10 +8,13 @@
 
 #define SUBSAMPLE 5
 
+int *calculate_bins( int, int*, int, int );
+
 int main( int argc, char** argv )
 {
   int *all_values;
   int *values;
+  int *bin_edges;
   int numprocs, myid;
 
   // initialize mpi
@@ -60,43 +63,12 @@ int main( int argc, char** argv )
     // wait for all the nodes to receive their data
     MPI_Waitall( numprocs-1, req, stat );
 
-    // choose bins
-    // so that we get some idea of the distribution of the array,
-    // choose SUBSAMPLE * (numprocs - 1) values, sort them, and
-    // use SUBSAMPLE, 2 * SUBSAMPLE, ... as the bins
-    int subsample_size = SUBSAMPLE * ( numprocs - 1 );
+    // calculate bin edges
+    bin_edges = calculate_bins( ARRAY_SIZE, all_values, numprocs, SUBSAMPLE );
 
-    if ( subsample_size > ARRAY_SIZE )
-      subsample_size = ARRAY_SIZE;
+    // send the calculated bins to all nodes
+    MPI_Bcast( bin_edges, numprocs - 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
 
-    int subsample_step = ARRAY_SIZE / subsample_size;
-
-    if ( subsample_step < 1 )
-      subsample_step = 1;
-
-    printf( "size %d step %d\n", subsample_size, subsample_step );    
-
-    int *subsample = (int *) malloc( sizeof(int) * subsample_size );
-
-    for ( i = 0 ; i < subsample_size ; i++ )
-    {
-      subsample[i] = all_values[subsample_step*i];
-    }
-
-    serial_sort( subsample, 0, subsample_size-1, (int (*)( int , int )) compare_integers );
-
-    printf("subsample\n");
-    print_array( subsample_size , subsample );
-
-    int *low_bin = (int *) malloc( sizeof(int) * ( numprocs - 1 ) );
-
-    for ( i = 0 ; i < numprocs - 1 ; i++ )
-    {
-      low_bin[i] = subsample[SUBSAMPLE*i];
-    }
-
-    printf("bin low edges\n");
-    print_array( numprocs - 1 , low_bin );
   }
   else
   {
@@ -104,7 +76,9 @@ int main( int argc, char** argv )
     values = (int *) malloc( sizeof(int) * values_per_proc );
     MPI_Recv( values, values_per_proc, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, stat );
 
-    // choose 
+    // listen for the bin sizes
+    bin_edges = (int *) malloc( sizeof(int) * ( numprocs - 1 ) );
+    MPI_Bcast( bin_edges, numprocs - 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
   }
 
   
@@ -121,7 +95,51 @@ int main( int argc, char** argv )
   // free allocated memory
   free( req );
   free( stat );
+  free( bin_edges );
 
   // shutdown
   MPI_Finalize();
+}
+
+// choose bins
+// so that we get some idea of the distribution of the array,
+// choose SUBSAMPLE * (numprocs - 1) values, sort them, and
+// use SUBSAMPLE, 2 * SUBSAMPLE, ... as the bins
+int *calculate_bins( int size, int* values, int num_procs, int subsample )
+{
+    int subsample_size = subsample * ( numprocs - 1 );
+
+    if ( subsample_size > size )
+      subsample_size = size;
+
+    int subsample_step = size / subsample_size;
+
+    if ( subsample_step < 1 )
+      subsample_step = 1;
+
+    printf( "size %d step %d\n", subsample_size, subsample_step );    
+
+    int *subsample = (int *) malloc( sizeof(int) * subsample_size );
+
+    for ( i = 0 ; i < subsample_size ; i++ )
+    {
+      subsample[i] = values[subsample_step*i];
+    }
+
+    serial_sort( subsample, 0, subsample_size-1, (int (*)( int , int )) compare_integers );
+
+    //printf("subsample\n");
+    //print_array( subsample_size , subsample );
+
+    int *low_bin = (int *) malloc( sizeof(int) * ( numprocs - 1 ) );
+
+    for ( i = 0 ; i < numprocs - 1 ; i++ )
+    {
+      low_bin[i] = subsample[subsample*i];
+    }
+
+    //printf("bin low edges\n");
+    //print_array( numprocs - 1 , low_bin );
+
+    return low_bin;
 }
