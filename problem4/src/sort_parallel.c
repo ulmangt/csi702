@@ -6,10 +6,6 @@
 
 #include "sort_util.h"
 
-#define SUBSAMPLE 5
-
-#define MAX_VALUE 1000
-
 int *calculate_bins( int, int*, int, int );
 
 int main( int argc, char** argv )
@@ -84,19 +80,13 @@ int main( int argc, char** argv )
   {
     num_values = values_per_proc;
 
-    printf("node %d getting data\n", myid );
-
     // listen for our portion of the array being sent from node 0
     values = (int *) malloc( sizeof(int) * values_per_proc );
     MPI_Recv( values, values_per_proc, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, stat );
 
-    printf("node %d got data\n", myid );
-
     // listen for the bin sizes
     bin_edges = (int *) malloc( sizeof(int) * ( numprocs - 1 ) );
     MPI_Bcast( bin_edges, numprocs - 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
-
-    printf("node %d got bin edges\n", myid );
   }
 
   // go through all our data and sort it into bins to send to the appropriate processor
@@ -110,30 +100,26 @@ int main( int argc, char** argv )
     all_bin_values[i] = (int *) malloc( sizeof(int) * ARRAY_SIZE );
   }
 
-  //printf( "node %d allocated\n", myid );
-
+  // iterate through the nodes data values, placing them into the correct bin
   for ( i = 0 ; i < num_values ; i++ )
   {
     int value = values[i];
-//printf("1 %d\n", value);
     int index = binary_search( value, numprocs - 1, bin_edges, compare_integers ) + 1;
-//printf("2 %d\n", index);
     int *bin_values = all_bin_values[index];
-//printf("3\n");
     int free_index = bin_index[index]++;
-//printf("4 %d\n", free_index);
     bin_values[free_index] = value;
 
-    printf( " node %d put value %d in bin %d (free index %d) \n", myid, value, index, free_index );
+    //printf( " node %d put value %d in bin %d (free index %d) \n", myid, value, index, free_index );
   }
 
   // send binned data to appropriate nodes
-  // everyone starts by sending to node 0, then 1, etc...
   int *my_bin_values = all_bin_values[ myid ];
   int free_index = bin_index[ myid ];
   int remaining_size = ARRAY_SIZE - free_index;
+  // loop over nodes, i represents the node each other node is sending to
   for ( i = 0 ; i < numprocs ; i++ )
   {
+    // if we are being sent to, listen to each other node in turn for data
     if ( myid == i )
     {
       int j, count;
@@ -146,16 +132,20 @@ int main( int argc, char** argv )
           MPI_Get_count( stat, MPI_INTEGER, &num_received );
           free_index += num_received;
           remaining_size -= num_received;
-          printf( "node: %d received from: %d num values: %d\n", i , j , num_received );
+          //printf( "node: %d received from: %d num values: %d\n", i , j , num_received );
         }
       }
     }
+    // otherwise, send our binned data for node i
     else
     {
-      printf( "node: %d sent to: %d num values: %d\n", myid , i , bin_index[i] );
+      //printf( "node: %d sent to: %d num values: %d\n", myid , i , bin_index[i] );
       MPI_Send( all_bin_values[i], bin_index[i], MPI_INTEGER, i, 1, MPI_COMM_WORLD );
     }
   }
+
+  printf("binned data for node %d (size %d)\n", myid, free_index);
+  //print_array( free_index, my_bin_values );
   
   //TODO combine data from all other procs and do local sort
 
