@@ -205,7 +205,7 @@ int *calculate_bins( int size, int* values, int numprocs, int subsample )
 
     for ( i = 0 ; i < numprocs - 1 ; i++ )
     {
-      low_bin[i] = subsample_values[subsample*i];
+      low_bin[i] = subsample_values[subsample*(i+1)-1];
     }
 
     //printf("bin low edges\n");
