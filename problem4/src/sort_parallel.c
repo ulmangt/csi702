@@ -6,7 +6,7 @@
 
 #include "sort_util.h"
 
-#define SUBSAMPLE 32
+#define SUBSAMPLE 5
 
 int main( int argc, char** argv )
 {
@@ -85,17 +85,17 @@ int main( int argc, char** argv )
 
     serial_sort( subsample, 0, subsample_size-1, (int (*)( int , int )) compare_integers );
 
-    printf("subsample");
+    printf("subsample\n");
     print_array( subsample_size , subsample );
 
     int *low_bin = (int *) malloc( sizeof(int) * ( numprocs - 1 ) );
 
     for ( i = 0 ; i < numprocs - 1 ; i++ )
     {
-      low_bin[i] = subsample[subsample_step*i];
+      low_bin[i] = subsample[SUBSAMPLE*i];
     }
 
-    printf("bin low edges");
+    printf("bin low edges\n");
     print_array( numprocs - 1 , low_bin );
   }
   else
