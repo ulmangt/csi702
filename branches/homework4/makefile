@@ -28,4 +28,4 @@ nbody_util.o:
 	gcc -I hdr -c -lm src/problem3/nbody_util.c -o src/problem3/nbody_util.o
 
 clean:
-	rm bin/nbody_serial src/problem3/nbody_serial.o src/problem3/nbody_parallel.o bin/nbody_gen_particles src/problem3/nbody_gen_particles.o src/problem3/nbody_util.o
+	rm bin/nbody_serial bin/nbody_parallel src/problem3/nbody_serial.o src/problem3/nbody_parallel.o bin/nbody_gen_particles src/problem3/nbody_gen_particles.o src/problem3/nbody_util.o
