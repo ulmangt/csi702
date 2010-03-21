@@ -1,4 +1,47 @@
 
+nbody_parallel 200 / 50 (run2)
+
+max potential: 237881.359375
+min potential: 121752.578125
+
+real  0m38.002s
+user  0m0.360s
+sys 0m0.380s
+
+----------------------------
+
+nbody_parallel 200 / 50 (run1)
+
+max potential: 237881.359375
+min potential: 121752.578125
+
+real  0m40.877s
+user  0m0.372s
+sys 0m0.268s
+
+-----------------------------
+
+nbody_parallel 50 / 2000 (run2)
+
+max potential: 239667.953125
+min potential: 119743.523438
+
+real  0m42.770s
+user  0m0.132s
+sys 0m0.124s
+
+-----------------------------
+
+nbody_parallel 50 / 2000 (run1)
+
+max potential: 239667.953125
+min potential: 119743.523438
+
+real  0m43.023s
+user  0m0.116s
+sys 0m0.092s
+
+-------------------------------
 
 nbody_parallel 20 / 5000 (run2)
 
@@ -33,7 +76,18 @@ sys 0m0.120s
 
 --------------------------------
 
-nbody_parallel 100 / 1000
+nbody_parallel 100 / 1000 (run2)
+
+max potential: 237642.609375
+min potential: 121095.203125
+
+real  0m37.989s
+user  0m0.172s
+sys 0m0.132s
+
+--------------------------------
+
+nbody_parallel 100 / 1000 (run1)
 
 max potential: 237572.125000
 min potential: 121352.328125
