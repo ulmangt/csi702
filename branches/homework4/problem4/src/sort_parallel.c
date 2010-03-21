@@ -8,6 +8,7 @@
 
 int main( int argc, char** argv )
 {
+  int *all_values;
   int numprocs, myid;
 
   // initialize mpi
@@ -27,15 +28,19 @@ int main( int argc, char** argv )
   {
     // set the random seed and generate the random array
     srand( time( NULL ) );
-    int *all_values = generate_random_array( ARRAY_SIZE , 100000000 );
+    all_values = generate_random_array( ARRAY_SIZE , 100000000 );
+
+    // no need to send our values to ourself, we simply take the first values
+    values = all_values;
 
     // if there are any extra values, they go on node 0
     int extra_values = ARRAY_SIZE % numprocs;
 
     // send sections of the array to each proc
     int i;
-    for ( i = i ; i < numprocs ; i++ )
+    for ( i = 1 ; i < numprocs ; i++ )
     {
+      printf("%d sending %d\n", myid, i);
       int index = i * values_per_proc + extra_values;
       MPI_Isend( all_values + index , values_per_proc, MPI_INTEGER, i, 1, MPI_COMM_WORLD, req + i - 1 );
     }
@@ -45,9 +50,20 @@ int main( int argc, char** argv )
   }
   else
   {
+    printf("%d listening\n", myid);
     // listen for our portion of the array being sent from node 0
     MPI_Recv( values, values_per_proc, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, stat );
   }
 
-  printf( "id %d of %d\n", myid, numprocs ); 
+  printf( "id %d of %d\n", myid, numprocs );
+
+  if ( myid == 0 ) free( all_values );
+
+  // free allocated memory
+  free( req );
+  free( stat );
+  free( values );
+
+  // shutdown
+  MPI_Finalize();
 }
