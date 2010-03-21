@@ -1,0 +1,251 @@
+Given the following two expressions, which will execute faster:
+
+if ( sqrt( x1^2 + y1^2 ) < sqrt( x2^2 + y2^2 ) )
+
+if ( x1^2 + y1^2 < x2^2 + y2^2 )
+
+Because sqrt() is a monotonically increasing function, given non negative real numbers a and b where a < b, it is the case that sqrt(a) < sqrt(b). Therefore, the two expressions in the problem are logically equivalent. However, unless the calculation of the sqrt() function is removed by the compiler, I hypothesize that the version with the sqrt will be slower by a factor of 10. With the highest optimization levels, I believe gcc will be able to optimize out the sqrt calls, making the speeds of the two versions identical.
+
+
+http://chart.apis.google.com/chart?chs=250x100&chd=t:60,40&cht=lc&chl=Hello|World"
+
+<img src="http://chart.apis.google.com/chart?
+chs=250x100
+&amp;chd=t:60,40
+&amp;cht=lc
+&amp;chl=Hello|World"/>
+
+
+No Optimization Options:
+
+./problem2 1
+Count: 250006898/500000000
+
+real	0m38.823s
+user	0m38.718s
+sys	0m0.052s
+
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]    100.0    1.35   17.03                 main [1]
+                8.58    8.44       1/1           caseOne [2]
+-----------------------------------------------
+                8.58    8.44       1/1           main [1]
+[2]     92.7    8.58    8.44       1         caseOne [2]
+                8.44    0.00 2000000000/2000000000     frand [3]
+-----------------------------------------------
+                8.44    0.00 2000000000/2000000000     caseOne [2]
+[3]     45.9    8.44    0.00 2000000000         frand [3]
+-----------------------------------------------
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 47.01      8.58     8.58        1     8.58    17.03  caseOne
+ 46.24     17.03     8.44 2000000000     0.00     0.00  frand
+  7.39     18.38     1.35                             main
+
+
+./problem2 2
+Count: 250006898/500000000
+
+real	0m31.375s
+user	0m31.378s
+sys	0m0.000s
+
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]    100.0    1.29   11.42                 main [1]
+                4.96    6.46       1/1           caseTwo [2]
+-----------------------------------------------
+                4.96    6.46       1/1           main [1]
+[2]     89.9    4.96    6.46       1         caseTwo [2]
+                6.46    0.00 2000000000/2000000000     frand [3]
+-----------------------------------------------
+                6.46    0.00 2000000000/2000000000     caseTwo [2]
+[3]     50.8    6.46    0.00 2000000000         frand [3]
+-----------------------------------------------
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 49.55      6.46     6.46 2000000000     0.00     0.00  frand
+ 38.05     11.42     4.96        1     4.96    11.42  caseTwo
+  9.88     12.71     1.29                             main
+
+
+
+
+Optimization Options: -O1
+
+./problem2 1
+Count: 250006898/500000000
+
+real	0m51.572s
+user	0m51.575s
+sys	0m0.000s
+
+
+index % time    self  children    called     name
+                8.22    4.31       1/1           main [2]
+[1]     91.0    8.22    4.31       1         caseOne [1]
+                4.31    0.00 2000000000/2000000000     frand [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]     91.0    0.00   12.53                 main [2]
+                8.22    4.31       1/1           caseOne [1]
+-----------------------------------------------
+                4.31    0.00 2000000000/2000000000     caseOne [1]
+[3]     31.3    4.31    0.00 2000000000         frand [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[4]      9.0    1.24    0.00                 frame_dummy [4]
+-----------------------------------------------
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 59.82      8.22     8.22        1     8.22    12.53  caseOne
+ 31.34     12.53     4.31 2000000000     0.00     0.00  frand
+  9.01     13.77     1.24                             frame_dummy
+
+
+./problem2 2
+Count: 250006898/500000000
+
+real	0m56.362s
+user	0m56.360s
+sys	0m0.008s
+
+
+index % time    self  children    called     name
+                2.99    5.69       1/1           main [2]
+[1]     88.4    2.99    5.69       1         caseTwo [1]
+                5.69    0.00 2000000000/2000000000     frand [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]     88.4    0.00    8.68                 main [2]
+                2.99    5.69       1/1           caseTwo [1]
+-----------------------------------------------
+                5.69    0.00 2000000000/2000000000     caseTwo [1]
+[3]     57.9    5.69    0.00 2000000000         frand [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[4]     11.6    1.14    0.00                 frame_dummy [4]
+-----------------------------------------------
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 58.34      5.69     5.69 2000000000     0.00     0.00  frand
+ 30.67      8.68     2.99        1     2.99     8.68  caseTwo
+ 11.67      9.82     1.14                             frame_dummy
+
+
+Optimization Options: -O2
+
+./problem2 1
+Count: 250006898/500000000
+
+real	0m54.694s
+user	0m54.383s
+sys	0m0.020s
+
+
+index % time    self  children    called     name
+                9.16    4.47       1/1           main [2]
+[1]     92.4    9.16    4.47       1         caseOne [1]
+                4.47    0.00 2000000000/2000000000     frand [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]     92.4    0.00   13.63                 main [2]
+                9.16    4.47       1/1           caseOne [1]
+-----------------------------------------------
+                4.47    0.00 2000000000/2000000000     caseOne [1]
+[3]     30.3    4.47    0.00 2000000000         frand [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[4]      7.6    1.12    0.00                 frame_dummy [4]
+-----------------------------------------------
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 62.54      9.16     9.16        1     9.16    13.63  caseOne
+ 30.51     13.63     4.47 2000000000     0.00     0.00  frand
+  7.63     14.75     1.12                             frame_dummy
+
+
+
+./problem2 2
+Count: 250006898/500000000
+
+real	0m45.880s
+user	0m45.851s
+sys	0m0.000s
+
+index % time    self  children    called     name
+                3.35    4.65       1/1           main [2]
+[1]     86.5    3.35    4.65       1         caseTwo [1]
+                4.65    0.00 2000000000/2000000000     frand [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]     86.5    0.00    8.00                 main [2]
+                3.35    4.65       1/1           caseTwo [1]
+-----------------------------------------------
+                4.65    0.00 2000000000/2000000000     caseTwo [1]
+[3]     50.3    4.65    0.00 2000000000         frand [3]
+-----------------------------------------------
+                                                 <spontaneous>
+[4]     13.5    1.25    0.00                 frame_dummy [4]
+-----------------------------------------------
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 50.61      4.65     4.65 2000000000     0.00     0.00  frand
+ 36.48      8.00     3.35        1     3.35     8.00  caseTwo
+ 13.58      9.25     1.25                             frame_dummy
+
+
+
+Optimization Options: -O3
+
+./problem2 1
+Count: 250006898/500000000
+
+real	0m26.249s
+user	0m26.250s
+sys	0m0.004s
+
+
+index % time    self  children    called     name
+                9.26    0.00       1/1           main [2]
+[1]    100.0    9.26    0.00       1         caseOne [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    9.26                 main [2]
+                9.26    0.00       1/1           caseOne [1]
+-----------------------------------------------
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.56      9.26     9.26        1     9.26     9.26  caseOne
+
+
+./problem2 2
+Count: 250006898/500000000
+
+real	0m21.017s
+user	0m21.013s
+sys	0m0.008s
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+100.56      4.13     4.13                             main
+
+

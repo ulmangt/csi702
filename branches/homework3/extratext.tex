@@ -1,0 +1,18 @@
+\begin{algorithm}
+\caption{Bin Sort Balancing Algorithm (Step 5)}
+\label{binsortbalance}
+\begin{algorithmic}[1]
+\STATE processors[ ] := \textbf{count} of data values on processor
+\STATE \textbf{sort} processors[ ] by pivot size
+\FOR{ \textbf{each} processor }
+  \STATE index := \textbf{find} index of processor with most data
+  \STATE sumHigh := \textbf{sum} data count for processors[index+1] to processors[m]
+  \STATE sumLow := \textbf{sum} data count for processors[1] to [processors[index-1]
+  \STATE addHigh := (m-index) * (n/m) - sumHigh
+  \STATE addLow := (index-1) * (n/m) - sumLow
+  \STATE processors[index+1] += addHigh
+  \STATE processors[index-1] += addLow
+  \STATE processor[index] -= addHigh + addLow
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}

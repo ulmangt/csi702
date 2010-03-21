@@ -1,0 +1,197 @@
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define NUM_THREADS	256
+
+
+// September 2008 - J. Wallin
+
+
+int n = 256;
+int *img;
+int itmax = 200000;
+double xmax, xmin, ymax, ymin;
+double dx, dy;
+
+double mandel_time[NUM_THREADS];
+
+struct thread_data {
+	int thread_id;
+	int start_index;
+	int end_index;
+};
+
+void *mandel(void *data)
+{
+  struct thread_data *tdata = (struct thread_data *) data;
+
+  int i, j, it, id;
+  double zr, zi, zr2, zi2;
+  double x,y;
+
+  int istart, iend;
+  clock_t t1, t2;
+  double dt;
+
+  // start the clock
+  t1 = clock();
+
+  // get the thread id from the input value
+  id = tdata->thread_id;
+
+  // set the limits for the outer loop
+  istart = tdata->start_index;
+  iend = tdata->end_index;
+
+  printf("tid %d start %d end %d\n",id, istart, iend);
+
+  // loop over the pixels
+  for (i= istart; i< iend; i++) {
+    for (j = 0; j<n; j++) { 
+    
+      // set the x and y position 
+      x = i*dx + xmin;
+      y = j*dy + ymin;
+
+      // set the initial values for the iteration loop
+      zr = x;
+      zi = y;
+      it = 0;
+
+
+      // iterate over the pixel values using 
+      // the mandelbrot formula
+      while (it < itmax && zr*zr + zi*zi < 2) {
+	
+	// calculate the new value in the complex plane
+	zr2 = zr*zr - zi*zi + x;
+	zi2 = 2*zi*zr + y;
+	  
+	// update the old value  
+	zr = zr2;
+	zi = zi2;
+	  
+	// increase the iteration number
+	it = it + 1;
+
+      }
+
+      // save the iteration number into the image array
+      // and update the image counter
+      img[ i * n + j ] = it;     
+    }
+  }
+
+
+  // find the final time
+  t2 = clock();
+  dt = (double) (t2 - t1) / CLOCKS_PER_SEC;
+
+  printf("tid %d runtime %f\n", id, dt);
+
+  mandel_time[id] = dt;
+  
+  // free malloced threat_data struct
+  free( tdata );
+}
+
+void start_worker( pthread_t threads[], int tid, int start, int end )
+{
+  struct thread_data *data = (struct thread_data *) malloc(sizeof(struct thread_data));
+  
+  data->thread_id = tid;
+  data->start_index = start;
+  data->end_index = end;
+  
+  int rc = pthread_create(&threads[tid], NULL, mandel, (void *) data);
+  if ( rc )
+  {
+    printf("Error in pthread_create: %d\n", rc);
+    exit(-1);
+  }
+
+  //printf("%d %d %d\n",tid, start, end);
+}
+
+int main(int argc, char *argv[])
+{
+  pthread_t threads[NUM_THREADS];
+
+  double x,y;
+  double zr, zi, zr2, zi2;
+  int i, j, it;
+  int id;
+  int k;
+  int rc;
+
+  FILE *fp;
+
+
+  // set the limits for the mandelbrot set
+  xmin = -2.0;
+  xmax =  2.0;
+  ymin = -2.0;
+  ymax =  2.0;
+
+  // calculate pixel spacings
+  dx = (xmax - xmin)/(n-1);
+  dy = (ymax - ymin)/(n-1);
+  
+  // allocate space for the image array
+  img = (int *) malloc(sizeof(int) * n * n);
+
+  int remainder = n % NUM_THREADS;
+  int step =  ( n - remainder ) / NUM_THREADS;
+  int tid = 0;
+  int start = 0;
+  int end = 0;
+
+  printf("remainder %d step %d\n", remainder, step);
+
+  for ( tid = 0 ; tid < NUM_THREADS - 1 ; tid++ )
+  {
+    end = start + step;
+    start_worker( threads, tid, start, end );
+    start = end;
+  }
+  
+  start_worker( threads, tid++, end, n );
+
+  for ( tid = 0 ; tid < NUM_THREADS ; tid++ )
+  {
+    void *status;
+    int rc = pthread_join( threads[tid], &status );
+  if ( rc )
+  {
+    printf("Error in pthread_join: %d\n", rc);
+    exit(-1);
+  }
+  }
+
+  // open the output file and write the array data 
+  k = 0;
+  fp = fopen("mset","w");
+  for (i=0;i<n;i++) {
+    for (j = 0; j<n; j++) { 
+ 
+      fprintf(fp, "%d \n",img[k]);
+      k = k + 1;
+    }
+  }
+  fclose(fp);
+
+  
+  // summarize routine times
+  //printf("times for routine = %g \n",mandel_time[tid]);
+
+}
+
+
+
+
+
+
+
+

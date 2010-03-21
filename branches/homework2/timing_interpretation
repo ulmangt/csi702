@@ -1,0 +1,5 @@
+real: Elapsed  real  (wall  clock) time used by the process, in [hours:]minutes:seconds
+user: Total number of CPU-seconds that the process used direct‐ly (in user mode), in seconds. Note: this may be larger than real if the command executed on multiple CPUs.
+sys: Total  number of CPU-seconds used by the system on behalf of the process (in kernel mode), in seconds.
+
+c clock() also returns processor time (number of processor cycles)

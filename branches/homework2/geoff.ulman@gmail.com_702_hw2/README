@@ -1,0 +1,72 @@
+Documentation File
+
+Geoffrey Ulman
+CSI 702
+Homework 2
+Feb 21, 2010
+
+
+
+============================
+= Compilation Instructions =
+============================
+
+To compile, simply type:
+
+make
+
+This should create two executables, mandelbrot_serial and mandelbrot_threaded
+
+To remove compiled files type:
+
+make clean
+
+
+==========================
+= Running   Instructions =
+==========================
+
+To run mandelbrot_serial with default parameters, type:
+
+./mandelbrot_serial
+
+To adjust the run parameters, type:
+
+./mandelbrot_serial [n] [itmax] [printResults]
+
+n -- the size of the output array
+itmax -- the maximum Julia set iterations
+printResults -- 1 prints output to file, 0 suppresses output
+
+For example:
+
+./mandelbrot_serial 256 2000 0
+
+Will run the code with a 256 by 256 output array, with 2000 iterations maximum per cell, and no output file will be generated.
+
+
+To run mandelbrot_threaded with default parameters, type:
+
+./mandelbrot_threaded
+
+To adjust the run parameters, type:
+
+./mandelbrot_threaded [numThreads] [n] [itmax] [printResults]
+
+numThreads -- the number of threads to create. rows of the array will be divided evenly among the threads
+
+For example:
+
+./mandelbrot_threaded 32 512 20000 1
+
+Will run the code with 32 threads, a 512 by 512 output array (with 16 rows being processed by each thread), with 20000 iterations maximum per cell, and will generate an mset output file.
+
+
+==========================
+= Note on Alternate Code =
+==========================
+
+As described in the report, an alternate threaded code was written to test a hypothesis about the performance degredation observed for long runs of the code. This code is not compiled by default, but can be compiled if desired using:
+
+make mandelbrot_threaded_alternative
+
