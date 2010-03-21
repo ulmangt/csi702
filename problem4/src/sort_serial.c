@@ -25,7 +25,7 @@ int main( int argc, char** argv )
     printf("trouble index %d\n", -check);
   }
 
-  printf( " index of 50 %d\n", binary_search( 50, ARRAY_SIZE, values, compare_integers ) );
+  printf( " index of 50 %d\n", binary_search( -2, ARRAY_SIZE, values, compare_integers ) );
 
   free( values );
 }
