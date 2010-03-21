@@ -32,6 +32,21 @@ void print_array( int size, int *values )
   }
 }
 
+// determines whether an array is sorted
+// returns 1 for a sorted array, a negative number
+// for a non-sorted array
+int check_sorted( int size, int *values )
+{
+  int i;
+  for ( i = 0 ; i < size-1 ; i++ )
+  {
+    if ( values[i] > values[i+1] )
+      return -i;
+  }
+
+  return 1;
+}
+
 // swaps two integers in an array based on their index
 void swap_array( int* array, int index1, int index2 )
 {
