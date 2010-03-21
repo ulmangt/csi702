@@ -1,0 +1,166 @@
+
+The increase in efficiency possible by rearranging the order of the case statements depends on the relative rarity of the cases. However, I believe that case statements are efficient enough that reorganization will not provide significant speedup. I don't believe that compiler settings will have a significant impact on performance.
+
+Modifications to the provided code:
+
+A c case statement was not flexible enough to perform the test that I wanted. So my implementation uses an if-else form.
+
+
+No Optimization Options:
+
+time ./problem8 1
+1001 1001000 499498999
+
+real	0m35.413s
+user	0m35.382s
+sys	0m0.020s
+
+index % time    self  children    called     name
+               29.66    0.00       1/1           main [2]
+[1]    100.0   29.66    0.00       1         caseOne [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00   29.66                 main [2]
+               29.66    0.00       1/1           caseOne [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.58     29.66    29.66        1    29.66    29.66  caseOne
+
+
+time ./problem8 2
+500000000 500501 499
+
+real	0m17.619s
+user	0m17.617s
+sys	0m0.000s
+
+index % time    self  children    called     name
+               14.75    0.00       1/1           main [2]
+[1]    100.0   14.75    0.00       1         caseTwo [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00   14.75                 main [2]
+               14.75    0.00       1/1           caseTwo [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.58     14.75    14.75        1    14.75    14.75  caseTwo
+
+
+Optimization Options: -O1
+
+time ./problem8 1
+real	0m4.844s
+user	0m4.844s
+sys	0m0.000s
+
+index % time    self  children    called     name
+                4.06    0.00       1/1           main [2]
+[1]    100.0    4.06    0.00       1         caseOne [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    4.06                 main [2]
+                4.06    0.00       1/1           caseOne [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.69      4.06     4.06        1     4.06     4.06  caseOne
+
+
+time ./problem8 2
+real	0m3.045s
+user	0m3.044s
+sys	0m0.000s
+
+index % time    self  children    called     name
+                2.55    0.00       1/1           main [2]
+[1]    100.0    2.55    0.00       1         caseTwo [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    2.55                 main [2]
+                2.55    0.00       1/1           caseTwo [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.69      2.55     2.55        1     2.55     2.55  caseTwo
+
+
+Optimization Options: -O2
+
+time ./problem8 1
+real	0m4.654s
+user	0m4.652s
+sys	0m0.000s
+
+index % time    self  children    called     name
+                3.90    0.00       1/1           main [2]
+[1]    100.0    3.90    0.00       1         caseOne [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    3.90                 main [2]
+                3.90    0.00       1/1           caseOne [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.69      3.90     3.90        1     3.90     3.90  caseOne
+
+time ./problem8 2
+real	0m2.960s
+user	0m2.960s
+sys	0m0.000s
+
+index % time    self  children    called     name
+                2.48    0.00       1/1           main [2]
+[1]    100.0    2.48    0.00       1         caseTwo [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    2.48                 main [2]
+                2.48    0.00       1/1           caseTwo [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.69      2.48     2.48        1     2.48     2.48  caseTwo
+
+
+
+Optimization Options: -O3
+
+time ./problem8 1
+1001 1001000 499498999
+
+real	0m4.640s
+user	0m4.636s
+sys	0m0.008s
+
+index % time    self  children    called     name
+                3.88    0.00       1/1           main [2]
+[1]    100.0    3.88    0.00       1         caseOne [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    3.88                 main [2]
+                3.88    0.00       1/1           caseOne [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.60      3.88     3.88        1     3.88     3.88  caseOne
+
+
+time ./problem8 2
+500000000 500501 499
+
+real	0m2.969s
+user	0m2.968s
+sys	0m0.004s
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+100.60      2.48     2.48                             main
+

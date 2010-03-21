@@ -1,0 +1,149 @@
+The memory index of an individual element in the c array a[row][col] is given by COL * row + col (where row, col are indexes and COL is the total number of columns in the array) [1]. Therefore, the first version, which accesses the array sequentially by the second index will improve spatial locality of the memory accesses. With a large enough array, this should reduce page faults and speed execution. Because L1 cache is 3 to 4 times faster than RAM [2], I believe the first version should be faster by a similar amount for large arrays.
+
+Modifications to the provided code:
+
+However, as written, the first version must recalculate exp(j) every iteration through the inner loop, whereas even simple compiler optimizations should move the exp(j) calculation outside the inner loop in the second version. Thus, to make a more pure test of the effects of spatial locality, I calculate exp(i) in the second version so that the expression cannot be moved outside the loop.
+
+Also, to more explicitly
+
+[1]
+The C Programming Language
+Brian W. Kernighan
+Dennis M. Ritchie
+pg. 113
+
+[2]
+Lecture Notes
+
+
+
+No Optimization Options:
+
+time ./problem5 1
+real	0m37.142s
+user	0m33.134s
+sys	0m4.008s
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+100.78      9.16     9.16                             caseOne
+
+
+time ./problem5 2
+real	1m53.615s
+user	1m49.343s
+sys	0m3.924s
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+100.78     57.50    57.50                             caseTwo
+
+
+Optimization Options: -O1
+
+time ./problem5 1
+real	0m34.770s
+user	0m30.650s
+sys	0m4.120s
+
+
+index % time    self  children    called     name
+                5.68    0.00       1/1           main [2]
+[1]    100.0    5.68    0.00       1         caseOne [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    5.68                 main [2]
+                5.68    0.00       1/1           caseOne [1]
+-----------------------------------------------
+
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.78      5.68     5.68        1     5.68     5.68  caseOne
+
+
+
+time ./problem5 2
+real	1m50.131s
+user	1m46.143s
+sys	0m3.996s
+
+index % time    self  children    called     name
+               58.28    0.00       1/1           main [2]
+[1]    100.0   58.28    0.00       1         caseTwo [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00   58.28                 main [2]
+               58.28    0.00       1/1           caseTwo [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.78     58.28    58.28        1    58.28    58.28  caseTwo
+
+
+Optimization Options: -O2
+
+time ./problem5 1
+real	0m34.310s
+user	0m30.222s
+sys	0m4.084s
+
+index % time    self  children    called     name
+                7.26    0.00       1/1           main [2]
+[1]    100.0    7.26    0.00       1         caseOne [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    7.26                 main [2]
+                7.26    0.00       1/1           caseOne [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.79      7.26     7.26        1     7.26     7.26  caseOne
+
+
+time ./problem5 2
+real	1m43.927s
+user	1m40.038s
+sys	0m3.884s
+
+index % time    self  children    called     name
+               51.47    0.00       1/1           main [2]
+[1]    100.0   51.47    0.00       1         caseTwo [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00   51.47                 main [2]
+               51.47    0.00       1/1           caseTwo [1]
+-----------------------------------------------
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+100.79     51.47    51.47        1    51.47    51.47  caseTwo
+
+
+
+
+Optimization Options: -O3
+
+time ./problem5 1
+real	0m37.263s
+user	0m32.866s
+sys	0m4.160s
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+100.78      9.66     9.66                             caseOne
+
+
+time ./problem5 2
+
+real	2m4.070s
+user	1m59.815s
+sys	0m3.940s
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+100.78     35.56    35.56                             caseTwo
+
+

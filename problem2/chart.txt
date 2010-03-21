@@ -1,0 +1,2 @@
+http://chart.apis.google.com/chart?chs=600x400&cht=lxy&chdl=Code%201|Code%202&chco=FF0000,00FF00&chg=33,25&chm=o,FF0000,0,-1,10.0|o,00FF00,1,-1,10.0&chtt=Problem%202%20Timing&chxt=x,y,x,y&chxl=0:|None|-O1|-O2|-O3|1:|0.0|10.0|20.0|2:||Compiler%20Option||3:||Time%20%28sec%29|&chd=t:-1|18.38,13.77,14.75,9.26|-1|12.71,9.82,9.25,4.13&chds=0,20
+

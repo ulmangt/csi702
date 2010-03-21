@@ -1,0 +1,23 @@
+=Problem 1=
+===Description===
+How do I make this code run faster?
+
+  do i = 1, 1000
+    if (i < 100) then
+      a(i) = 10
+    else
+      a(i) = 20
+    endif
+  enddo
+
+===Expectation===
+===Code===
+===Comments===
+
+
+
+    *  Your name
+    * A summary of the problem
+    * Your expectations and ﬁnal conclusions based on discussions.
+    * For the problems you solve, your code, the code proﬁle, and the timing results.
+    * Any other comments about the code and approach you took to solve the problem, including references. 
