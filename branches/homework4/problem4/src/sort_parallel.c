@@ -141,8 +141,9 @@ int main( int argc, char** argv )
       {
         if ( i != j )
         { 
-          MPI_Recv( my_bin_values + free_index, remaining_size, MPI_INTEGER, j, 1, MPI_COMM_WORLD, status );
-          int num_received = status.count;
+          MPI_Recv( my_bin_values + free_index, remaining_size, MPI_INTEGER, j, 1, MPI_COMM_WORLD, stat );
+          int num_received;
+          MPI_Get_count( stat, MPI_INTEGER, &num_received );
           free_index += num_received;
           remaining_size -= num_received;
           printf( "node: %d received from: %d num values: %d\n", i , j , num_received );
