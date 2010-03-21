@@ -3,7 +3,12 @@
 
 #define ARRAY_SIZE 10
 
-int *generate_random_array( int );
+int randn( int );
+
+int *generate_random_array( int, int );
 void print_array( int, int* );
+
+void swap_array( int*, int, int );
+void swap( int*, int* );
 
 #endif
