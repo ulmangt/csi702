@@ -1,4 +1,10 @@
-all: mutex_barrier condition_barrier
+all: mutex_barrier condition_barrier semaphore_barrier
+
+semaphore_barrier: semaphore_barrier.o
+	gcc -I hdr -lm -lpthread src/semaphore_barrier.o -o bin/semaphore_barrier
+
+semaphore_barrier.o:
+	gcc -I hdr -c src/semaphore_barrier.c -o src/semaphore_barrier.o
 
 condition_barrier: condition_barrier.o
 	gcc -I hdr -lm -lpthread src/condition_barrier.o -o bin/condition_barrier
