@@ -7,3 +7,9 @@ hard to write clean code because of reuse limitations
 
 Error: External calls are not supported (found non-inlined call to _Z12device_frandiff)
 (device functions called from kernel are inlined, semantics on what is able to be inlined is unclear -- does this mean code has to be in a single file?)
+
+
+
+
+http://gpuray.blogspot.com/2009/07/compiling-cuda-projects.html
+(example of old guides, even a year old compilers and libries have changed)

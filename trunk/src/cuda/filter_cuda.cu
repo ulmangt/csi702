@@ -5,9 +5,9 @@
 #include <math.h>
 #include <time.h>
 #include "obs_math.h"
-#include "device_filter_math.h"
 #include "filter_io.h"
 #include "convert.h"
+#include "device_filter_math.h"
 
 #define NUM_PARTICLES 100000
 #define MAX_RANGE 20000 // meters
@@ -37,10 +37,6 @@ float *d_x_vel; // meters/second
 float *d_y_vel; // meters/second
 float *d_weight;
 float *d_seed; // random seed for particle
-
-// functions from filter_math.h
-__device__ float d_frand0( float max );
-__device__ float d_frand( float min, float max );
 
 void h_init_particle_mem( int );
 void h_free_particle_mem( );
@@ -253,10 +249,11 @@ void print_particles( int num, int downsample )
   }
 }
 
-
-
-
-
+// prints a single particle's information to the console
+void print_particle( int i )
+{
+  printf( "%f\t%f\t%f\t%f\t%f\n", h_x_pos[i], h_y_pos[i], h_x_vel[i], h_y_vel[i], h_weight[i] );
+}
 
 
 

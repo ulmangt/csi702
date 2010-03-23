@@ -1,17 +1,4 @@
-all: filter_serial filter_cuda
-
-filter_cuda: filter_io.o obs_math.o device_filter_math.o filter_cuda.o convert.o
-	nvcc -I hdr -lm src/cuda/filter_cuda.o src/common/convert.o src/cuda/device_filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_cuda
-
-filter_cuda.o:
-	nvcc -I hdr -c -lm src/cuda/filter_cuda.cu -o src/cuda/filter_cuda.o
-
-device_filter_math.o:
-	nvcc -I hdr -c -lm src/cuda/device_filter_math.cu -o src/cuda/device_filter_math.o
-
-
-
-
+all: filter_serial
 
 filter_serial: filter_io.o obs_math.o filter_math.o filter_serial.o convert.o
 	gcc -I hdr -lm src/serial/filter_serial.o src/common/convert.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_serial
@@ -32,7 +19,7 @@ convert.o:
 	gcc -I hdr -c -lm src/common/convert.c -o src/common/convert.o
 
 clean:
-	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o src/cuda/device_filter_math.o src/cuda/filter_cuda.o
+	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o src/cuda/device_filter_math.o
 
 
 
@@ -57,5 +44,5 @@ report:
 clean_examples:
 	rm bin/cudaMallocAndMemcpy bin/myFirstKernel bin/reverseArray_singleblock bin/reverseArray_multiblock
 
-clean-docs:
+clean_docs:
 	rm docs/report.aux docs/report.log docs/report.pdf docs/report.toc
