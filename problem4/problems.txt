@@ -1,0 +1,6 @@
+sending variable sized messages, correctly combining variable sized messages from multiple nodes into an array
+serial sorting algorithm
+off by 1 error in b search -- debugging difficult -- erorr only arose in multinode case
+trying to allocate too much memory
+
+serial communication sending data (all nodes to all nodes) severly slowed down sort with many nodes
