@@ -7,7 +7,7 @@
 
 #include "nbody_util.h"
 
-void copy_buf( int, float*, float* );
+void copy_buf( int, double*, double* );
 
 int main( int argc, char** argv )
 {
@@ -41,14 +41,14 @@ int main( int argc, char** argv )
   // intitialize request, status, send, and receive buffers
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * numprocs );
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * numprocs );
-  float *recv_buf = (float *) malloc( sizeof(float) * PARTICLES_PER_PROC * 3 );
-  float *send_buf; 
+  double *recv_buf = (double *) malloc( sizeof(double) * PARTICLES_PER_PROC * 3 );
+  double *send_buf; 
 
 
   // allocates space for all the particles ( both guest and host particles )
-  float *potential = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC );
-  float *host_particles  = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
-  float *guest_particles = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * 3 );
+  double *potential = (double *) malloc( sizeof( double ) * PARTICLES_PER_PROC );
+  double *host_particles  = (double *) malloc( sizeof( double ) * PARTICLES_PER_PROC * 3 );
+  double *guest_particles = (double *) malloc( sizeof( double ) * PARTICLES_PER_PROC * 3 );
 
   // initialize the potential array
   int i;
@@ -57,13 +57,13 @@ int main( int argc, char** argv )
     potential[i] = 0.0;
   }
 
-  float *host_x = host_particles;
-  float *host_y = host_particles + PARTICLES_PER_PROC;
-  float *host_z = host_particles + PARTICLES_PER_PROC * 2;
+  double *host_x = host_particles;
+  double *host_y = host_particles + PARTICLES_PER_PROC;
+  double *host_z = host_particles + PARTICLES_PER_PROC * 2;
 
-  float *guest_x = guest_particles;
-  float *guest_y = guest_particles + PARTICLES_PER_PROC;
-  float *guest_z = guest_particles + PARTICLES_PER_PROC * 2;
+  double *guest_x = guest_particles;
+  double *guest_y = guest_particles + PARTICLES_PER_PROC;
+  double *guest_z = guest_particles + PARTICLES_PER_PROC * 2;
 
   // load particles from data file
   load_particles( get_file_name("particle", myid), host_x, host_y, host_z );
@@ -88,8 +88,8 @@ int main( int argc, char** argv )
     if ( k != numprocs - 1)
     {
       // perform a non blocking send and non blocking receive
-      MPI_Irecv( recv_buf, PARTICLES_PER_PROC * 3, MPI_FLOAT, bottom, 1, cart_comm, req );
-      MPI_Isend( send_buf, PARTICLES_PER_PROC * 3, MPI_FLOAT, top, 1, cart_comm, req + 1 );
+      MPI_Irecv( recv_buf, PARTICLES_PER_PROC * 3, MPI_DOUBLE, bottom, 1, cart_comm, req );
+      MPI_Isend( send_buf, PARTICLES_PER_PROC * 3, MPI_DOUBLE, top, 1, cart_comm, req + 1 );
     }  
 
     // perform the gravitational potential calculation for the
@@ -102,7 +102,7 @@ int main( int argc, char** argv )
         // when the guest particles are the host particles
         if ( k != 0 || i != j )
         {
-          float R_ij = distance( host_x[i], guest_x[j], host_y[i], guest_y[j], host_z[i], guest_z[j] );
+          double R_ij = distance( host_x[i], guest_x[j], host_y[i], guest_y[j], host_z[i], guest_z[j] );
           // G, M[i], and M[j] are all assumed to be 1
           potential[i] = potential[i] + 1.0 / R_ij;
         }
@@ -124,21 +124,21 @@ int main( int argc, char** argv )
   if ( mycartid == 0 )
   {
     // allocate space for the potentials from all processors
-    float *all_potential = (float *) malloc( sizeof( float ) * PARTICLES_PER_PROC * numprocs );
+    double *all_potential = (double *) malloc( sizeof( double ) * PARTICLES_PER_PROC * numprocs );
     // copy node 0 potentials into the first section of the all_potential array
     copy_buf( PARTICLES_PER_PROC, potential, all_potential );
 
     // receive potential data from all other nodes
     for ( i = 1 ; i < numprocs ; i++ )
     {
-      MPI_Irecv( all_potential + i * PARTICLES_PER_PROC, PARTICLES_PER_PROC, MPI_FLOAT, i, 2, MPI_COMM_WORLD, req + i - 1 );
+      MPI_Irecv( all_potential + i * PARTICLES_PER_PROC, PARTICLES_PER_PROC, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, req + i - 1 );
     }
 
     MPI_Waitall( numprocs - 1, req, stat );
 
     // calculate particle with maximum and minimum potential
-    float max_potential = all_potential[0];
-    float min_potential = all_potential[0];
+    double max_potential = all_potential[0];
+    double min_potential = all_potential[0];
     for ( i = 0 ; i < PARTICLES_PER_PROC * numprocs ; i++ )
     {
       if ( max_potential < all_potential[i] )
@@ -158,7 +158,7 @@ int main( int argc, char** argv )
   }
   else {
     // all other processors send their potential array to node 0
-    MPI_Isend( potential , PARTICLES_PER_PROC, MPI_FLOAT, 0, 2, MPI_COMM_WORLD, req );
+    MPI_Isend( potential , PARTICLES_PER_PROC, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD, req );
     MPI_Waitall( 1, req, stat );
   }
 
@@ -177,7 +177,7 @@ int main( int argc, char** argv )
   return 0;
 }
 
-void copy_buf( int size, float *src, float *dest )
+void copy_buf( int size, double *src, double *dest )
 {
   int i;
   for ( i = 0 ; i < size ; i++ )

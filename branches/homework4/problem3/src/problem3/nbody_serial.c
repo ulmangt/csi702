@@ -12,10 +12,10 @@ int main( )
   int total = NUM_PROC * PARTICLES_PER_PROC;
 
   // allocates space for all the particles
-  float *x_proc = malloc( sizeof( float ) * total );
-  float *y_proc = malloc( sizeof( float ) * total );
-  float *z_proc = malloc( sizeof( float ) * total );
-  float *potential = malloc( sizeof( float ) * total );
+  double *x_proc = malloc( sizeof( double ) * total );
+  double *y_proc = malloc( sizeof( double ) * total );
+  double *z_proc = malloc( sizeof( double ) * total );
+  double *potential = malloc( sizeof( double ) * total );
 
   // load particles from NUM_PROC files into the _proc arrays
   for ( i = 0 ; i < NUM_PROC ; i++ )
@@ -32,7 +32,7 @@ int main( )
     {
       if ( i != j )
       {
-        float R_ij = distance( x_proc[i], x_proc[j], y_proc[i], y_proc[j], z_proc[i], z_proc[j] );
+        double R_ij = distance( x_proc[i], x_proc[j], y_proc[i], y_proc[j], z_proc[i], z_proc[j] );
         // G, M[i], and M[j] are all assumed to be 1
         potential[i] = potential[i] + 1.0 / R_ij;
       }
@@ -40,8 +40,8 @@ int main( )
   }
 
   // calculate particle with maximum and minimum potential
-  float max_potential = potential[0];
-  float min_potential = potential[0];
+  double max_potential = potential[0];
+  double min_potential = potential[0];
   for ( i = 0 ; i < total ; i++ )
   {
     if ( max_potential < potential[i] )

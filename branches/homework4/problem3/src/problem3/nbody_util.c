@@ -5,14 +5,14 @@
 
 #include "nbody_util.h"
 
-// generate a random float between 0 and 1
+// generate a random double between 0 and 1
 float frand( )
 {
   return ( float ) rand( ) / ( float ) RAND_MAX ;
 }
 
 // calculates the distance between two particles
-float distance( float x1, float y1, float z1, float x2, float y2, float z2 )
+double distance( double x1, double y1, double z1, double x2, double y2, double z2 )
 {
   return sqrt( pow( x1 - x2 , 2.0 ) + pow( y1 - y2 , 2.0 ) + pow( z1 - z2 , 2.0 ) ) ;
 }
@@ -31,7 +31,7 @@ char *get_file_name( char* name_prefix, int num )
 }
 
 // writes the particles in the provided arrays to file_name
-void write_potentials( char *file_name, int num_particles, float *potential )
+void write_potentials( char *file_name, int num_particles, double *potential )
 {
   FILE *file = fopen( file_name, "w" );
 
@@ -62,14 +62,22 @@ void write_particles( char *file_name, int num_particles )
 }
 
 // loads PARTICLES_PER_PROC particles from file_name into the provided arrays
-void load_particles( char *file_name, float *x_pos, float *y_pos, float *z_pos )
+void load_particles( char *file_name, double *x_pos, double *y_pos, double *z_pos )
 {
+  float x;
+  float y;
+  float z;
+
   FILE *file = fopen( file_name, "r" );
 
   int count;
   for ( count = 0 ; count < PARTICLES_PER_PROC ; count++ )
   {
-    int success = fscanf( file, "%f%f%f" , x_pos++, y_pos++, z_pos++ );
+    int success = fscanf( file, "%f%f%f" , &x, &y, &z );
+
+    *x_pos++ = (double) x;
+    *y_pos++ = (double) y;
+    *z_pos++ = (double) z; 
 
     if ( success == EOF )
       break;
