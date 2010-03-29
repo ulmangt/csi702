@@ -6,6 +6,9 @@
 
 #include "sort_util.h"
 
+// maximum amount to grow data array
+#define MAX_GROW 10000
+
 int *calculate_bins( int, int*, int, int );
 
 int main( int argc, char** argv )
@@ -31,8 +34,6 @@ int main( int argc, char** argv )
     exit(0);
   }
 
-  //printf( "id %d of %d\n", myid, numprocs );
-
   MPI_Request *req = (MPI_Request *) malloc( sizeof(MPI_Request) * numprocs );
   MPI_Status *stat = (MPI_Status *) malloc( sizeof(MPI_Status) * numprocs );
 
@@ -50,13 +51,6 @@ int main( int argc, char** argv )
     // set the random seed and generate the random array
     srand( time( NULL ) );
     all_values = generate_random_array( ARRAY_SIZE , MAX_VALUE );
-
-    ///////// TEMPORARY TEST CODE ///////////
-    int *copy_all_values = (int*) malloc( sizeof(int) * ARRAY_SIZE );
-    copy_buf( ARRAY_SIZE, all_values, copy_all_values );
-    serial_sort( copy_all_values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
-    write_array("serial_sorted", ARRAY_SIZE, copy_all_values );
-    ///////// TEMPORARY TEST CODE ///////////
 
     // no need to send our values to ourself, we simply take the first values
     values = all_values;
@@ -76,11 +70,13 @@ int main( int argc, char** argv )
     // calculate bin edges
     bin_edges = calculate_bins( ARRAY_SIZE, all_values, numprocs, SUBSAMPLE );
 
-    printf( "bin edges\n" );
+    printf( "bin edges:\n" );
     print_array( numprocs - 1 , bin_edges );
 
     // send the calculated bins to all nodes
     MPI_Bcast( bin_edges, numprocs - 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+
+    printf( "sent edges\n" );
 
   }
   else
@@ -97,32 +93,50 @@ int main( int argc, char** argv )
   }
 
   // go through all our data and sort it into bins to send to the appropriate processor
-  // for simplicity, create enough space in each processor's bin to hold all the data
   int **all_bin_values = (int **) malloc( sizeof(int *) * numprocs );
   // the current free index into bin_values for each processor
   int *bin_index = (int *) malloc( sizeof(int) * numprocs );
+  // the current size of the bin_values array for each processor
+  int *max_bin_size = (int *) malloc( sizeof(int) * numprocs );
   for ( i = 0 ; i < numprocs ; i++ )
   {
     bin_index[i] = 0;
-    all_bin_values[i] = (int *) malloc( sizeof(int) * ARRAY_SIZE );
+    max_bin_size[i] = 10000;
+    all_bin_values[i] = (int *) malloc( sizeof(int) * 10000 );
   }
 
   // iterate through the nodes data values, placing them into the correct bin
   for ( i = 0 ; i < num_values ; i++ )
   {
     int value = values[i];
-    int index = binary_search( value, numprocs - 1, bin_edges, compare_integers ) + 1;
-    int *bin_values = all_bin_values[index];
-    int free_index = bin_index[index]++;
-    bin_values[free_index] = value;
 
-    //printf( " node %d put value %d in bin %d (free index %d) \n", myid, value, index, free_index );
+    int index = binary_search( value, numprocs - 1, bin_edges, compare_integers ) + 1;
+
+    int *bin_values = all_bin_values[index];
+    
+    int free_index = bin_index[index]++;
+    int max_size = max_bin_size[index];   
+
+    if ( free_index >= max_size )
+    {
+      int new_size = max_size * 2;
+      if ( new_size > max_size + MAX_GROW )
+        new_size = max_size + MAX_GROW;
+
+      all_bin_values[index] = (int *) realloc( all_bin_values[index] , sizeof(int) * new_size );
+      bin_values = all_bin_values[index];
+      max_bin_size[index] = new_size;
+      //printf("realloc proc %d index %d from %d to %d pointer %p\n", myid, index, max_size, new_size, bin_values);
+    }
+
+    bin_values[free_index] = value;
   }
 
   // send binned data to appropriate nodes
   int *my_bin_values = all_bin_values[ myid ];
   int free_index = bin_index[ myid ];
-  int remaining_size = ARRAY_SIZE - free_index;
+  int max_size = max_bin_size[ myid ];
+  
   // loop over nodes, i represents the node each other node is sending to
   for ( i = 0 ; i < numprocs ; i++ )
   {
@@ -133,20 +147,30 @@ int main( int argc, char** argv )
       for ( j = 0, count = 0 ; j < numprocs ; j++ )
       {
         if ( i != j )
-        { 
-          MPI_Recv( my_bin_values + free_index, remaining_size, MPI_INTEGER, j, 2, MPI_COMM_WORLD, stat );
+        {
+          // check how much data is arriving
+          MPI_Probe( j, 2, MPI_COMM_WORLD, stat );
           int num_received;
           MPI_Get_count( stat, MPI_INTEGER, &num_received );
+
+          printf("node %d got %d max %d free %d\n", myid, num_received, max_size, free_index );
+          
+          // allocate space for the incoming data if necessary
+          if ( num_received >= max_size - free_index )
+          {
+            max_size = free_index + num_received;
+            my_bin_values = (int *) realloc( my_bin_values, sizeof(int) * max_size );
+          }
+
+          // receive the data and update the free_index pointer
+          MPI_Recv( my_bin_values + free_index, max_size - free_index, MPI_INTEGER, j, 2, MPI_COMM_WORLD, stat );
           free_index += num_received;
-          remaining_size -= num_received;
-          //printf( "node: %d received from: %d num values: %d\n", i , j , num_received );
         }
       }
     }
     // otherwise, send our binned data for node i
     else
     {
-      //printf( "node: %d sent to: %d num values: %d\n", myid , i , bin_index[i] );
       MPI_Send( all_bin_values[i], bin_index[i], MPI_INTEGER, i, 2, MPI_COMM_WORLD );
     }
   }
@@ -159,35 +183,35 @@ int main( int argc, char** argv )
   // send the sorted bin data back to node 0
   if ( myid == 0 )
   {
-    printf("free %d remaining %d\n", free_index, remaining_size );
+    // allocate enough space for all the values
+    my_bin_values = (int *) realloc( my_bin_values , sizeof(int) * ARRAY_SIZE );
+
     for ( i = 1 ; i < numprocs ; i++ )
     {
-      MPI_Recv( my_bin_values + free_index, remaining_size, MPI_INTEGER, i, 3, MPI_COMM_WORLD, stat );
+      MPI_Recv( my_bin_values + free_index, ARRAY_SIZE - free_index, MPI_INTEGER, i, 3, MPI_COMM_WORLD, stat );
       int num_received;
       MPI_Get_count( stat, MPI_INTEGER, &num_received );
       free_index += num_received;
-      remaining_size -= num_received;
 
       printf( "got data %d from node %d (total %d)\n", num_received, i, free_index);
     }
 
-    ///////// TEMPORARY TEST CODE ///////////
-    // check that final array is sorted
-    int sort_check = check_sorted( ARRAY_SIZE, my_bin_values );
-    if ( sort_check < 1 )
+    int check = check_sorted( ARRAY_SIZE , my_bin_values );
+    if ( check < 0 )
     {
-      printf("WARNING: array not sorted at index %d\n", -sort_check);
+      printf("trouble index %d\n", -check);
     }
-
-    write_array("parallel_sorted", ARRAY_SIZE, my_bin_values );
-    ///////// TEMPORARY TEST CODE ///////////
- 
+    else
+    {
+      printf("sort successful\n");
+    }
   }
   else
   {
     MPI_Send( my_bin_values, free_index, MPI_INTEGER, 0, 3, MPI_COMM_WORLD );
   }
 
+ /* 
   // free allocated memory
   if ( myid == 0 )
   {
@@ -201,6 +225,7 @@ int main( int argc, char** argv )
   free( req );
   free( stat );
   free( bin_edges );
+*/
 
   // shutdown
   MPI_Finalize();
@@ -224,8 +249,6 @@ int *calculate_bins( int size, int* values, int numprocs, int subsample )
     if ( subsample_step < 1 )
       subsample_step = 1;
 
-    printf( "size %d step %d\n", subsample_size, subsample_step );    
-
     int *subsample_values = (int *) malloc( sizeof(int) * subsample_size );
 
     for ( i = 0 ; i < subsample_size ; i++ )
@@ -235,18 +258,12 @@ int *calculate_bins( int size, int* values, int numprocs, int subsample )
 
     serial_sort( subsample_values, 0, subsample_size-1, (int (*)( int , int )) compare_integers );
 
-    //printf("subsample\n");
-    //print_array( subsample_size , subsample );
-
     int *low_bin = (int *) malloc( sizeof(int) * ( numprocs - 1 ) );
 
     for ( i = 0 ; i < numprocs - 1 ; i++ )
     {
-      low_bin[i] = subsample_values[subsample*(i+1)-1];
+      low_bin[i] = subsample_values[subsample/2+subsample*i-1];
     }
-
-    //printf("bin low edges\n");
-    //print_array( numprocs - 1 , low_bin );
 
     return low_bin;
 }
