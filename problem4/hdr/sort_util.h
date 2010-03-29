@@ -1,9 +1,9 @@
 #ifndef SORT_UTIL_H_INCLUDED
 #define SORT_UTIL_H_INCLUDED
 
-#define ARRAY_SIZE 100000000
+#define ARRAY_SIZE 10000000
 #define SUBSAMPLE 64
-#define MAX_VALUE 10000000
+#define MAX_VALUE 1000000
 
 int randn( int );
 

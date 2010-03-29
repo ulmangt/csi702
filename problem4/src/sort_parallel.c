@@ -146,37 +146,35 @@ int main( int argc, char** argv )
   for ( i = 0 ; i < numprocs ; i++ )
   {
     // if we are being sent to, listen to each other node in turn for data
-    if ( myid == i )
+    if ( myid != i )
     {
-      int j, count;
-      for ( j = 0, count = 0 ; j < numprocs ; j++ )
-      {
-        if ( i != j )
-        {
-          // check how much data is arriving
-          MPI_Probe( j, 2, MPI_COMM_WORLD, stat );
-          int num_received;
-          MPI_Get_count( stat, MPI_INTEGER, &num_received );
-
-          printf("node %d got %d max %d free %d\n", myid, num_received, max_size, free_index );
-          
-          // allocate space for the incoming data if necessary
-          if ( num_received >= max_size - free_index )
-          {
-            max_size = free_index + num_received;
-            my_bin_values = (int *) realloc( my_bin_values, sizeof(int) * max_size );
-          }
-
-          // receive the data and update the free_index pointer
-          MPI_Recv( my_bin_values + free_index, max_size - free_index, MPI_INTEGER, j, 2, MPI_COMM_WORLD, stat );
-          free_index += num_received;
-        }
-      }
+      printf("node %d sending %d values to node %d\n", myid, bin_index[i], i);
+      MPI_Isend( all_bin_values[i], bin_index[i], MPI_INTEGER, i, 2, MPI_COMM_WORLD, req + i );
     }
-    // otherwise, send our binned data for node i
-    else
+  }
+
+  int j, count;
+  for ( j = 0, count = 0 ; j < numprocs ; j++ )
+  {
+    if ( myid != j )
     {
-      MPI_Send( all_bin_values[i], bin_index[i], MPI_INTEGER, i, 2, MPI_COMM_WORLD );
+      // check how much data is arriving
+      MPI_Probe( j, 2, MPI_COMM_WORLD, stat );
+      int num_received;
+      MPI_Get_count( stat, MPI_INTEGER, &num_received );
+
+      printf("node %d receiving %d values from node %d (max %d free %d)\n", myid, num_received, j, max_size, free_index );
+          
+      // allocate space for the incoming data if necessary
+      if ( num_received >= max_size - free_index )
+      {
+        max_size = free_index + num_received;
+        my_bin_values = (int *) realloc( my_bin_values, sizeof(int) * max_size );
+      }
+
+      // receive the data and update the free_index pointer
+      MPI_Recv( my_bin_values + free_index, max_size - free_index, MPI_INTEGER, j, 2, MPI_COMM_WORLD, stat );
+      free_index += num_received;
     }
   }
 
