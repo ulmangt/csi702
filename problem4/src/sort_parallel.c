@@ -6,7 +6,10 @@
 
 #include "sort_util.h"
 
-// maximum amount to grow data array
+// Data arrays are realloced dynamically because
+// each node does not know how much data it will
+// end up with. When an array grows, it grows by
+// at most this amount.
 #define MAX_GROW 10000
 
 int *calculate_bins( int, int*, int, int );
@@ -75,9 +78,6 @@ int main( int argc, char** argv )
 
     // send the calculated bins to all nodes
     MPI_Bcast( bin_edges, numprocs - 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
-
-    printf( "sent edges\n" );
-
   }
   else
   {
@@ -93,40 +93,45 @@ int main( int argc, char** argv )
   }
 
   // go through all our data and sort it into bins to send to the appropriate processor
+
+  // store an array for each processor, these are the bins we will sort our data into
   int **all_bin_values = (int **) malloc( sizeof(int *) * numprocs );
-  // the current free index into bin_values for each processor
+
+  // the number of data values in each processor's bin
   int *bin_index = (int *) malloc( sizeof(int) * numprocs );
-  // the current size of the bin_values array for each processor
+
+  // the maximum size allocated for each processor's bin
   int *max_bin_size = (int *) malloc( sizeof(int) * numprocs );
+
+  // allocate memory for each bin
   for ( i = 0 ; i < numprocs ; i++ )
   {
     bin_index[i] = 0;
-    max_bin_size[i] = 10000;
-    all_bin_values[i] = (int *) malloc( sizeof(int) * 10000 );
+    max_bin_size[i] = values_per_proc;
+    all_bin_values[i] = (int *) malloc( sizeof(int) * values_per_proc );
   }
 
   // iterate through the nodes data values, placing them into the correct bin
   for ( i = 0 ; i < num_values ; i++ )
   {
+    // get the next data value
     int value = values[i];
 
+    // perform a binary search through the bins to determine where to place the data value
     int index = binary_search( value, numprocs - 1, bin_edges, compare_integers ) + 1;
 
+    // get the proper bin based on its index
     int *bin_values = all_bin_values[index];
-    
     int free_index = bin_index[index]++;
     int max_size = max_bin_size[index];   
 
+    // if there is not enough space in the bin extend it
     if ( free_index >= max_size )
     {
-      int new_size = max_size * 2;
-      if ( new_size > max_size + MAX_GROW )
-        new_size = max_size + MAX_GROW;
-
+      int new_size = max_size + MAX_GROW;
       all_bin_values[index] = (int *) realloc( all_bin_values[index] , sizeof(int) * new_size );
       bin_values = all_bin_values[index];
       max_bin_size[index] = new_size;
-      //printf("realloc proc %d index %d from %d to %d pointer %p\n", myid, index, max_size, new_size, bin_values);
     }
 
     bin_values[free_index] = value;
