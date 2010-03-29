@@ -1,0 +1,7 @@
+serial
+61.756 sec
+100,000,000 elements (10,000,000 max value)
+
+parallel (20 nodes on single 4 core machine)
+28.374 sec
+100,000,000 elements (10,000,000 max value)
