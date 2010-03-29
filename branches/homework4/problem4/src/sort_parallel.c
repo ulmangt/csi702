@@ -216,7 +216,6 @@ int main( int argc, char** argv )
     MPI_Send( my_bin_values, free_index, MPI_INTEGER, 0, 3, MPI_COMM_WORLD );
   }
 
- /* 
   // free allocated memory
   if ( myid == 0 )
   {
@@ -227,10 +226,21 @@ int main( int argc, char** argv )
     free( values );
   }
 
+  free( bin_index );
+  free( max_bin_size );
+
+/*
+  for ( i = 0 ; i < numprocs ; i++ )
+  {
+    free( all_bin_values[i] );
+  }
+
+  free( all_bin_values );
+*/
+
   free( req );
   free( stat );
   free( bin_edges );
-*/
 
   // shutdown
   MPI_Finalize();
