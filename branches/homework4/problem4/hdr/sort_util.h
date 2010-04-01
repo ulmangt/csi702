@@ -1,7 +1,7 @@
 #ifndef SORT_UTIL_H_INCLUDED
 #define SORT_UTIL_H_INCLUDED
 
-#define ARRAY_SIZE 1000000
+#define ARRAY_SIZE 250000000
 #define SUBSAMPLE 64
 #define MAX_VALUE 10000000
 #define UNSORTED_NAME "unsorted_list"
