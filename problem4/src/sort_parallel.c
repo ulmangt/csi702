@@ -33,7 +33,9 @@ int main( int argc, char** argv )
   // special case the 1 processor (i.e. serial) case
   if ( numprocs == 1 )
   {
-    all_values = read_array( UNSORTED_NAME, ARRAY_SIZE );
+    // read data to sort from a file, the commented line generates data randomly
+    all_values = generate_random_array( ARRAY_SIZE, MAX_VALUE );
+    //all_values = read_array( UNSORTED_NAME, ARRAY_SIZE );
     serial_sort( all_values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
     print_array( ARRAY_SIZE, values );
     exit(0);
@@ -53,7 +55,9 @@ int main( int argc, char** argv )
   // divide the data among the processors
   if ( myid == 0 )
   {
-    all_values = read_array( UNSORTED_NAME, ARRAY_SIZE );
+    // read data to sort from a file, the commented line generates data randomly
+    all_values = generate_random_array( ARRAY_SIZE, MAX_VALUE );
+    //all_values = read_array( UNSORTED_NAME, ARRAY_SIZE );
 
     // no need to send our values to ourself, we simply take the first values
     values = all_values;
@@ -69,6 +73,8 @@ int main( int argc, char** argv )
     
     // wait for all the nodes to receive their data
     MPI_Waitall( numprocs-1, req, stat );
+
+    printf( "sent all data\n" );
 
     // calculate bin edges
     bin_edges = calculate_bins( ARRAY_SIZE, all_values, numprocs, SUBSAMPLE );

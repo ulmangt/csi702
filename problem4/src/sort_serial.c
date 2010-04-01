@@ -8,7 +8,9 @@ int main( int argc, char** argv )
 {
   srand( time( NULL ) );
 
+  // read data to sort from a file, the commented line generates data randomly
   int *values = read_array( UNSORTED_NAME, ARRAY_SIZE );
+  //int *values = generate_random_array( ARRAY_SIZE, MAX_VALUE );
 
   serial_sort( values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
 
