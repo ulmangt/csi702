@@ -8,7 +8,9 @@ int main( int argc, char** argv )
 {
   srand( time( NULL ) );
 
-  int *values = generate_random_array( ARRAY_SIZE , MAX_VALUE );
+  int values[ ARRAY_SIZE ];
+
+  read_array( UNSORTED_NAME, values, ARRAY_SIZE );
 
   serial_sort( values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
 
@@ -22,5 +24,6 @@ int main( int argc, char** argv )
     printf("sort successful\n" );
   }
 
-  free( values );
+  // write out the sorted array for verification
+  write_array( "serial_sorted_list", values, ARRAY_SIZE );
 }

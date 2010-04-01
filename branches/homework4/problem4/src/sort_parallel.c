@@ -16,6 +16,9 @@ int *calculate_bins( int, int*, int, int );
 
 int main( int argc, char** argv )
 {
+  // set the random seed
+  srand( time( NULL ) );
+
   int i;
   int *all_values;
   int *values;
@@ -30,8 +33,8 @@ int main( int argc, char** argv )
   // special case the 1 processor (i.e. serial) case
   if ( numprocs == 1 )
   {
-    srand( time( NULL ) );
-    all_values = generate_random_array( ARRAY_SIZE , MAX_VALUE );
+    all_values = (int *) malloc( sizeof(int) * ARRAY_SIZE );
+    read_array( UNSORTED_NAME, all_values, ARRAY_SIZE );
     serial_sort( all_values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
     print_array( ARRAY_SIZE, values );
     exit(0);
@@ -51,9 +54,8 @@ int main( int argc, char** argv )
   // divide the data among the processors
   if ( myid == 0 )
   {
-    // set the random seed and generate the random array
-    srand( time( NULL ) );
-    all_values = generate_random_array( ARRAY_SIZE , MAX_VALUE );
+    all_values = (int *) malloc( sizeof(int) * ARRAY_SIZE );
+    read_array( UNSORTED_NAME, all_values, ARRAY_SIZE );
 
     // no need to send our values to ourself, we simply take the first values
     values = all_values;
@@ -208,6 +210,9 @@ int main( int argc, char** argv )
     {
       printf("sort successful\n");
     }
+
+    // write out the sorted array for verification
+    write_array( "parallel_sorted_list", my_bin_values, ARRAY_SIZE );
   }
   else
   {

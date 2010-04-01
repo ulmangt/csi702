@@ -22,20 +22,6 @@ int *generate_random_array( int size , int n )
   return r;
 }
 
-// writes the specified file to file_name
-void write_array( char *file_name, int size, int *values )
-{
-  FILE *file = fopen( file_name, "w" );
-
-  int i;
-  for ( i = 0 ; i < size ; i++ )
-  {
-    fprintf( file, "%d\n", values[i] );
-  }
-
-  close( file );
-}
-
 // prints the values in the provided array to stdout
 void print_array( int size, int *values )
 {
@@ -184,4 +170,34 @@ void copy_buf( int size, int *src, int *dest )
   {
     dest[i] = src[i];
   }
+}
+
+
+void write_array( char *file_name, int *array, int size )
+{
+  FILE *file = fopen( file_name, "w" );
+
+  int count;
+
+  for ( count = 0 ; count < size ; count++ )
+  {
+    fprintf( file, "%d\n", array[count] );
+  }
+  
+  close( file );
+}
+
+void read_array( char *file_name, int *array, int size )
+{
+  FILE *file = fopen( file_name, "r" );
+
+  int value;
+  int count;
+  for ( count = 0 ; count < size ; count++ )
+  {
+    if ( fscanf( file, "%d" , array++ ) == EOF )
+      break;
+  }
+
+  close( file );
 }
