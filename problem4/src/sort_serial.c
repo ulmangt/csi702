@@ -8,9 +8,7 @@ int main( int argc, char** argv )
 {
   srand( time( NULL ) );
 
-  int values[ ARRAY_SIZE ];
-
-  read_array( UNSORTED_NAME, values, ARRAY_SIZE );
+  int *values = read_array( UNSORTED_NAME, ARRAY_SIZE );
 
   serial_sort( values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
 

@@ -25,6 +25,6 @@ int binary_search( int, int, int* , int (*)( int , int ) );
 void copy_buf( int, int*, int* );
 
 void write_array( char*, int*, int );
-void read_array( char*, int*, int );
+int* read_array( char*, int );
 
 #endif

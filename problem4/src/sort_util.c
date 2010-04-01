@@ -187,9 +187,10 @@ void write_array( char *file_name, int *array, int size )
   close( file );
 }
 
-void read_array( char *file_name, int *array, int size )
+int* read_array( char *file_name, int size )
 {
   FILE *file = fopen( file_name, "r" );
+  int *array = (int *) malloc( sizeof(int) * size );
 
   int value;
   int count;
