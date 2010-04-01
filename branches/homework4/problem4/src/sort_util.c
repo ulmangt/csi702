@@ -196,9 +196,11 @@ int* read_array( char *file_name, int size )
   int count;
   for ( count = 0 ; count < size ; count++ )
   {
-    if ( fscanf( file, "%d" , array++ ) == EOF )
+    if ( fscanf( file, "%d" , array + count ) == EOF )
       break;
   }
 
   close( file );
+
+  return array;
 }

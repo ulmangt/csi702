@@ -26,7 +26,9 @@ Debugging my parallel implementation was also quite difficult. My communication 
 
 After fixing the bugs described above, my parallel implementation worked, but was quite slow. For simplicity, I was using far too much synchronous communication. My first implementation had the nodes sending their binned data to each other essentially one node at a time. The current implementation has all the nodes send their binned data to all other nodes asynchronously.
 
-Finally, this problem was the first time that I had worked with variable sized messages in MPI, so I had to familiaraize myself for some of the functions for retrieving data from \verb!MPI_Request! and \verb!MPI_Status! objects as well as think through the logic necessary to combine the data from multiple variable sized messages into a single array. 
+This problem was the first time that I had worked with variable sized messages in MPI, so I had to familiaraize myself for some of the functions for retrieving data from \verb!MPI_Request! and \verb!MPI_Status! objects as well as think through the logic necessary to combine the data from multiple variable sized messages into a single array. 
+
+Finally, I was not able to profile the code for arrays larger than \(10^9\) because the messages I was attempting to send exceeded the maximum message size. To experiment further with such large data sets would have required even more complicated algorithms to split up messages as they got too large. 
 
 \section{MPI Commands}
 Like all MPI programs, the commands \verb!MPI_Init!, \verb!MPI_Comm_size!, \verb!MPI_Comm_rank!, and \verb!MPI_Finalize! were used to initialize and get basic information about the MPI environment. Unsorted segments of data was distributed to nodes using \verb!MPI_Isend! and \verb!MPI_Waitall! was used by node 0 to wait for the sends to complete. Because binning was calculated on the host node, \verb!MPI_Bcast! was used to distribute the bin edges to the other nodes. Data was sent using \verb!MPI_Isend! and both \verb!MPI_Irecv! and \verb!MPI_Recv! were used for receving data. Synchronous receives were used when receving unknown quantities of data from multiple nodes. This greatly simplified the task of collecting the data into a single array for processing. \verb!MPI_Probe! and \verb!MPI_Get_count! were also very important for handling messages of unknown size.
@@ -35,14 +37,18 @@ Like all MPI programs, the commands \verb!MPI_Init!, \verb!MPI_Comm_size!, \verb
 
 \begin{figure}
 \centering
-\includegraphics[width=0.6\textwidth]{img/timing_data_variable_particles.png}
-\caption{Parallel and Serial Timing Results for Variable Particle Count}
+\includegraphics[width=0.6\textwidth]{img/comparison1.png}
+\caption{Parallel and Serial Timing Results for Variable Array Size}
 \label{chart1}
 \end{figure}
+
+Figure \ref{chart1} compares the runtime of the parallel and serial sort codes on unsorted arrays ranging from \(10^6\) to \(10^8\) elements in size. Smaller arrays sorted too quickly to be interesting and larger arrays ran into memory and message size limits. Of particular note is the fact that for problems smaller than \(10^6\) elements, the serial code is significantly faster because of the MPI startup and communications overhead. The parallel runs in Figure \ref{chart1} were run on a single quad core machine using 20 MPI nodes.
 
 
 \section{Output Comparison}
 \label{outputcomp}
+
+Because this code sorts integer values, there are no floating point precision concerns like with the n-body gravitational potential problem. Thus, in every test case which I have run, the output of the parallel and serial codes have been identical.
 
 \begin{thebibliography}{9}
 
