@@ -1,0 +1,35 @@
+
+===============
+== Compiling ==
+===============
+
+Open a command prompt and type:
+
+make
+
+This will generate three executables in the bin directory.
+
+
+===============
+== Running   ==
+===============
+
+Open a command prompt and type:
+
+bin/nbody_gen_particles
+
+This will generate data input files named particleXX.
+
+
+To run the serial code type:
+
+bin/nbody_serial
+
+The maximum and minimum potentials will be printed and the potentials for all the particles saved to a file named "potential".
+
+
+To run the parallel code type:
+
+mpirun -np 10 bin/nbody_parallel
+
+The maximum and minimum potentials will be printed and the potentials for all the particles saved to a file named "potential_parallel".
