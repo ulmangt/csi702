@@ -34,8 +34,8 @@ int main( int argc, char** argv )
   if ( numprocs == 1 )
   {
     // read data to sort from a file, the commented line generates data randomly
-    //all_values = read_array( UNSORTED_NAME, ARRAY_SIZE );
-    all_values = generate_random_array( ARRAY_SIZE, MAX_VALUE );
+    all_values = read_array( UNSORTED_NAME, ARRAY_SIZE );
+    //all_values = generate_random_array( ARRAY_SIZE, MAX_VALUE );
     serial_sort( all_values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
     print_array( ARRAY_SIZE, values );
     exit(0);
