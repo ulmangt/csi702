@@ -48,20 +48,20 @@ int main( int argc, char** argv )
   int values_per_proc = ARRAY_SIZE / numprocs;
   // if there are any extra values, they go on node 0
   int extra_values = ARRAY_SIZE % numprocs;
-  // the actual number of values on this proc (either 
-  // values_per_proc or values_per_proc + extra_values
   int num_values;
 
   // divide the data among the processors
   if ( myid == 0 )
   {
     // read data to sort from a file, the commented line generates data randomly
-    //all_values = read_array( UNSORTED_NAME, ARRAY_SIZE );
-    all_values = generate_random_array( ARRAY_SIZE, MAX_VALUE );
+    all_values = read_array( UNSORTED_NAME, ARRAY_SIZE );
+    //all_values = generate_random_array( ARRAY_SIZE, MAX_VALUE );
 
     // no need to send our values to ourself, we simply take the first values
     values = all_values;
 
+    // the actual number of values on this proc (either 
+    // values_per_proc or values_per_proc + extra_values
     num_values = values_per_proc + extra_values;
 
     // send sections of the array to each proc
@@ -74,8 +74,6 @@ int main( int argc, char** argv )
     // wait for all the nodes to receive their data
     MPI_Waitall( numprocs-1, req, stat );
 
-    printf( "sent all data\n" );
-
     // calculate bin edges
     bin_edges = calculate_bins( ARRAY_SIZE, all_values, numprocs, SUBSAMPLE );
 
@@ -87,6 +85,8 @@ int main( int argc, char** argv )
   }
   else
   {
+    // the actual number of values on this proc (either 
+    // values_per_proc or values_per_proc + extra_values
     num_values = values_per_proc;
 
     // listen for our portion of the array being sent from node 0
@@ -140,6 +140,7 @@ int main( int argc, char** argv )
       max_bin_size[index] = new_size;
     }
 
+    // place the data element in the bin
     bin_values[free_index] = value;
   }
 
@@ -159,6 +160,7 @@ int main( int argc, char** argv )
     }
   }
 
+  // receive binned data from other nodes
   int j, count;
   for ( j = 0, count = 0 ; j < numprocs ; j++ )
   {
@@ -205,6 +207,7 @@ int main( int argc, char** argv )
       printf( "got data %d from node %d (total %d)\n", num_received, i, free_index);
     }
 
+    // verify that the array is sorted
     int check = check_sorted( ARRAY_SIZE , my_bin_values );
     if ( check < 0 )
     {
@@ -216,7 +219,7 @@ int main( int argc, char** argv )
     }
 
     // write out the sorted array for verification
-    //write_array( "parallel_sorted_list", my_bin_values, ARRAY_SIZE );
+    write_array( "parallel_sorted_list", my_bin_values, ARRAY_SIZE );
   }
   else
   {
@@ -261,16 +264,20 @@ int *calculate_bins( int size, int* values, int numprocs, int subsample )
 {
     int i;
 
+    // determine the number of elements to choose from the entire array
     int subsample_size = subsample * ( numprocs - 1 );
 
     if ( subsample_size > size )
       subsample_size = size;
 
+    // to choose subsample_size values from the unsorted array, step through
+    // the array, skipping subsample_step elements each step
     int subsample_step = size / subsample_size;
 
     if ( subsample_step < 1 )
       subsample_step = 1;
 
+    // choose the subsample values
     int *subsample_values = (int *) malloc( sizeof(int) * subsample_size );
 
     for ( i = 0 ; i < subsample_size ; i++ )
@@ -278,8 +285,10 @@ int *calculate_bins( int size, int* values, int numprocs, int subsample )
       subsample_values[i] = values[subsample_step*i];
     }
 
+    // sort the subsample values
     serial_sort( subsample_values, 0, subsample_size-1, (int (*)( int , int )) compare_integers );
 
+    // choose the bin edges
     int *low_bin = (int *) malloc( sizeof(int) * ( numprocs - 1 ) );
 
     for ( i = 0 ; i < numprocs - 1 ; i++ )

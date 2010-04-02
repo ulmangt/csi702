@@ -4,6 +4,7 @@
 
 #include "sort_util.h"
 
+// a simple utility function for generating a sorted array and outputting it to a file
 int main( int argc, char** argv )
 {
   srand( time( NULL ) );

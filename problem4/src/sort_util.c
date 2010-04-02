@@ -117,6 +117,7 @@ int partition( int* values, int low, int high, int (*comp)( int , int ) )
   return pivot;
 }
 
+// passed as a function pointer into partition and binary_search functions
 int compare_integers( int i1, int i2 )
 {
   if ( i1 < i2 ) return -1;
@@ -172,7 +173,7 @@ void copy_buf( int size, int *src, int *dest )
   }
 }
 
-
+// write the provided array of integers to file_name
 void write_array( char *file_name, int *array, int size )
 {
   FILE *file = fopen( file_name, "w" );
@@ -187,6 +188,7 @@ void write_array( char *file_name, int *array, int size )
   close( file );
 }
 
+// read an array of integers of the specified size from file_name
 int* read_array( char *file_name, int size )
 {
   FILE *file = fopen( file_name, "r" );
