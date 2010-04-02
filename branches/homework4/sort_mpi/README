@@ -1,0 +1,35 @@
+
+===============
+== Compiling ==
+===============
+
+Open a command prompt and type:
+
+make
+
+This will generate three executables in the bin directory.
+
+
+===============
+== Running   ==
+===============
+
+Open a command prompt and type:
+
+bin/gen_unsorted_list
+
+This will generate a file named "unsorted_list" with a unsorted array of integer values.
+
+
+To run the serial code type:
+
+bin/sort_serial
+
+The code will generated a sorted output file named "serial_sorted_list".
+
+
+To run the parallel code type:
+
+mpirun -np 10 bin/sort_parallel
+
+The code will generated a sorted output file named "parallel_sorted_list".
