@@ -65,3 +65,111 @@ __global__ void init_particle_val( float *d_x_pos, float *d_y_pos, float *d_x_ve
 
   d_seed[index] = seed;
 }
+
+
+// particles in host memory
+float *h_x_pos; // meters
+float *h_y_pos; // meters
+float *h_x_vel; // meters/second
+float *h_y_vel; // meters/second
+float *h_weight;
+float *h_seed; // random seed for particle
+
+// particles in device memory
+float *d_x_pos; // meters
+float *d_y_pos; // meters
+float *d_x_vel; // meters/second
+float *d_y_vel; // meters/second
+float *d_weight;
+float *d_seed; // random seed for particle
+
+
+
+extern "C" void h_init_seed( int num )
+{
+  int i;
+
+  for ( i = 0 ; i < num ; i++ )
+  {
+    h_seed[i] = rand();
+  }
+}
+
+extern "C" void copy_particles_host_to_device( int num )
+{
+  int size = sizeof( float ) * num;
+
+  cudaMemcpy( h_x_pos, d_x_pos, size, cudaMemcpyHostToDevice );
+  cudaMemcpy( h_y_pos, d_y_pos, size, cudaMemcpyHostToDevice );
+  cudaMemcpy( h_x_vel, d_x_vel, size, cudaMemcpyHostToDevice );
+  cudaMemcpy( h_y_vel, d_y_vel, size, cudaMemcpyHostToDevice );
+  cudaMemcpy( h_weight, d_weight, size, cudaMemcpyHostToDevice );
+  cudaMemcpy( h_seed, d_seed, size, cudaMemcpyHostToDevice );
+}
+
+extern "C" void copy_particles_device_to_host( int num )
+{
+  int size = sizeof( float ) * num;
+
+  cudaMemcpy( h_x_pos, d_x_pos, size, cudaMemcpyDeviceToHost );
+  cudaMemcpy( h_y_pos, d_y_pos, size, cudaMemcpyDeviceToHost );
+  cudaMemcpy( h_x_vel, d_x_vel, size, cudaMemcpyDeviceToHost );
+  cudaMemcpy( h_y_vel, d_y_vel, size, cudaMemcpyDeviceToHost );
+  cudaMemcpy( h_weight, d_weight, size, cudaMemcpyDeviceToHost );
+  cudaMemcpy( h_seed, d_seed, size, cudaMemcpyDeviceToHost );
+}
+
+// allocate memory for num particles on host
+extern "C" void h_init_particle_mem( int num )
+{
+  int size = sizeof( float ) * num;
+
+  h_x_pos  = ( float* ) malloc( size );
+  h_y_pos  = ( float* ) malloc( size );
+  h_x_vel  = ( float* ) malloc( size );
+  h_y_vel  = ( float* ) malloc( size );
+  h_weight = ( float* ) malloc( size );
+  h_seed = ( float* ) malloc( size );
+}
+
+// allocate memory for num particles on device
+extern "C" void d_init_particle_mem( int num )
+{
+  int size = sizeof( float ) * num;
+
+  cudaMalloc( (void **) &d_x_pos, size );
+  cudaMalloc( (void **) &d_y_pos, size );
+  cudaMalloc( (void **) &d_x_vel, size );
+  cudaMalloc( (void **) &d_y_vel, size );
+  cudaMalloc( (void **) &d_weight, size );
+  cudaMalloc( (void **) &d_seed, size );
+}
+
+// free particle memory on host
+extern "C" void h_free_particle_mem( )
+{
+  free( h_x_pos );
+  free( h_y_pos );
+  free( h_x_vel );
+  free( h_y_vel );
+  free( h_weight );
+  free( h_seed );
+}
+
+// free particle memory on device
+extern "C" void d_free_particle_mem( )
+{
+  cudaFree( d_x_pos );
+  cudaFree( d_y_pos );
+  cudaFree( d_x_vel );
+  cudaFree( d_y_vel );
+  cudaFree( d_weight );
+  cudaFree( d_seed );
+}
+
+
+
+
+
+
+
