@@ -4,6 +4,7 @@
 
 #include "nbody_util.h"
 
+// generate NUM_PROC files containing PARTICLES_PER_PROC randomly generated particles
 int main( )
 {
   // initialize random seed

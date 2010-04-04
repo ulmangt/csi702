@@ -18,8 +18,6 @@ int main( int argc, char** argv )
   MPI_Comm_size( MPI_COMM_WORLD, &numprocs );
   MPI_Comm_rank( MPI_COMM_WORLD, &myid );
 
-  //printf( "id %d of %d\n", myid, numprocs );
-
   // create a 1 dimensional periodic cartesian grid
   // with numprocs nodes and store in cart_comm
   MPI_Comm cart_comm;
@@ -57,6 +55,8 @@ int main( int argc, char** argv )
     potential[i] = 0.0;
   }
 
+  // x, y, and z components of the particles are stored in various sections
+  // of the host and guest particles array
   double *host_x = host_particles;
   double *host_y = host_particles + PARTICLES_PER_PROC;
   double *host_z = host_particles + PARTICLES_PER_PROC * 2;
@@ -177,6 +177,7 @@ int main( int argc, char** argv )
   return 0;
 }
 
+// copy size elements from src array into dest array
 void copy_buf( int size, double *src, double *dest )
 {
   int i;
