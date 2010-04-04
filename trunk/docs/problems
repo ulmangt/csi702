@@ -5,6 +5,8 @@ forced implemenation of linear congruential random number generator
 
 hard to write clean code because of reuse limitations
 
+learning how to properly decompose code is hard -- similar to issues with cell -- you're writing and compiling in 2 languages -- makes build process difficult
+
 Error: External calls are not supported (found non-inlined call to _Z12device_frandiff)
 (device functions called from kernel are inlined, semantics on what is able to be inlined is unclear -- does this mean code has to be in a single file?)
 
@@ -13,3 +15,6 @@ Error: External calls are not supported (found non-inlined call to _Z12device_fr
 
 http://gpuray.blogspot.com/2009/07/compiling-cuda-projects.html
 (example of old guides, even a year old compilers and libries have changed)
+
+
+making makefile portable hard -- sdk examples provide build scripts, but they are overly complicated for simple purposes (or for learning the libraries/build path) they present too many options/configurability at once
