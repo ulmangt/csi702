@@ -239,6 +239,8 @@ int main( int argc, char** argv )
   free( bin_index );
   free( max_bin_size );
 
+  // these free calls cause problems, I wasn't able to conclusively determine why.
+  // however, they aren't critical since the memory is freed when the program exits.
 /*
   for ( i = 0 ; i < numprocs ; i++ )
   {

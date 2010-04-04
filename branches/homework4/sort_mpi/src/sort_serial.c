@@ -13,7 +13,8 @@ int main( int argc, char** argv )
   int *values = read_array( UNSORTED_NAME, ARRAY_SIZE );
   //int *values = generate_random_array( ARRAY_SIZE, MAX_VALUE );
 
-  // binary sort the values array
+  // binary sort the values array, for the details of the serial sort
+  // implementation, see sort_util.c
   serial_sort( values, 0, ARRAY_SIZE-1, (int (*)( int , int )) compare_integers );
 
   // verify that the list has been sorted
