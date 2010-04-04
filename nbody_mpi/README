@@ -37,6 +37,8 @@ The maximum and minimum potentials will be printed and the potentials for all th
 
 To run the parallel code type:
 
-mpirun -np 10 bin/nbody_parallel
+mpirun -np XX bin/nbody_parallel
+
+XX should generally be equal to the number of particleXX files generated using nbody_gen_particles. The number of particle files generated is defined by NUM_PROC in hdr/nbody_util.h
 
 The maximum and minimum potentials will be printed and the potentials for all the particles saved to a file named "potential_parallel".
