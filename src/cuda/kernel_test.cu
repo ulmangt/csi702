@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "kernel_test_helper.h"
+
 __global__ void myFirstKernel( int* d_a )
 {
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
-	d_a[index] = blockIdx.x * 1000 + threadIdx.x;
+	d_a[index] = multiplyBy1000(blockIdx.x) + threadIdx.x;
 }
 
 extern "C" void checkCUDAError(const char *msg)

@@ -12,9 +12,9 @@
 #define result_bits 31
 
 // bit mask the least significant m bits
-const extern long mask = ( 1L << mask_bits ) - 1;
+const long mask = ( 1L << mask_bits ) - 1;
 
-const extern int LCG_RAND_MAX = ( 1 << result_bits ) - 1;
+const int LCG_RAND_MAX = ( 1 << result_bits ) - 1;
 
 __device__ int device_lcg_rand( int );
 __device__ float device_frand0( int, float );
