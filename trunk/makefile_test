@@ -1,9 +1,12 @@
 
-cuda_test: host_test.o kernel_test.o
-	nvcc -I hdr -lm src/cuda/host_test.o src/cuda/kernel_test.o -o bin/cuda_test
+cuda_test: host_test.o kernel_test.o kernel_test_helper.o
+	nvcc -I hdr -lm src/cuda/host_test.o src/cuda/kernel_test.o src/cuda/kernel_test_helper.o -o bin/cuda_test
 
 host_test.o:
 	gcc -I hdr -lm -c src/cuda/host_test.c -o src/cuda/host_test.o
+
+kernel_test_helper.o:
+	gcc -I hdr -lm -c src/cuda/kernel_test_helper.c -o src/cuda/kernel_test_helper.o
 
 kernel_test.o:
 	nvcc -I hdr -lm -c src/cuda/kernel_test.cu -o src/cuda/kernel_test.o

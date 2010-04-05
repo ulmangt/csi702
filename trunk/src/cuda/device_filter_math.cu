@@ -1,4 +1,48 @@
+
 #include "device_filter_math.h"
+#include "cuda_util.h"
+
+// CUDA kernel function : initialize a particle
+__global__ void init_particle_val( float max_range, float max_vel,
+                                   float *d_x_pos, float *d_y_pos,
+                                   float *d_x_vel, float *d_y_vel,
+                                   float *d_weight, float *d_seed )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  int seed = d_seed[index];
+
+  d_x_pos[index]  = device_frand( seed, -max_range, max_range );
+  seed = device_lcg_rand( seed );
+  d_y_pos[index]  = device_frand( seed, -max_range, max_range );
+  seed = device_lcg_rand( seed );
+  d_x_vel[index]  = device_frand( seed, -max_vel, max_vel );
+  seed = device_lcg_rand( seed );
+  d_y_vel[index]  = device_frand( seed, -max_vel, max_vel );
+  seed = device_lcg_rand( seed );
+  d_weight[index] = 1.0;
+
+  d_seed[index] = seed;
+}
+
+extern "C" void init_particles( int numBlocks, int numThreadsPerBlock,
+                           float max_range, float max_vel,
+                           float *d_x_pos, float *d_y_pos,
+                           float *d_x_vel, float *d_y_vel,
+                           float *d_weight, float *d_seed )
+{
+  // launch kernel
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(numThreadsPerBlock);
+  init_particle_val<<< dimGrid, dimBlock >>>( max_range, max_vel, d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the init_particle_val kernel generated errors
+  //checkCUDAError("init_particle_val");
+}
+
 
 // implementation based on examples from:
 // http://en.wikipedia.org/wiki/Linear_congruential_generator
