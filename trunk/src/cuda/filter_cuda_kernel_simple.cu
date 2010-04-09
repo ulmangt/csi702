@@ -1,3 +1,6 @@
+#import <stdlib.h>
+
+#include "cuda_test.h"
 
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
@@ -93,6 +96,13 @@ extern "C" void h_init_seed( int num )
   {
     h_seed[i] = rand();
   }
+}
+
+extern "C" void copy_particles_host_to_device2( struct particles *host, struct particles *device, int num )
+{
+  int size = sizeof( struct particles ) * num;
+
+  cudaMemcpy( host, device, size, cudaMemcpyHostToDevice );
 }
 
 extern "C" void copy_particles_host_to_device( int num )
