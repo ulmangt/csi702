@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "cuda_test.h"
+#include "filter_cuda_data.h"
 
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second

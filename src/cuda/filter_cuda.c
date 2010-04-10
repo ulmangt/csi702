@@ -7,8 +7,8 @@
 #include "filter_io.h"
 #include "convert.h"
 
-#include "cuda_test.h"
-#include "cuda_test_functions.h"
+#include "filter_cuda_kernels.h"
+#include "filter_cuda_data.h"
 
 #define NUM_PARTICLES 32
 
