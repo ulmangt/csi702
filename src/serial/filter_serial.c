@@ -6,19 +6,7 @@
 #include "filter_math.h"
 #include "filter_io.h"
 #include "convert.h"
-
-#define NUM_PARTICLES 100000
-#define MAX_RANGE 20000 // meters
-#define MAX_VEL 15 // meters per second
-
-#define MAX_POS_PERTURB 1000.0 // meters
-#define MAX_VEL_PERTURB    2.0 // meters per second
-
-#define MEAN_MANEUVER_TIME 3600 // seconds
-
-#define INITIAL_MAX_WAYPOINTS 10
-
-#define OUTPUT_NAME "particles.out"
+#include "filter_constants.h"
 
 float *x_pos; // meters
 float *y_pos; // meters
@@ -49,8 +37,10 @@ void print_particle( int );
 
 int main( int argc, char* argv )
 {
+  // initialize random seed
   srand( time( NULL ) );
 
+  // read waypoint lists for sensor and target
   struct waypoint_list *waypoints1 = read_waypoints( "data/waypoints1.txt" );
   struct waypoint_list *waypoints2 = read_waypoints( "data/waypoints2.txt" );
 
@@ -60,12 +50,15 @@ int main( int argc, char* argv )
   printf("Target Waypoints:\n");
   print_waypoints( waypoints2 );
 
+  // generate errored range and azimuth observations based on the waypoints
   struct observation_list *range_obs_list = generate_observations( waypoints1, waypoints2, 2, 100, 0.0, 500.0, 2000.0 );
   struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
   struct observation_list *obs_list = combine_observations( range_obs_list, azimuth_obs_list );
+  
   printf("Observations:\n");
   print_observations( obs_list );
 
+  // allocate particle memory and initialize state
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
 
