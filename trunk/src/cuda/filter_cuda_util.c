@@ -27,3 +27,20 @@ void print_particles( struct particles *list, int num, int downsample )
     print_particle( list+i );
   }
 }
+
+// writes the current set of particles out to disk as
+// a tab delimited text file
+void write_particles( struct particles *list, char* out_name, int num, int downsample )
+{
+  FILE* file = fopen( out_name, "w" );
+
+  int i;
+
+  for ( i = 0 ; i < num ; i = i + downsample )
+  {
+    struct particles *part = list + i;
+    fprintf( file, "%f\t%f\t%f\t%f\t%f\n", part->x_pos, part->y_pos, part->x_vel, part->y_vel, part->weight );
+  }
+
+  int success = fclose( file );
+}

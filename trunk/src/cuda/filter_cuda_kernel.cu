@@ -68,24 +68,24 @@ void checkCUDAError(const char *msg)
 }
 
 // CUDA kernel function : time update a particle
-__global__ void time_update_kernel( struct particles *list, float seconds, float mean_maneuver )
+__global__ void time_update_kernel( struct particles *list, float time_sec, float mean_maneuver )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-  struct particles particle = list[index];
+  struct particles *particle = list + index;
 
-  particle.x_pos = particle.x_pos + particle.x_vel * seconds;
-  particle.y_pos = particle.y_pos + particle.y_vel * seconds;
+  particle->x_pos = particle->x_pos + particle->x_vel * time_sec;
+  particle->y_pos = particle->y_pos + particle->y_vel * time_sec;
 }
 
-extern "C" void time_update( struct particles *list, int num, float seconds, float mean_maneuver )
+extern "C" void time_update( struct particles *list, int num, float time_sec, float mean_maneuver )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
   // launch kernel
   dim3 dimGrid(numBlocks);
   dim3 dimBlock(THREADS_PER_BLOCK);
-  time_update_kernel<<< dimGrid, dimBlock >>>( list, seconds, mean_maneuver );
+  time_update_kernel<<< dimGrid, dimBlock >>>( list, time_sec, mean_maneuver );
 
   // block until the device has completed kernel execution
   cudaThreadSynchronize();
@@ -99,21 +99,21 @@ __global__ void init_particles_kernel( struct particles *list )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-  struct particles particle = list[index];
+  struct particles *particle = list + index;
 
-  int seed = particle.seed;
+  int seed = particle->seed;
 
-  particle.x_pos  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
+  particle->x_pos  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
   seed = device_lcg_rand( seed );
-  particle.y_pos  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
+  particle->y_pos  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
   seed = device_lcg_rand( seed );
-  particle.x_vel  = device_frand( seed, -MAX_VEL, MAX_VEL );
+  particle->x_vel  = device_frand( seed, -MAX_VEL, MAX_VEL );
   seed = device_lcg_rand( seed );
-  particle.y_vel  = device_frand( seed, -MAX_VEL, MAX_VEL );
+  particle->y_vel  = device_frand( seed, -MAX_VEL, MAX_VEL );
   seed = device_lcg_rand( seed );
-  particle.weight = 1.0;
+  particle->weight = 1.0;
 
-  particle.seed = seed;
+  particle->seed = seed;
 }
 
 extern "C" void init_particles( struct particles *host, int num )

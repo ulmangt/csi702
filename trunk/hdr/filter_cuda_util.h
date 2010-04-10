@@ -10,4 +10,7 @@ void print_particle( struct particles *part );
 // prints information on all particles to the console
 void print_particles( struct particles *list, int num, int downsample );
 
+// writes information on all particles to a file named out_name
+void write_particles( struct particles *list, char* out_name, int num, int downsample );
+
 #endif

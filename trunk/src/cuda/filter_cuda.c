@@ -58,7 +58,8 @@ int main( int argc, char** argv )
     struct observation *obs = (obs_list->observations) + i;
     previous_time = current_time;
     current_time = obs->time;
-    time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
+    float diff_time = current_time - previous_time;
+    time_update( d_particle_list, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
     //information_update( NUM_PARTICLES, obs );
     //resample2( NUM_PARTICLES );
   }
@@ -66,7 +67,8 @@ int main( int argc, char** argv )
   // copy particles back to host
   copy_particles_device_to_host( h_particle_list, d_particle_list, NUM_PARTICLES );
 
-  print_particles( h_particle_list, NUM_PARTICLES, 1 );
+  write_particles( h_particle_list, OUTPUT_NAME, NUM_PARTICLES, 10 );
+  //print_particles( h_particle_list, NUM_PARTICLES, 1 );
 
   // free host and device memory
   h_free_particle_mem( h_particle_list );
