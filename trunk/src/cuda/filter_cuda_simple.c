@@ -8,43 +8,70 @@
 #include "convert.h"
 
 #include "cuda_test.h"
+#include "cuda_test_functions.h"
 
-#define NUM_PARTICLES 100000
+#define NUM_PARTICLES 32
 
-// particles in host memory
-float *h_x_pos; // meters
-float *h_y_pos; // meters
-float *h_x_vel; // meters/second
-float *h_y_vel; // meters/second
-float *h_weight;
-float *h_seed; // random seed for particle
 
-// particles in device memory
-float *d_x_pos; // meters
-float *d_y_pos; // meters
-float *d_x_vel; // meters/second
-float *d_y_vel; // meters/second
-float *d_weight;
-float *d_seed; // random seed for particle
+
+// prints a single particle's information to the console
+void print_particle( struct particles *part )
+{
+  printf( "%f\t%f\t%f\t%f\t%f\n", part->x_pos, part->y_pos, part->x_vel, part->y_vel, part->weight );
+}
+
+// prints information on all particles to the console
+void print_particles( struct particles *list, int num, int downsample )
+{
+  int i;
+
+  for ( i = 0 ; i < num ; i = i + downsample )
+  {
+    print_particle( list+i );
+  }
+}
+
+// prints a single particle's information to the console
+void init_host_particles( struct particles *list, int num )
+{
+  int i;
+  for ( i = 0 ; i < num ; i++ )
+  {
+    struct particles *part = list + i;
+    part->x_pos = -999;
+    part->y_pos = -999;
+    part->x_vel = -999;
+    part->y_vel = -999;
+    part->weight = -999;
+  }
+}
+
+// allocate memory for num particles on host
+struct particles * h_init_particle_mem2( int num )
+{
+  //printf("size %d %d\n", num, sizeof( struct particles) );
+  int size = sizeof( struct particles ) * num ;
+  return ( struct particles * ) malloc( size );
+}
+
+
 
 int main( int argc, char** argv )
 {
-  printf("Hello CUDA\n");
+  printf("Hello CUDA 3\n");
 
-  int size = sizeof( struct particles ) * NUM_PARTICLES ;
-  struct particles *d_particle_list;
-  struct particles *h_particle_list = ( struct particles * ) malloc( size );
+  struct particles *d_particle_list = d_init_particle_mem( NUM_PARTICLES );
+  struct particles *h_particle_list = h_init_particle_mem2( NUM_PARTICLES );
   
-  copy_particles_host_to_device2( h_particle_list, d_particle_list, NUM_PARTICLES );
+  init_host_particles( h_particle_list, NUM_PARTICLES );
+
+  copy_particles_host_to_device( d_particle_list, h_particle_list, NUM_PARTICLES );
+
+  init_particles( d_particle_list, NUM_PARTICLES );
+
+  copy_particles_device_to_host( h_particle_list, d_particle_list, NUM_PARTICLES );
+
+  print_particles( h_particle_list, NUM_PARTICLES, 1 );
 
   printf("Hello CUDA 2\n");
-
-  //h_init_particle_mem( NUM_PARTICLES );
-
-  //h_init_seed( NUM_PARTICLES );
-
-  //d_init_particle_mem( NUM_PARTICLES );
-
-  // copy the seeds generated on the host to the device
-  //copy_particles_host_to_device( NUM_PARTICLES );
 }

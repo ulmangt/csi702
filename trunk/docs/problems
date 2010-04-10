@@ -18,3 +18,6 @@ http://gpuray.blogspot.com/2009/07/compiling-cuda-projects.html
 
 
 making makefile portable hard -- sdk examples provide build scripts, but they are overly complicated for simple purposes (or for learning the libraries/build path) they present too many options/configurability at once
+
+
+lack of good debugging techniques/tools for kernel functions -- have to copy data back to host memory to inspect it in c

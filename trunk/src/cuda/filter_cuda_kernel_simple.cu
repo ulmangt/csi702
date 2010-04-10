@@ -1,4 +1,6 @@
 #import <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
 
 #include "cuda_test.h"
 
@@ -49,134 +51,134 @@ __device__ float device_frand( int seed, float min, float max )
   return device_frand0( seed, diff ) + min;
 }
 
-// CUDA kernel function : initialize a particle
-__global__ void init_particle_val( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed )
+
+void checkCUDAError(const char *msg)
 {
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-
-  int seed = d_seed[index];
-
-  d_x_pos[index]  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
-  seed = device_lcg_rand( seed );
-  d_y_pos[index]  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
-  seed = device_lcg_rand( seed );
-  d_x_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
-  seed = device_lcg_rand( seed );
-  d_y_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
-  seed = device_lcg_rand( seed );
-  d_weight[index] = 1.0;
-
-  d_seed[index] = seed;
+    cudaError_t err = cudaGetLastError();
+    if( cudaSuccess != err) 
+    {
+        fprintf(stderr, "Cuda error: %s: %s.\n", msg, cudaGetErrorString( err) );
+        exit(-1);
+    }
+    else
+    {
+        fprintf(stderr, "No error: %s.\n", msg);
+    }
 }
 
 
-// particles in host memory
-float *h_x_pos; // meters
-float *h_y_pos; // meters
-float *h_x_vel; // meters/second
-float *h_y_vel; // meters/second
-float *h_weight;
-float *h_seed; // random seed for particle
+__global__ void test_particles_kernel( struct particles *list )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  (list+index)->x_pos = blockIdx.x;
+  (list+index)->y_pos = blockDim.x;
+  (list+index)->x_vel = threadIdx.x;
+  (list+index)->y_vel = index;
+  (list+index)->weight = 20.0;
+}
 
-// particles in device memory
-float *d_x_pos; // meters
-float *d_y_pos; // meters
-float *d_x_vel; // meters/second
-float *d_y_vel; // meters/second
-float *d_weight;
-float *d_seed; // random seed for particle
+// CUDA kernel function : initialize a particle
+__global__ void init_particles_kernel( struct particles *list )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
 
+  int seed = list[index].seed;
 
+  list[index].x_pos  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
+  seed = device_lcg_rand( seed );
+  list[index].y_pos  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
+  seed = device_lcg_rand( seed );
+  list[index].x_vel  = device_frand( seed, -MAX_VEL, MAX_VEL );
+  seed = device_lcg_rand( seed );
+  list[index].y_vel  = device_frand( seed, -MAX_VEL, MAX_VEL );
+  seed = device_lcg_rand( seed );
+  list[index].weight = 1.0;
 
-extern "C" void h_init_seed( int num )
+  list[index].seed = seed;
+}
+
+extern "C" void init_particles( struct particles *host, int num )
+{
+  int numThreadsPerBlock = 32;
+  int numBlocks = num / numThreadsPerBlock;
+
+  // launch kernel
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(numThreadsPerBlock);
+  init_particles_kernel<<< dimGrid, dimBlock >>>( host );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the init_particle_val kernel generated errors
+  checkCUDAError("init_particle_val");
+}
+
+extern "C" void test_particles( struct particles *host, int num )
+{
+  int numThreadsPerBlock = 32;
+  int numBlocks = num / numThreadsPerBlock;
+
+  // launch kernel
+  //dim3 dimGrid(numBlocks);
+  //dim3 dimBlock(numThreadsPerBlock);
+  dim3 dimGrid(16);
+  dim3 dimBlock(2);
+  test_particles_kernel<<< dimGrid, dimBlock >>>( host );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the init_particle_val kernel generated errors
+  checkCUDAError("init_particle_val");
+}
+
+extern "C" void h_init_seed( struct particles *host, int num )
 {
   int i;
 
   for ( i = 0 ; i < num ; i++ )
   {
-    h_seed[i] = rand();
+    host[i].seed = rand();
   }
 }
 
-extern "C" void copy_particles_host_to_device2( struct particles *host, struct particles *device, int num )
+extern "C" void copy_particles_host_to_device( struct particles *device, struct particles *host, int num )
 {
   int size = sizeof( struct particles ) * num;
 
-  cudaMemcpy( host, device, size, cudaMemcpyHostToDevice );
+  cudaMemcpy( device, host, size, cudaMemcpyHostToDevice );
 }
 
-extern "C" void copy_particles_host_to_device( int num )
+extern "C" void copy_particles_device_to_host( struct particles *host, struct particles *device, int num )
 {
-  int size = sizeof( float ) * num;
+  int size = sizeof( struct particles ) * num;
 
-  cudaMemcpy( h_x_pos, d_x_pos, size, cudaMemcpyHostToDevice );
-  cudaMemcpy( h_y_pos, d_y_pos, size, cudaMemcpyHostToDevice );
-  cudaMemcpy( h_x_vel, d_x_vel, size, cudaMemcpyHostToDevice );
-  cudaMemcpy( h_y_vel, d_y_vel, size, cudaMemcpyHostToDevice );
-  cudaMemcpy( h_weight, d_weight, size, cudaMemcpyHostToDevice );
-  cudaMemcpy( h_seed, d_seed, size, cudaMemcpyHostToDevice );
-}
-
-extern "C" void copy_particles_device_to_host( int num )
-{
-  int size = sizeof( float ) * num;
-
-  cudaMemcpy( h_x_pos, d_x_pos, size, cudaMemcpyDeviceToHost );
-  cudaMemcpy( h_y_pos, d_y_pos, size, cudaMemcpyDeviceToHost );
-  cudaMemcpy( h_x_vel, d_x_vel, size, cudaMemcpyDeviceToHost );
-  cudaMemcpy( h_y_vel, d_y_vel, size, cudaMemcpyDeviceToHost );
-  cudaMemcpy( h_weight, d_weight, size, cudaMemcpyDeviceToHost );
-  cudaMemcpy( h_seed, d_seed, size, cudaMemcpyDeviceToHost );
-}
-
-// allocate memory for num particles on host
-extern "C" void h_init_particle_mem( int num )
-{
-  int size = sizeof( float ) * num;
-
-  h_x_pos  = ( float* ) malloc( size );
-  h_y_pos  = ( float* ) malloc( size );
-  h_x_vel  = ( float* ) malloc( size );
-  h_y_vel  = ( float* ) malloc( size );
-  h_weight = ( float* ) malloc( size );
-  h_seed = ( float* ) malloc( size );
+  cudaMemcpy( host, device, size, cudaMemcpyDeviceToHost );
 }
 
 // allocate memory for num particles on device
-extern "C" void d_init_particle_mem( int num )
+extern "C" struct particles *d_init_particle_mem( int num )
 {
-  int size = sizeof( float ) * num;
+  int size = sizeof( struct particles ) * num ;
+  struct particles *list;
 
-  cudaMalloc( (void **) &d_x_pos, size );
-  cudaMalloc( (void **) &d_y_pos, size );
-  cudaMalloc( (void **) &d_x_vel, size );
-  cudaMalloc( (void **) &d_y_vel, size );
-  cudaMalloc( (void **) &d_weight, size );
-  cudaMalloc( (void **) &d_seed, size );
+  cudaMalloc( (void **) &list, size );
+
+  return list;
 }
 
 // free particle memory on host
-extern "C" void h_free_particle_mem( )
+extern "C" void h_free_particle_mem( struct particles *list )
 {
-  free( h_x_pos );
-  free( h_y_pos );
-  free( h_x_vel );
-  free( h_y_vel );
-  free( h_weight );
-  free( h_seed );
+  free( list );
 }
 
 // free particle memory on device
-extern "C" void d_free_particle_mem( )
+extern "C" void d_free_particle_mem( struct particles *list )
 {
-  cudaFree( d_x_pos );
-  cudaFree( d_y_pos );
-  cudaFree( d_x_vel );
-  cudaFree( d_y_vel );
-  cudaFree( d_weight );
-  cudaFree( d_seed );
+  cudaFree( list );
 }
-
 
 
 
