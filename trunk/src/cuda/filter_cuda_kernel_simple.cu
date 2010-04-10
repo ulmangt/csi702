@@ -157,6 +157,13 @@ extern "C" void copy_particles_device_to_host( struct particles *host, struct pa
   cudaMemcpy( host, device, size, cudaMemcpyDeviceToHost );
 }
 
+// allocate memory for num particles on host
+extern "C" struct particles * h_init_particle_mem( int num )
+{
+  int size = sizeof( struct particles ) * num ;
+  return ( struct particles * ) malloc( size );
+}
+
 // allocate memory for num particles on device
 extern "C" struct particles *d_init_particle_mem( int num )
 {

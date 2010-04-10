@@ -17,7 +17,7 @@
 // prints a single particle's information to the console
 void print_particle( struct particles *part )
 {
-  printf( "%f\t%f\t%f\t%f\t%f\n", part->x_pos, part->y_pos, part->x_vel, part->y_vel, part->weight );
+  printf( "%f\t%f\t%f\t%f\t%f\t%f\n", part->x_pos, part->y_pos, part->x_vel, part->y_vel, part->weight, part->seed );
 }
 
 // prints information on all particles to the console
@@ -46,24 +46,16 @@ void init_host_particles( struct particles *list, int num )
   }
 }
 
-// allocate memory for num particles on host
-struct particles * h_init_particle_mem2( int num )
-{
-  //printf("size %d %d\n", num, sizeof( struct particles) );
-  int size = sizeof( struct particles ) * num ;
-  return ( struct particles * ) malloc( size );
-}
-
-
-
 int main( int argc, char** argv )
 {
   printf("Hello CUDA 3\n");
 
   struct particles *d_particle_list = d_init_particle_mem( NUM_PARTICLES );
-  struct particles *h_particle_list = h_init_particle_mem2( NUM_PARTICLES );
+  struct particles *h_particle_list = h_init_particle_mem( NUM_PARTICLES );
   
   init_host_particles( h_particle_list, NUM_PARTICLES );
+
+  h_init_seed( h_particle_list, NUM_PARTICLES );
 
   copy_particles_host_to_device( d_particle_list, h_particle_list, NUM_PARTICLES );
 
