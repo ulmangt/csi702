@@ -48,6 +48,21 @@ int main( int argc, char** argv )
   // initialize particle positions 
   init_particles( d_particle_list, NUM_PARTICLES );
 
+  int i;
+  float previous_time = 0.0;
+  float current_time = 0.0;
+  for ( i = 0 ; i < obs_list->size ; i++ )
+  {
+    printf("observation %d\n", i);
+
+    struct observation *obs = (obs_list->observations) + i;
+    previous_time = current_time;
+    current_time = obs->time;
+    time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
+    //information_update( NUM_PARTICLES, obs );
+    //resample2( NUM_PARTICLES );
+  }
+
   // copy particles back to host
   copy_particles_device_to_host( h_particle_list, d_particle_list, NUM_PARTICLES );
 
