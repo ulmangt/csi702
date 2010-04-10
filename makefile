@@ -2,18 +2,27 @@
 
 all: filter_serial filter_cuda
 
+clean: clean_cuda clean_serial
+
+
 #
 # CUDA Code
 #
 
-filter_cuda: filter_cuda_kernel.o filter_cuda.o filter_math.o obs_math.o filter_io.o convert.o
-	nvcc -I hdr -lcuda -lcudart -lm src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o -o bin/filter_cuda
+filter_cuda: filter_cuda_kernel.o filter_cuda.o filter_math.o obs_math.o filter_io.o convert.o filter_cuda_util.o
+	nvcc -I hdr -lcuda -lcudart -lm src/cuda/filter_cuda_util.o src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o -o bin/filter_cuda
 
 filter_cuda.o:
 	gcc -I hdr -c src/cuda/filter_cuda.c -o src/cuda/filter_cuda.o
 
+filter_cuda_util.o:
+	gcc -I hdr -c src/cuda/filter_cuda_util.c -o src/cuda/filter_cuda_util.o
+
 filter_cuda_kernel.o:
 	nvcc -I hdr -c src/cuda/filter_cuda_kernel.cu -o src/cuda/filter_cuda_kernel.o
+
+clean_cuda:
+	rm bin/filter_cuda src/cuda/filter_cuda_util.o src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o
 
 #
 # Serial Code
@@ -37,8 +46,8 @@ filter_io.o:
 convert.o:
 	gcc -I hdr -c -lm src/common/convert.c -o src/common/convert.o
 
-clean:
-	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o src/cuda/device_filter_math.o
+clean_serial:
+	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o
 
 
 #
