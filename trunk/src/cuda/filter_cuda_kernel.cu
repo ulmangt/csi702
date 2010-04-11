@@ -80,6 +80,7 @@ __global__ void time_update_kernel( struct particles *list, float time_sec, floa
   particle->y_pos = particle->y_pos + particle->y_vel * time_sec;
 }
 
+// updates the position of all particles based on their current velocity
 extern "C" void time_update( struct particles *list, int num, float time_sec, float mean_maneuver )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -118,6 +119,8 @@ __global__ void init_particles_kernel( struct particles *list )
   particle->seed = seed;
 }
 
+// initialize particles, use random seeds to set random positions and velocities
+// also set weights of all particles to 1.0
 extern "C" void init_particles( struct particles *host, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -134,6 +137,7 @@ extern "C" void init_particles( struct particles *host, int num )
   checkCUDAError("init_particles");
 }
 
+// device function to calculate the azimuth between two particles
 __device__ float azimuth( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
 {
   float x_diff = from_x_pos - to_x_pos;
@@ -153,6 +157,7 @@ __device__ float gvalue( float value, float mean, float sigma )
   return exp( -0.5 * z * z ) / ( sqrt( 2.0 * DEVICE_PI ) * sigma );
 }
 
+// device function to calculate the distance between two particles
 __device__ float range( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
 {
   float x_diff = from_x_pos - to_x_pos;
@@ -161,6 +166,7 @@ __device__ float range( float to_x_pos, float to_y_pos, float from_x_pos, float 
   return sqrt( x_diff * x_diff + y_diff * y_diff );
 }
 
+// CUDA kernel function : apply an azimuth observation (adjust particle weight)
 __global__ void apply_azimuth_observation_kernel( struct particles *list, float x_pos, float y_pos, float value, float error )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -174,6 +180,7 @@ __global__ void apply_azimuth_observation_kernel( struct particles *list, float 
   particle->weight = particle->weight * likelihood;
 }
 
+// CUDA kernel function : apply a range observation (adjust particle weight)
 __global__ void apply_range_observation_kernel( struct particles *list, float x_pos, float y_pos, float value, float error )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -187,7 +194,8 @@ __global__ void apply_range_observation_kernel( struct particles *list, float x_
   particle->weight = particle->weight * likelihood;
 }
 
-extern "C" void information_update( struct observation *obs, struct particles *host, int num )
+// apply observation obs to the particle list, adjusting particle weights
+extern "C" void information_update( struct observation *obs, struct particles *list, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
@@ -198,10 +206,10 @@ extern "C" void information_update( struct observation *obs, struct particles *h
   switch( obs->type )
   {
     case AZIMUTH:
-      apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( host, obs->x_pos, obs->y_pos, obs->value, obs->error );
+      apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( list, obs->x_pos, obs->y_pos, obs->value, obs->error );
       break;
     case RANGE:
-      apply_range_observation_kernel<<< dimGrid, dimBlock >>>( host, obs->x_pos, obs->y_pos, obs->value, obs->error );
+      apply_range_observation_kernel<<< dimGrid, dimBlock >>>( list, obs->x_pos, obs->y_pos, obs->value, obs->error );
       break;
   }
 
@@ -212,57 +220,7 @@ extern "C" void information_update( struct observation *obs, struct particles *h
   checkCUDAError("information_update");
 }
 
-/*
-extern "C" struct observation_list * d_init_and_copy_observations( struct observation_list *h_obs_list )
-{
-  int size = sizeof( struct observation_list );
-  struct observation_list *d_obs_list;
-
-  cudaMalloc( (void **) &d_obs_list, size );
-
-  d_obs_list->size = h_obs_list->size;
-
-  size = sizeof( struct observation ) * h_obs_list->size;
-  cudaMalloc( (void **) &d_obs_list.observations, size );
- 
-  int i;
-  for ( i = 0 ; i < h_obs_list->size ; i++ )
-  {
-    struct observation *h_obs = (h_obs_list->observations) + i;
-    struct observation *d_obs = (d_obs_list->observations) + i;
-
-    d_obs->type = h_obs->type;
-    d_obs->time = h_obs->time;
-    d_obs->x_pos = h_obs->x_pos;
-    d_obs->y_pos = h_obs->y_pos;
-    d_obs->value = h_obs->value
-    d_obs->type = h_obs->type;
-      // observation_type (determines how value is interpreted)
-  int type;
-  // the timestamp of the observation
-  float time;
-  // x position of sensor
-  float x_pos;
-  // y position of sensor
-  float y_pos;
-  // observation value
-  float value;
-  // observation error
-  float error;
-  }
-}
-*/
-
-extern "C" void h_init_seed( struct particles *host, int num )
-{
-  int i;
-
-  for ( i = 0 ; i < num ; i++ )
-  {
-    host[i].seed = rand();
-  }
-}
-
+// copy particles from host (cpu) to device (video card)
 extern "C" void copy_particles_host_to_device( struct particles *device, struct particles *host, int num )
 {
   int size = sizeof( struct particles ) * num;
@@ -270,6 +228,7 @@ extern "C" void copy_particles_host_to_device( struct particles *device, struct 
   cudaMemcpy( device, host, size, cudaMemcpyHostToDevice );
 }
 
+// copy particles from device (video card) to host (cpu)
 extern "C" void copy_particles_device_to_host( struct particles *host, struct particles *device, int num )
 {
   int size = sizeof( struct particles ) * num;
