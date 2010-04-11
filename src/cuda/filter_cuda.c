@@ -76,3 +76,15 @@ int main( int argc, char** argv )
   h_free_particle_mem( h_particle_list );
   d_free_particle_mem( d_particle_list );
 }
+
+// inititalize random seeds
+// cuda kernels do not have access to c library rand function
+void h_init_seed( struct particles *host, int num )
+{
+  int i;
+
+  for ( i = 0 ; i < num ; i++ )
+  {
+    host[i].seed = rand();
+  }
+}
