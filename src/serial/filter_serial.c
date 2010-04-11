@@ -51,10 +51,12 @@ int main( int argc, char* argv )
   print_waypoints( waypoints2 );
 
   // generate errored range and azimuth observations based on the waypoints
-  struct observation_list *range_obs_list = generate_observations( waypoints1, waypoints2, 2, 100, 0.0, 500.0, 2000.0 );
-  struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
-  struct observation_list *obs_list = combine_observations( range_obs_list, azimuth_obs_list );
+  //struct observation_list *range_obs_list = generate_observations( waypoints1, waypoints2, 2, 100, 0.0, 500.0, 2000.0 );
+  //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
+  //struct observation_list *obs_list = combine_observations( range_obs_list, azimuth_obs_list );
   
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
+
   printf("Observations:\n");
   print_observations( obs_list );
 
