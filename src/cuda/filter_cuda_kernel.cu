@@ -54,6 +54,12 @@ __device__ float device_frand( int seed, float min, float max )
   return device_frand0( seed, diff ) + min;
 }
 
+// return an exponentially distributed random float
+__device__ float device_erand( int seed, float inv_lambda )
+{
+  return -log( device_frand0( seed, 1.0 ) ) * inv_lambda;
+}
+
 
 void checkCUDAError(const char *msg)
 {
@@ -72,10 +78,27 @@ void checkCUDAError(const char *msg)
 // CUDA kernel function : time update a particle
 __global__ void time_update_kernel( struct particles *list, float time_sec, float mean_maneuver )
 {
+  // get the current particle index and retrieve the particle
   int index = blockIdx.x * blockDim.x + threadIdx.x;
-
   struct particles *particle = list + index;
 
+  // store the particle's random seed
+  float seed = list->seed;
+
+  // use the random seed to make a random draw from an exponential distribution with mean time_sec
+  // if the draw is larger than mean_maneuver, the particle maneuvers
+  if ( device_erand( seed, time_sec ) > mean_maneuver )
+  {
+    seed = device_lcg_rand( seed );
+    particle->x_vel = particle->x_vel + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+    seed = device_lcg_rand( seed );
+    particle->y_vel = particle->y_vel + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  }
+
+  // update the random seed and store it back in the particle storage
+  list->seed = device_lcg_rand( seed );
+
+  // update the particle's position and velocity
   particle->x_pos = particle->x_pos + particle->x_vel * time_sec;
   particle->y_pos = particle->y_pos + particle->y_vel * time_sec;
 }

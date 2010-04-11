@@ -10,8 +10,6 @@ extern void time_update( struct particles *list, int num, float time_sec, float 
 
 extern void init_particles( struct particles *host, int num );
 
-extern void h_init_seed( struct particles *host, int num );
-
 extern void copy_particles_host_to_device( struct particles *host, struct particles *device, int num );
 
 extern void copy_particles_device_to_host( struct particles *host, struct particles *device, int num );
