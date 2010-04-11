@@ -28,12 +28,14 @@ int main( int argc, char** argv )
   print_waypoints( waypoints2 );
 
   // generate errored range and azimuth observations based on the waypoints
-  struct observation_list *range_obs_list = generate_observations( waypoints1, waypoints2, 2, 100, 0.0, 500.0, 2000.0 );
-  struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
-  struct observation_list *obs_list = combine_observations( range_obs_list, azimuth_obs_list );
-  
+  //struct observation_list *range_obs_list = generate_observations( waypoints1, waypoints2, 2, 100, 0.0, 500.0, 2000.0 );
+  //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
+  //struct observation_list *h_obs_list = combine_observations( range_obs_list, azimuth_obs_list );
+
+  struct observation_list *h_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 100.0 );
+
   printf("Observations:\n");
-  print_observations( obs_list );
+  print_observations( h_obs_list );
 
   // initialize particle memory
   struct particles *d_particle_list = d_init_particle_mem( NUM_PARTICLES );
@@ -51,16 +53,16 @@ int main( int argc, char** argv )
   int i;
   float previous_time = 0.0;
   float current_time = 0.0;
-  for ( i = 0 ; i < obs_list->size ; i++ )
+  for ( i = 0 ; i < h_obs_list->size ; i++ )
   {
     printf("observation %d\n", i);
 
-    struct observation *obs = (obs_list->observations) + i;
+    struct observation *obs = (h_obs_list->observations) + i;
     previous_time = current_time;
     current_time = obs->time;
     float diff_time = current_time - previous_time;
     time_update( d_particle_list, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
-    //information_update( NUM_PARTICLES, obs );
+    information_update( obs, d_particle_list, NUM_PARTICLES );
     //resample2( NUM_PARTICLES );
   }
 

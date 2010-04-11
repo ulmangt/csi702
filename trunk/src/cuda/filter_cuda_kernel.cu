@@ -161,28 +161,28 @@ __device__ float range( float to_x_pos, float to_y_pos, float from_x_pos, float 
   return sqrt( x_diff * x_diff + y_diff * y_diff );
 }
 
-__global__ void apply_azimuth_observation_kernel( struct observation *obs, struct particles *list )
+__global__ void apply_azimuth_observation_kernel( struct particles *list, float x_pos, float y_pos, float value, float error )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
   struct particles *particle = list + index;
 
-  float particle_azimuth = azimuth( obs->x_pos , obs->y_pos , particle->x_pos , particle->y_pos );
-  float observed_azimuth = obs->value;
-  float likelihood = gvalue( particle_azimuth - observed_azimuth , 0.0 , obs->error );
+  float particle_azimuth = azimuth( x_pos , y_pos , particle->x_pos , particle->y_pos );
+  float observed_azimuth = value;
+  float likelihood = gvalue( particle_azimuth - observed_azimuth , 0.0 , error );
 
   particle->weight = particle->weight * likelihood;
 }
 
-__global__ void apply_range_observation_kernel( struct observation *obs, struct particles *list )
+__global__ void apply_range_observation_kernel( struct particles *list, float x_pos, float y_pos, float value, float error )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
   struct particles *particle = list + index;
 
-  float particle_range = range( obs->x_pos , obs->y_pos , particle->x_pos , particle->y_pos );
-  float observed_range = obs->value;
-  float likelihood = gvalue( particle_range - observed_range , 0.0 , obs->error );
+  float particle_range = range( x_pos , y_pos , particle->x_pos , particle->y_pos );
+  float observed_range = value;
+  float likelihood = gvalue( particle_range - observed_range , 0.0 , error );
 
   particle->weight = particle->weight * likelihood;
 }
@@ -198,20 +198,60 @@ extern "C" void information_update( struct observation *obs, struct particles *h
   switch( obs->type )
   {
     case AZIMUTH:
-      return apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( obs, host );
+      apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( host, obs->x_pos, obs->y_pos, obs->value, obs->error );
+      break;
     case RANGE:
-      return apply_range_observation_kernel<<< dimGrid, dimBlock >>>( obs, host );
+      apply_range_observation_kernel<<< dimGrid, dimBlock >>>( host, obs->x_pos, obs->y_pos, obs->value, obs->error );
+      break;
   }
 
   // block until the device has completed kernel execution
   cudaThreadSynchronize();
 
   // check if the init_particle_val kernel generated errors
-  checkCUDAError("init_particles");
+  checkCUDAError("information_update");
 }
 
+/*
+extern "C" struct observation_list * d_init_and_copy_observations( struct observation_list *h_obs_list )
+{
+  int size = sizeof( struct observation_list );
+  struct observation_list *d_obs_list;
 
+  cudaMalloc( (void **) &d_obs_list, size );
 
+  d_obs_list->size = h_obs_list->size;
+
+  size = sizeof( struct observation ) * h_obs_list->size;
+  cudaMalloc( (void **) &d_obs_list.observations, size );
+ 
+  int i;
+  for ( i = 0 ; i < h_obs_list->size ; i++ )
+  {
+    struct observation *h_obs = (h_obs_list->observations) + i;
+    struct observation *d_obs = (d_obs_list->observations) + i;
+
+    d_obs->type = h_obs->type;
+    d_obs->time = h_obs->time;
+    d_obs->x_pos = h_obs->x_pos;
+    d_obs->y_pos = h_obs->y_pos;
+    d_obs->value = h_obs->value
+    d_obs->type = h_obs->type;
+      // observation_type (determines how value is interpreted)
+  int type;
+  // the timestamp of the observation
+  float time;
+  // x position of sensor
+  float x_pos;
+  // y position of sensor
+  float y_pos;
+  // observation value
+  float value;
+  // observation error
+  float error;
+  }
+}
+*/
 
 extern "C" void h_init_seed( struct particles *host, int num )
 {
