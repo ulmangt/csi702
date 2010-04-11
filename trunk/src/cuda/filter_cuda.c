@@ -70,7 +70,7 @@ int main( int argc, char** argv )
   copy_particles_device_to_host( h_particle_list, d_particle_list, NUM_PARTICLES );
 
   write_particles( h_particle_list, OUTPUT_NAME, NUM_PARTICLES, 10 );
-  //print_particles( h_particle_list, NUM_PARTICLES, 1 );
+  print_particles( h_particle_list, NUM_PARTICLES, 1000 );
 
   // free host and device memory
   h_free_particle_mem( h_particle_list );
