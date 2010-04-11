@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "obs_math.h"
+
 #include "filter_cuda_data.h"
 #include "filter_constants.h"
 
@@ -131,6 +133,84 @@ extern "C" void init_particles( struct particles *host, int num )
   // check if the init_particle_val kernel generated errors
   checkCUDAError("init_particles");
 }
+
+__device__ float azimuth( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
+{
+  float x_diff = from_x_pos - to_x_pos;
+  float y_diff = from_y_pos - to_y_pos;
+
+  if ( x_diff == 0 && y_diff > 0 ) return DEVICE_PI / 2.0;
+  if ( x_diff == 0 && y_diff < 0 ) return -DEVICE_PI / 2.0;
+
+  return atan2( y_diff, x_diff );
+}
+
+// calculates the probability density function for the gaussian
+// distribution with given mean and sigma
+__device__ float gvalue( float value, float mean, float sigma )
+{
+  float z = ( value - mean ) / sigma ;
+  return exp( -0.5 * z * z ) / ( sqrt( 2.0 * DEVICE_PI ) * sigma );
+}
+
+__device__ float range( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
+{
+  float x_diff = from_x_pos - to_x_pos;
+  float y_diff = from_y_pos - to_y_pos;
+
+  return sqrt( x_diff * x_diff + y_diff * y_diff );
+}
+
+__global__ void apply_azimuth_observation_kernel( struct observation *obs, struct particles *list )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  struct particles *particle = list + index;
+
+  float particle_azimuth = azimuth( obs->x_pos , obs->y_pos , particle->x_pos , particle->y_pos );
+  float observed_azimuth = obs->value;
+  float likelihood = gvalue( particle_azimuth - observed_azimuth , 0.0 , obs->error );
+
+  particle->weight = particle->weight * likelihood;
+}
+
+__global__ void apply_range_observation_kernel( struct observation *obs, struct particles *list )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  struct particles *particle = list + index;
+
+  float particle_range = range( obs->x_pos , obs->y_pos , particle->x_pos , particle->y_pos );
+  float observed_range = obs->value;
+  float likelihood = gvalue( particle_range - observed_range , 0.0 , obs->error );
+
+  particle->weight = particle->weight * likelihood;
+}
+
+extern "C" void information_update( struct observation *obs, struct particles *host, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  // launch kernel
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+
+  switch( obs->type )
+  {
+    case AZIMUTH:
+      return apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( obs, host );
+    case RANGE:
+      return apply_range_observation_kernel<<< dimGrid, dimBlock >>>( obs, host );
+  }
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the init_particle_val kernel generated errors
+  checkCUDAError("init_particles");
+}
+
+
 
 
 extern "C" void h_init_seed( struct particles *host, int num )
