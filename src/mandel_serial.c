@@ -78,7 +78,7 @@ void *mandel(void *tid)
 
       // save the iteration number into the image array
       // and update the image counter
-      img[k] = it;
+      img[i*n+j] = it;
     }
   }
 
