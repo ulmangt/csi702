@@ -5,8 +5,8 @@
 
 \begin{document}
 
-\title{Title}
-\author{Names\\
+\title{Bayesian Particle Filter Tracking with CUDA}
+\author{Geoffrey Ulman\\
         CSI702}
 \date{April 2010}
 \maketitle
@@ -18,7 +18,12 @@ Text...
 \tableofcontents
 
 \section{Background}
-Text...
+A simple geographic tracking problem traditionally consists of estimating the state of a target using errored observations on a function of that state. The problem explored here assumes a four-dimensional state space with two cartesian position dimensions and two veocity dimensions. To simplify the problem, the possibility of false alarms (observations which do not corrispond to an actual target) is ignorred. All observations are assumed to corrispond to a single target of interest (associating observations with the correct target track is an additional complicating concern in multi-target tracking problems).
+
+\subsection{Prerequisites}
+Employing bayesian tracking to determine the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This prior distribution is generally based on engineering knowledge of the targets and sensors. The simple priors used in this tracking problem use the maximum detection range of the sensors generating observations. Because targets will not be detected until they are within the sensor's detection range, we can begin with the assumption that the target is somewhere within the sensor's detection range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state 
+
+ employs Bayes' Theorem to combine errored observations on functions of a state space \(S\) into a posterior distribution p
 
 \section{Design}
 Text...
@@ -36,6 +41,12 @@ Text...
   \emph{The C Programming Language},
   Prentice Hall PTR, New Jersey,
   2009.
+
+\bibitem{bmtt}
+  Stone, Barlow, and Corwin,
+  \emph{Bayesian Multiple Target Tracking},
+  Artech House, Boston,
+  1999.
 
 \end{thebibliography}
 
