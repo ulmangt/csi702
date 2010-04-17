@@ -142,6 +142,80 @@ __global__ void init_particles_kernel( struct particles *list )
   particle->seed = seed;
 }
 
+// modified from reduction code example in CUDA sdk
+// num must be a power of 2 for this routine to function
+__global__ void sum_weight_kernel( struct particles *list , float *weights, int num )
+{
+  // allocate a shared memory array the size of the current block
+  __shared__ float s_shared[THREADS_PER_BLOCK];
+
+  int tid = threadIdx.x; // thread id within block
+
+  // similar to the standard global array index calculation
+  // except that blockDimx.x sized spaces are left between
+  // the indexes assigned to the threads in each block
+  int i = blockIdx.x * ( blockDim.x * 2 ) + threadIdx.x;
+
+  // copy weights from global memory into shared memory for
+  // num / 2 threads (only half the threads are from blocks
+  // whose i indexes corrispond to actual indexes)
+  struct particles *particle = list + i;
+  s_shared[ tid ] = i < num ? particle->weight : 0 ;
+
+  // perform the first stage of the reduction reading from global memory
+  // threads in block n add the weight of their corrisponding particle
+  // in block n + 1, half the threads sit idle
+  if ( i + blockDim.x < num )
+  {
+    particle = list + i + blockDim.x;
+    s_shared[ tid ] += particle->weight;
+  }
+
+  // wait for s_shared to be fully populated
+  __syncthreads();
+
+  // offset tracks the distance between the two entries from
+  // s_shared that are added together in the current iteration
+  // also, each iteration, offset threads are used
+  int offset = blockDim.x / 2;
+  while ( offset < 0 )
+  {
+    if ( tid < offset )
+    {
+      s_shared[ tid ] += s_shared[ tid + offset ];
+    }
+
+    offset = offset >> 1; // divide offset by 2
+
+    __syncthreads();
+  }
+
+  // s_shatred[0] now contains the final weight for this block
+  // write that result to the global weights array position
+  // corrisponding to this block's id
+  if ( tid == 0 )
+  {
+    weights[ blockIdx.x ] = s_shared[ 0 ];
+  }
+}
+
+extern "C" void sum_weight( struct particles *list, float *weight, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  // launch kernel
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  int shared_mem_size = sizeof( float ) * THREADS_PER_BLOCK;
+  sum_weight_kernel<<< dimGrid, dimBlock, shared_mem_size >>>( list, weight, num );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the init_particle_val kernel generated errors
+  checkCUDAError("sum_weight");
+}
+
 // initialize particles, use random seeds to set random positions and velocities
 // also set weights of all particles to 1.0
 extern "C" void init_particles( struct particles *host, int num )

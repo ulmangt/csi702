@@ -21,3 +21,7 @@ making makefile portable hard -- sdk examples provide build scripts, but they ar
 
 
 lack of good debugging techniques/tools for kernel functions -- have to copy data back to host memory to inspect it in c
+
+
+"Run time limit on kernels" printed from ./deviceQuery
+limited testing since running on single gfx card
