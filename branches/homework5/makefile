@@ -8,6 +8,9 @@ run_parallel: mandel_parallel
 	export OMP_SCHEDULE=static,10
 	bin/mandel_parallel
 
+run_qsub: mandel_parallel
+	qsub submit.sh
+
 view_results:
 	octave --persist mandel_view
 
