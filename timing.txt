@@ -1,0 +1,429 @@
+> cat /proc/cpuinfo for 8 node ubuntu amazon cloud image ami-55739e3c
+
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5410  @ 2.33GHz
+stepping	: 10
+cpu MHz		: 2333.414
+cache size	: 6144 KB
+physical id	: 0
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 0
+initial apicid	: 7
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae mce cx8 apic mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 xsave lahf_lm tpr_shadow vnmi flexpriority
+bogomips	: 4670.06
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5410  @ 2.33GHz
+stepping	: 10
+cpu MHz		: 2333.414
+cache size	: 6144 KB
+physical id	: 1
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 1
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae mce cx8 apic mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 xsave lahf_lm tpr_shadow vnmi flexpriority
+bogomips	: 4670.06
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+processor	: 2
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5410  @ 2.33GHz
+stepping	: 10
+cpu MHz		: 2333.414
+cache size	: 6144 KB
+physical id	: 2
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 2
+initial apicid	: 4
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae mce cx8 apic mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 xsave lahf_lm tpr_shadow vnmi flexpriority
+bogomips	: 4670.06
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+processor	: 3
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5410  @ 2.33GHz
+stepping	: 10
+cpu MHz		: 2333.414
+cache size	: 6144 KB
+physical id	: 3
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 3
+initial apicid	: 1
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae mce cx8 apic mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 xsave lahf_lm tpr_shadow vnmi flexpriority
+bogomips	: 4670.06
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+processor	: 4
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5410  @ 2.33GHz
+stepping	: 10
+cpu MHz		: 2333.414
+cache size	: 6144 KB
+physical id	: 4
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 4
+initial apicid	: 5
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae mce cx8 apic mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 xsave lahf_lm tpr_shadow vnmi flexpriority
+bogomips	: 4670.06
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+processor	: 5
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5410  @ 2.33GHz
+stepping	: 10
+cpu MHz		: 2333.414
+cache size	: 6144 KB
+physical id	: 5
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 5
+initial apicid	: 2
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae mce cx8 apic mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 xsave lahf_lm tpr_shadow vnmi flexpriority
+bogomips	: 4670.06
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+processor	: 6
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5410  @ 2.33GHz
+stepping	: 10
+cpu MHz		: 2333.414
+cache size	: 6144 KB
+physical id	: 6
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 6
+initial apicid	: 5
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae mce cx8 apic mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 xsave lahf_lm tpr_shadow vnmi flexpriority
+bogomips	: 4670.06
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+processor	: 7
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 23
+model name	: Intel(R) Xeon(R) CPU           E5410  @ 2.33GHz
+stepping	: 10
+cpu MHz		: 2333.414
+cache size	: 6144 KB
+physical id	: 7
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 7
+initial apicid	: 3
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu tsc msr pae mce cx8 apic mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good pni dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm dca sse4_1 xsave lahf_lm tpr_shadow vnmi flexpriority
+bogomips	: 4670.06
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 38 bits physical, 48 bits virtual
+power management:
+
+
+=========================
+
+serial
+n = 128
+itmax = 200000
+3.965
+
+serial
+n = 256
+itmax = 200000
+15.940
+
+serial
+n = 512
+itmax = 200000
+63.668
+
+serial
+n = 1024
+itmax = 200000
+254.738
+
+serial
+n = 2048
+itmax = 200000
+1020.144
+
+=========================
+
+threads 8
+static,10
+n = 128
+itmax = 200000
+1.250, 1.240, 
+
+threads 8
+static,10
+n = 256
+itmax = 200000
+2.884, 2.920, 2.861
+
+threads 8
+static,10
+n = 512
+itmax = 200000
+10.452, 9.966, 9.768
+
+threads 8
+static,10
+n = 1024
+itmax = 200000
+35.609, 35.303
+
+threads 8
+static,10
+n = 2048
+itmax = 200000
+138.283
+
+=========================
+
+
+serial
+n = 1024
+itmax = 200000
+255.311
+
+threads 2
+static,10
+n = 1024
+itmax = 200000
+130.077
+
+threads 4
+static,10
+n = 1024
+itmax = 200000
+66.479
+
+threads 6
+static,10
+n = 1024
+itmax = 200000
+46.334, 46.241
+
+threads 8
+static,10
+n = 1024
+itmax = 200000
+35.609, 35.303
+
+threads 16
+static,10
+n = 1024
+itmax = 200000
+35.933
+
+
+=============================
+
+threads 8
+static,1
+n = 1024
+itmax = 200000
+33.808
+
+threads 8
+static,2
+n = 1024
+itmax = 200000
+33.414
+
+threads 8
+static,4
+n = 1024
+itmax = 200000
+33.789
+
+threads 8
+static,8
+n = 1024
+itmax = 200000
+35.012
+
+threads 8
+static,10
+n = 1024
+itmax = 200000
+35.609, 35.303
+
+threads 8
+static,20
+n = 1024
+itmax = 200000
+39.087
+
+threads 8
+static,40
+n = 1024
+itmax = 200000
+44.839
+
+threads 8
+static,80
+n = 1024
+itmax = 200000
+72.903
+
+============================
+
+threads 8
+dynamic,1
+n = 1024
+itmax = 200000
+33.431
+
+threads 8
+dynamic,2
+n = 1024
+itmax = 200000
+34.052
+
+threads 8
+dynamic,4
+n = 1024
+itmax = 200000
+33.742
+
+threads 8
+dynamic,8
+n = 1024
+itmax = 200000
+34.691
+
+threads 8
+dynamic,10
+n = 1024
+itmax = 200000
+35.093
+
+threads 8
+dynamic,20
+n = 1024
+itmax = 200000
+37.588
+
+threads 8
+dynamic,40
+n = 1024
+itmax = 200000
+43.803
+
+threads 8
+dynamic,80
+n = 1024
+itmax = 200000
+73.089
+
+======================
+
+threads 8
+guided,1
+n = 1024
+itmax = 200000
+74.873
+
+threads 8
+guided,10
+n = 1024
+itmax = 200000
+74.850
+
+threads 8
+guided,40
+n = 1024
+itmax = 200000
+75.105
+
+threads 8
+guided,80
+n = 1024
+itmax = 200000
+79.883
+
+
+======================
