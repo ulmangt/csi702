@@ -427,3 +427,32 @@ itmax = 200000
 
 
 ======================
+
+cds01 cluster
+
+threads 8
+dynamic,1
+n = 1024
+itmax = 200000
+148.798
+
+
+threads 8
+dynamic,2
+n = 1024
+itmax = 200000
+148.781
+
+
+threads 8
+dynamic,80
+n = 1024
+itmax = 200000
+148.918
+
+
+threads 1
+dynamic,80
+n = 1024
+itmax = 200000
+297.095
