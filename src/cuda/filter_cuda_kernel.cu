@@ -199,7 +199,7 @@ __global__ void sum_weight_kernel( struct particles *list , float *weights, int 
   }
 }
 
-extern "C" void sum_weight( struct particles *list, float *weight, int num )
+extern "C" float sum_weight( struct particles *list, float *weight, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
@@ -214,6 +214,16 @@ extern "C" void sum_weight( struct particles *list, float *weight, int num )
 
   // check if the init_particle_val kernel generated errors
   checkCUDAError("sum_weight");
+
+  // each block has reported its sum, now sum the blocks weight sums in serial
+  int i;
+  float sum = 0.0f;
+  for ( i = 0 ; i < numBlocks ; i++ )
+  {
+    sum += weight[i];
+  }
+
+  return sum;
 }
 
 // initialize particles, use random seeds to set random positions and velocities

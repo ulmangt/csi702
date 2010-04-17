@@ -53,6 +53,9 @@ int main( int argc, char** argv )
   struct particles *d_particle_list = d_init_particle_mem( NUM_PARTICLES );
   struct particles *h_particle_list = h_init_particle_mem( NUM_PARTICLES );
 
+  // initialize temporary weight array
+  float *weights = ( float * ) malloc( sizeof( float ) * ( NUM_PARTICLES / THREADS_PER_BLOCK ) );
+
   // initialize random seeds for each particle using host random number generator
   h_init_seed( h_particle_list, NUM_PARTICLES );
 
@@ -75,6 +78,7 @@ int main( int argc, char** argv )
     float diff_time = current_time - previous_time;
     time_update( d_particle_list, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
     information_update( obs, d_particle_list, NUM_PARTICLES );
+    float weight_sum = sum_weight( d_particle_list, weights, NUM_PARTICLES );
     //resample2( NUM_PARTICLES );
   }
 
