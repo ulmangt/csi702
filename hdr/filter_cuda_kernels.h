@@ -4,7 +4,7 @@
 
 #include "filter_cuda_data.h"
 
-extern float sum_weight( struct particles *host, float *weights, int num );
+extern float sum_weight( struct particles *host, float *d_weights, float *h_weights, int num );
 
 extern void information_update( struct observation *obs, struct particles *host, int num );
 
@@ -15,6 +15,8 @@ extern void init_particles( struct particles *host, int num );
 extern void copy_particles_host_to_device( struct particles *host, struct particles *device, int num );
 
 extern void copy_particles_device_to_host( struct particles *host, struct particles *device, int num );
+
+extern float* d_init_farray_mem( int num );
 
 // allocate memory for num particles on host
 extern struct particles *h_init_particle_mem( int num );

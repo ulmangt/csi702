@@ -156,6 +156,7 @@ __global__ void sum_weight_kernel( struct particles *list , float *weights, int 
   // the indexes assigned to the threads in each block
   int i = blockIdx.x * ( blockDim.x * 2 ) + threadIdx.x;
 
+
   // copy weights from global memory into shared memory for
   // num / 2 threads (only half the threads are from blocks
   // whose i indexes corrispond to actual indexes)
@@ -174,11 +175,12 @@ __global__ void sum_weight_kernel( struct particles *list , float *weights, int 
   // wait for s_shared to be fully populated
   __syncthreads();
 
+
   // offset tracks the distance between the two entries from
   // s_shared that are added together in the current iteration
   // also, each iteration, offset threads are used
-  int offset = blockDim.x / 2;
-  while ( offset < 0 )
+  unsigned int offset = blockDim.x / 2;
+  while ( offset > 0 )
   {
     if ( tid < offset )
     {
@@ -199,7 +201,7 @@ __global__ void sum_weight_kernel( struct particles *list , float *weights, int 
   }
 }
 
-extern "C" float sum_weight( struct particles *list, float *weight, int num )
+extern "C" float sum_weight( struct particles *list, float *d_weights, float *h_weights, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
@@ -207,7 +209,10 @@ extern "C" float sum_weight( struct particles *list, float *weight, int num )
   dim3 dimGrid(numBlocks);
   dim3 dimBlock(THREADS_PER_BLOCK);
   int shared_mem_size = sizeof( float ) * THREADS_PER_BLOCK;
-  sum_weight_kernel<<< dimGrid, dimBlock, shared_mem_size >>>( list, weight, num );
+  
+  printf("shared_mem_size %d \n", shared_mem_size );
+
+  sum_weight_kernel<<< dimGrid, dimBlock, shared_mem_size >>>( list, d_weights, num );
 
   // block until the device has completed kernel execution
   cudaThreadSynchronize();
@@ -215,12 +220,17 @@ extern "C" float sum_weight( struct particles *list, float *weight, int num )
   // check if the init_particle_val kernel generated errors
   checkCUDAError("sum_weight");
 
-  // each block has reported its sum, now sum the blocks weight sums in serial
+  // each block has reported its sum, now copy those block sums
+  // back to the host and sum the blocks weight sums in serial
+  // remembering that only half the entries contain partial sums
+  cudaMemcpy( h_weights, d_weights, (numBlocks / 2) * sizeof(float), cudaMemcpyDeviceToHost );
+
   int i;
   float sum = 0.0f;
-  for ( i = 0 ; i < numBlocks ; i++ )
+  for ( i = 0 ; i < (numBlocks/2) ; i++ )
   {
-    sum += weight[i];
+    printf( "weight %d %f\n", i, h_weights[i] );
+    sum += h_weights[i];
   }
 
   return sum;
@@ -341,6 +351,17 @@ extern "C" void copy_particles_device_to_host( struct particles *host, struct pa
   int size = sizeof( struct particles ) * num;
 
   cudaMemcpy( host, device, size, cudaMemcpyDeviceToHost );
+}
+
+// allocate memory for a float array of size num on device
+extern "C" float* d_init_farray_mem( int num )
+{
+  int size = sizeof( float ) * num ;
+  float *array;
+
+  cudaMalloc( (void **) &array, size );
+
+  return array;
 }
 
 // allocate memory for num particles on host

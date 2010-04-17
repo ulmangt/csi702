@@ -2,9 +2,10 @@
 #ifndef FILTER_CONSTANTS_H_INCLUDED
 #define FILTER_CONSTANTS_H_INCLUDED
 
-#define THREADS_PER_BLOCK 512
-
-#define NUM_PARTICLES THREADS_PER_BLOCK * 500
+#define THREADS_PER_BLOCK 256
+#define NUM_BLOCKS 512
+// NUM_PARTICLES must be a power of 2 (for reduction routine to work)
+#define NUM_PARTICLES THREADS_PER_BLOCK * NUM_BLOCKS
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
 

@@ -53,8 +53,9 @@ int main( int argc, char** argv )
   struct particles *d_particle_list = d_init_particle_mem( NUM_PARTICLES );
   struct particles *h_particle_list = h_init_particle_mem( NUM_PARTICLES );
 
-  // initialize temporary weight array
-  float *weights = ( float * ) malloc( sizeof( float ) * ( NUM_PARTICLES / THREADS_PER_BLOCK ) );
+  // initialize temporary weight array on device and host
+  float *d_weights = d_init_farray_mem( NUM_PARTICLES / THREADS_PER_BLOCK );
+  float *h_weights = (float *) malloc( sizeof(float) * ( NUM_PARTICLES / THREADS_PER_BLOCK ) );
 
   // initialize random seeds for each particle using host random number generator
   h_init_seed( h_particle_list, NUM_PARTICLES );
@@ -77,16 +78,19 @@ int main( int argc, char** argv )
     current_time = obs->time;
     float diff_time = current_time - previous_time;
     time_update( d_particle_list, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
-    information_update( obs, d_particle_list, NUM_PARTICLES );
-    float weight_sum = sum_weight( d_particle_list, weights, NUM_PARTICLES );
+    //information_update( obs, d_particle_list, NUM_PARTICLES );
+    float weight_sum = sum_weight( d_particle_list, d_weights, h_weights, NUM_PARTICLES );
+
+    printf("weight sum %f\n", weight_sum );
+
     //resample2( NUM_PARTICLES );
   }
 
   // copy particles back to host
   copy_particles_device_to_host( h_particle_list, d_particle_list, NUM_PARTICLES );
 
-  write_particles( h_particle_list, OUTPUT_NAME, NUM_PARTICLES, 10 );
-  print_particles( h_particle_list, NUM_PARTICLES, 1000 );
+  //write_particles( h_particle_list, OUTPUT_NAME, NUM_PARTICLES, 10 );
+  //print_particles( h_particle_list, NUM_PARTICLES, 1000 );
 
   // free host and device memory
   h_free_particle_mem( h_particle_list );
