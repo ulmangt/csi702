@@ -3,7 +3,7 @@
 #define FILTER_CONSTANTS_H_INCLUDED
 
 #define THREADS_PER_BLOCK 256
-#define NUM_BLOCKS 512
+#define NUM_BLOCKS 512 * 8
 // NUM_PARTICLES must be a power of 2 (for reduction routine to work)
 #define NUM_PARTICLES THREADS_PER_BLOCK * NUM_BLOCKS
 #define MAX_RANGE 20000 // meters
