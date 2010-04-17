@@ -4,7 +4,7 @@
 
 #include "filter_cuda_data.h"
 
-extern void sum_weight( struct particles *host, int num );
+extern float sum_weight( struct particles *host, float *weights, int num );
 
 extern void information_update( struct observation *obs, struct particles *host, int num );
 
