@@ -1,0 +1,12 @@
+http://docs.amazonwebservices.com/AWSEC2/latest/GettingStartedGuide/
+yum install subversion
+yum install gcc
+
+
+use spot instances to reduce cost
+ami-55739e3c (High-CPU Extra Large On-Demand Instances = $0.68 per hour , about $0.20 per hour with spot instance)
+http://uec-images.ubuntu.com/releases/karmic/release/
+ssh -i <your .pem file> ubuntu@<public DNS>
+sudo apt-get update
+sudo apt-get install subversion
+sudo apt-get install gcc
