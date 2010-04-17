@@ -47,11 +47,12 @@ void *mandel(void *tid)
   iend = n;
 
   // loop over the pixels
-  #pragma omp parallel
-  #pragma omp do shared(img) default(private) schedule(runtime)
+  #pragma omp parallel for default(shared) private(i,j,x,y,zr,zi,it,zr2,zi2) schedule(runtime)
   for (i= istart; i< iend; i++) {
     for (j = 0; j<n; j++) { 
-    
+
+      printf( " i %d j %d \n ", i, j );    
+
       // set the x and y position 
       x = i*dx + xmin;
       y = j*dy + ymin;
@@ -80,11 +81,9 @@ void *mandel(void *tid)
 
       // save the iteration number into the image array
       // and update the image counter
-      img[k] = it;
+      img[i*n+j] = it;
     }
   }
-  #pragma omp end do
-  #pragma omp end parallel
 
 
   // find the final time

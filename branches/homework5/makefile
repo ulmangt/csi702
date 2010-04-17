@@ -6,7 +6,10 @@ run_serial: mandel_serial
 run_parallel: mandel_parallel
 	export OMP_NUM_THREADS=4
 	export OMP_SCHEDULE=static,10
-	bin/mandel_serial
+	bin/mandel_parallel
+
+view_results:
+	octave --persist mandel_view
 
 mandel_serial: mandel_serial.o
 	gcc src/mandel_serial.o -o bin/mandel_serial
