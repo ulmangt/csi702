@@ -2,10 +2,14 @@
 #ifndef FILTER_CONSTANTS_H_INCLUDED
 #define FILTER_CONSTANTS_H_INCLUDED
 
-#define THREADS_PER_BLOCK 256
-#define NUM_BLOCKS 512 * 8
-// NUM_PARTICLES must be a power of 2 (for reduction routine to work)
+// reduction routines are picky about these values
+// NUM_PARTICLES must be a power of 2 (routines perform a binary fan-in)
+// THREADS_PER_BLOCK must be greater than or equal to 64
+// (routines have unrolled loops which fail for smaller numbers of threads per block)
+#define THREADS_PER_BLOCK 64
+#define NUM_BLOCKS 512 * 32
 #define NUM_PARTICLES THREADS_PER_BLOCK * NUM_BLOCKS
+
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
 
