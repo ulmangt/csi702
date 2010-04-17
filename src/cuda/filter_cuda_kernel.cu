@@ -180,7 +180,7 @@ __global__ void sum_weight_kernel( struct particles *list , float *weights, int 
   // s_shared that are added together in the current iteration
   // also, each iteration, offset threads are used
   unsigned int offset = blockDim.x / 2;
-  while ( offset > 0 )
+  while ( offset > 32 )
   {
     if ( tid < offset )
     {
@@ -190,6 +190,20 @@ __global__ void sum_weight_kernel( struct particles *list , float *weights, int 
     offset = offset >> 1; // divide offset by 2
 
     __syncthreads();
+  }
+
+  // after offset is 32, all our threads are working within a single warp
+  // this means all operations they perform are SIMD (simultanious) and
+  // require no __syncthreads()
+  // thus, each line corrisponds to an unrolled iteration of the above loop 
+  if ( tid < 32 )
+  {
+    s_shared[ tid ] += s_shared[ tid + 32 ];
+    s_shared[ tid ] += s_shared[ tid + 16 ];
+    s_shared[ tid ] += s_shared[ tid + 8 ];
+    s_shared[ tid ] += s_shared[ tid + 4 ];
+    s_shared[ tid ] += s_shared[ tid + 2 ];
+    s_shared[ tid ] += s_shared[ tid + 1 ];
   }
 
   // s_shatred[0] now contains the final weight for this block
