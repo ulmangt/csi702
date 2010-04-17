@@ -51,8 +51,6 @@ void *mandel(void *tid)
   for (i= istart; i< iend; i++) {
     for (j = 0; j<n; j++) { 
 
-      printf( " i %d j %d \n ", i, j );    
-
       // set the x and y position 
       x = i*dx + xmin;
       y = j*dy + ymin;
