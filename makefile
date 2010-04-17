@@ -4,8 +4,6 @@ run_serial: mandel_serial
 	bin/mandel_serial
 
 run_parallel: mandel_parallel
-	export OMP_NUM_THREADS=4
-	export OMP_SCHEDULE=static,10
 	bin/mandel_parallel
 
 run_qsub: mandel_parallel

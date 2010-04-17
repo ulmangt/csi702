@@ -10,7 +10,7 @@
 // Modified April 2010 - G. Ulman
 
 
-int n = 512;
+int n = 1024;
 int *img;
 int itmax = 200000;
 double xmax, xmin, ymax, ymin;
