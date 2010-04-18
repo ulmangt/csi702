@@ -456,3 +456,36 @@ dynamic,80
 n = 1024
 itmax = 200000
 297.095
+
+
+threads 8
+static,1
+148.791
+
+threads 8
+static,80
+148.959
+
+threads 8
+static,800
+297.263
+
+threads 8
+static,500
+204
+
+threads 8
+static,400
+201
+
+threads 8
+static,200
+201
+
+threads 8
+static,600
+293
+
+threads 8
+static,300
+255
