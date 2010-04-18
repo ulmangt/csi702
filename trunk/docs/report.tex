@@ -30,6 +30,21 @@ Text...
 \subsection{Parallel Reduction}
 The thrust library provides prewritten parallel algorithms for common CUDA tasks, including reducing an array of values to a single value through repeated application of a binary reduction function.\cite{thrust}
 
+My parallel array summation implementation is based on the NVIDIA white paper on the subject included in the CUDA SDK.\cite{oprc} Understanding the overall summation algorithm requires first understanding the basic shared memory summation algorithm for a single block. A simple fan-in reduction is used. At the first iteration, the first \(\frac{blockDim.x}{2}\) threads in the block add their shared memory value to the shared memory value of their counterpart in the second half of the block. The second iteration continues using \(\frac{blockDim.x}{4}\) threads, and so on. Each iteration is synchronized using \verb!__syncthreads()!. Although the values to be summed are passed to the kernel using global memory, each block immediately copies its values to shared memory and performs the rest of the reduction there. Because shared memory is hundreds of times faster than global memory\cite{tutorial1} this strategy is necessary for adequate performance.
+
+However, the loop construct that controls this iteration is expensive, as are the \verb!__syncthreads()! calls. Fortunately, we can take advantage of the specifics of the NVIDA hardware to get substatial additional savings once the number of values in shared memory to sum drops below 32. CUDA threads are grouped into \emph{warps} of 32 threads which execute commands simultaniously as a single operation on the GPU (and thus require no synchronization). Therefore, by stopping the reduction iteration and unrolling the final iterations, we can avoid synchronization for the iterations where all the summations are occuring simultaniously automatically.
+
+As each block completes its parallel summation, it writes its sum to an array in global memory. Thus, after the first iteration, this array will contain one value for each block. To sum these values, the kernel is called iteratively until fewer value remain than the number of threads in a single block. At this point, the kernel is called one last time with a single block which writes the final overall sum to global memory.
+
+\subsection{Random Number Generation}
+Particle filter tracking is a stochastic process: as particles are time updated, they maneuver randomly according to their motion model; as particles are resampled, their replacements are randomly perturbed copies of existing particles. Thus, performing particle filter tracking using CUDA required generating random numbers efficiently on the GPU. The thrust library provides random number generation capabilities, and the CUDA SDK provides a parallel MersenneTwister example. My random number generator implementation is a simpler linear congruential generator which relies on independent seeds stored for each particle.
+
+\begin{equation}\label{lcgeq1}
+X_{n+1}=(aX_{n}+c \mod m)
+\end{equation}
+
+With properly chosen \(a\), \(c\) and \(m\) values linear congruential generator can provide sufficiently random values for particle filtering. The values I used are those used by the java.util.Random class. This approach is attractive because it is theoretically very fast and requires very little state, allowing each particle to generate its own independent stream of random values. Unfortunately, the recurrence relation in equation \ref{lcgeq1} relies on the modulus operator, which is extremely slow on NVIDA hardware.\cite{oprc}
+
 \section{Performance}
 Text...
 
@@ -53,11 +68,20 @@ Text...
 \bibitem{oprc}
    Harris, Mark,
    \emph{Optimizing Parallel Reduction in CUDA},
-   NVIDIA Developer Technology,\\
+   NVIDIA Developer Technology \\
    http://developer.download.nvidia.com/compute/cuda/sdk/website/samples.html
 
+\bibitem{tutorial1}
+   Volume I: Introduction to CUDA Programming \\
+   http://www.nvidia.com/docs/IO/47904/VolumeI.pdf
+
 \bibitem{thrust}
+   Thrust C++ Template Library for CUDA \\
    http://code.google.com/p/thrust/
+
+\bibitem{lcg}
+   Linear Congruential Generator \\
+   http://en.wikipedia.org/wiki/Linear\_congruential\_generator
 
 \end{thebibliography}
 
