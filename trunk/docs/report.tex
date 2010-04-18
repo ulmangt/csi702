@@ -18,10 +18,13 @@ Text...
 \tableofcontents
 
 \section{Background}
-A simple geographic tracking problem traditionally consists of estimating the state of a target using errored observations on a function of that state. The problem explored here assumes a four-dimensional state space with two cartesian position dimensions and two veocity dimensions. To simplify the problem, the possibility of false alarms (observations which do not corrispond to an actual target) is ignorred. All observations are assumed to corrispond to a single target of interest (associating observations with the correct target track is an additional complicating concern in multi-target tracking problems).
+A simple geographic tracking problem traditionally consists of estimating the state of a target using errored observations of some function of the target state. The problem explored here assumes a four-dimensional state space with two cartesian position dimensions and two veocity dimensions. To simplify the problem, the possibility of false alarms (observations which do not corrispond to an actual target) is ignorred. Further, all observations are assumed to corrispond to a single target of interest (associating observations with the correct target track is an additional complicating concern in multi-target tracking problems).
 
-\subsection{Prerequisites}
-Employing bayesian tracking to determine the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This prior distribution is generally based on engineering knowledge of the targets and sensors. The simple priors used in this tracking problem use the maximum detection range of the sensors generating observations. Because targets will not be detected until they are within the sensor's detection range, we can begin with the assumption that the target is somewhere within the sensor's detection range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state space dimensions.
+\subsection{Prior Distribution}
+Employing bayesian tracking to estimate the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This probability density function describes the probability that the target's true state is \(x\) prior to receving any observations on the target. This prior distribution is generally based on engineering knowledge of the targets and of the sensors used to generate observations. The simple priors used in this tracking problem assume the sensor have a maximum detection range and thus that targets will not be detected until they are inside that range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state space dimensions.
+
+\subsection{Motion Model}
+
 
  employs Bayes' Theorem to combine errored observations on functions of a state space \(S\) into a posterior distribution p
 
