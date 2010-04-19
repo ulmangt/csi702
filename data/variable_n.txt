@@ -1,0 +1,7 @@
+# Amazon EC2
+# problem size    Serial Timing       Parallel Timing (8 threads static,10)
+128                3.965                1.25
+256                15.940               2.884
+512                63.668               9.966
+1024               254.738              35.303
+2048               1020.144             138.283

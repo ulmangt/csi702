@@ -1,0 +1,9 @@
+# Amazon EC2   static,10   n=1024
+# number of threads    Parallel Timing
+1                        255.311
+2                        130.077
+4                        66.479
+6                        46.334
+8                        35.609
+16                       35.933
+

@@ -1,0 +1,10 @@
+# CDS01 Cluster  threads=8  n=1024
+# static chunk size    Static Timing   Dynamic Timing   Guided Timing
+1                         148.791          148.798
+80                        148.959          148.781
+200                       201              201.495
+300                       255              255
+400                       201              201
+500                       204              206
+600                       293              293
+800                       297.263          297

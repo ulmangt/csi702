@@ -1,0 +1,7 @@
+# CDS
+# problem size    Serial Timing       Parallel Timing (1 threads static,10)
+128                   4.655              2.440
+256                  18.570              9.631
+512                  74.324              37.346
+1024                 296.981             149.223
+2048                 1188.741            596.12
