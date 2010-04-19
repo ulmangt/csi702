@@ -1,0 +1,6 @@
+# CDS01 Cluster  n=1024   static,10
+# threads    
+1                297
+2                149
+3                148
+10               149
