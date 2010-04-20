@@ -1,0 +1,7 @@
+# gmice Cluster  threads 8   static,10
+# n                 parallel
+128                  2.848
+256                  8.440
+512                  30.849
+1024                 121.047
+2048                 482.450
