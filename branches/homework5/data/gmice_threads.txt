@@ -1,0 +1,3 @@
+# gmice Cluster  n=1024   static,10
+# threads    
+1                 

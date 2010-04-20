@@ -27,6 +27,10 @@ The standard \verb!#pragma omp parallel for! directive was used in front of the 
 
 \section{Performance Analysis}
 
+Performance tests were performed on three different computer systems: an 8 core Ubuntu box using 2.33GHz Intel Xeon CPUs hosted on Amazon EC2, a 2 core node on the GMU cds cluster, and an 8 core node on the GMU gmice cluster. In each case tests were performed varying the problem size, number of threads, and thread scheduling techniques.
+
+Figure \ref{amazon_n} demonstrate the effect of increasing problem size on the 8 core Amazon EC2 node. For all problem sizes, the parallel OpenMP code used static scheduling with a chunk size of 10. The most striking observation from these results is the sharp dropoff in speedup as the probem size (the number of rows or columns in the discretized Mandelbrot set) falls below 1024. Presumably using OpenMP adds some amount of overhead to the code as threads must be created and destroyed (there should be no synchronization overhead in this code). That overhead might begin to overwhelm the performance gains due to multithreading for small problem sizes. However, this is hard to believe due to the lightweight nature of threads (creating and destroying them is a very fast operation). The other possible explanation for the performance dropoff is that the ratio of chunk size to total problem size becomes larger and larger as the total problem size shrinks. This makes it more likely that one thread could be assigned a particularly computationally intensive portion of the Mandelbrot set.
+
 \begin{figure}
 \centering
 \includegraphics[width=0.7\textwidth]{../data/amazon_n.png}
