@@ -1,8 +1,8 @@
 #!/bin/csh
 #PBS -j oe
-#PBS -N mandel_parallel
-#PBS -l select=16:ncpus=1:mpiprocs=1
-#PBS -l walltime=48:00:00
+#PBS -N csi702mb
+#PBS -l select=1:ncpus=8
+#PBS -l walltime=00:10:00
 
 
 limit stacksize unlimited
@@ -26,11 +26,12 @@ setenv PROCS `cat $PBS_NODEFILE | wc -l`
 setenv NODES `cat $PBS_NODEFILE | sort -u | wc -l`
 echo "Running on $PROCS processors"
 
-echo "Home directory: $HOME" 
+echo "Home directory: $HOME"
 cd $HOME/homework5/
 echo "Working in directory: $PWD"
 
-
+setenv OMP_NUM_THREADS 8
+setenv OMP_SCHEDULE guided,800
 
 mpdboot -r ssh -f $PBS_NODEFILE -n $NODES
 time bin/mandel_parallel
