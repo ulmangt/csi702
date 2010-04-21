@@ -23,6 +23,9 @@ A simple geographic tracking problem traditionally consists of estimating the st
 \subsection{Prior Distribution}
 Employing bayesian tracking to estimate the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This probability density function describes the probability that the target's true state is \(x\) prior to receving any observations on the target. This prior distribution is generally based on engineering knowledge of the targets and of the sensors used to generate observations. The simple priors used in this tracking problem assume the sensor have a maximum detection range and thus that targets will not be detected until they are inside that range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state space dimensions.
 
+\subsection{Likelihood Functions}
+
+
 \subsection{Motion Model}
 
 
