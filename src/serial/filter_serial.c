@@ -25,7 +25,6 @@ void maneuver_index( int );
 void information_update( int, struct observation* );
 
 void resample( int );
-void resample2( int );
 void mark_particle( int, int );
 void copy_particle( int, int, float );
 void perturb_particle( int );
@@ -76,7 +75,7 @@ int main( int argc, char* argv )
     current_time = obs->time;
     time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
     information_update( NUM_PARTICLES, obs );
-    resample2( NUM_PARTICLES );
+    resample( NUM_PARTICLES );
   }
 
   write_particles( OUTPUT_NAME, NUM_PARTICLES, 10 );
@@ -194,7 +193,7 @@ void information_update( int num, struct observation *obs )
   }
 }
 
-void resample2( int num )
+void resample( int num )
 {
   int i;
   // sum weights
@@ -253,111 +252,6 @@ void resample2( int num )
 
     weight[i] = 1.0;
   }
-}
-
-void resample( int num )
-{
-  int i;
-
-  // sum weights
-  float weight_sum = 0.0;
-  for ( i = 0 ; i < num ; i++ )
-  {
-    weight_sum += weight[i];
-  }
-  
-  //printf( "weight_sum %f\n", weight_sum );
-
-  // normalize weights to sum to 1.0
-  for ( i = 0 ; i < num ; i++ )
-  {
-    weight[i] = weight[i] / weight_sum;
-    //printf("normalized weight %d = %f\n", i, weight[i] );
-  }
-
-  // weight of an average particle
-  float wcutoff_increment = 1.0 / num;
-  // current target weight
-  float wcutoff = wcutoff_increment * frand0( 1.0 );
-  // cumulative sum of particle weights
-  float wsum = weight[0];
-  // resample target index, the particle being replaced  
-  int rt = 0;
-  // resample source index, the particle being copied
-  int rs = 0;
-  
-  // Step forward through the particles keeping track of
-  // the cumulative weight of all particles encountered (wsum)
-  // and the desired cumulative weight (wcutoff) (if all
-  // particles were renormalized to have equal weight).
-  //
-  // When wsum is greater than wcutoff, we've enountered
-  // particles with higher than average weights that should
-  // be duplicated, spreading their weight over multiple
-  // particles. When wcutoff is greater than wsum, we step
-  // through the particles, summing weights, until wsum is greater
-  // (i.e. until we find a particle with too much weight).
-  for ( ; rt < num ; )
-  {
-    //printf("rt %d %f %f\n", rt, wsum, wcutoff);
-
-    while( wsum < wcutoff && rs < num-1 )
-    {
-      rs++;
-      wsum += weight[rs];
-
-      //printf( "rs %d wsum %f wcutoff %f\n", rs, wsum, wcutoff );
-    }
-
-    mark_particle( rs, rt );
-
-    do
-    {
-      rt++;
-      wcutoff += wcutoff_increment;
-    }
-    while ( wsum >= wcutoff );
-  }
-
-  // In order to perform the above algorithm in place,
-  // particles are not duplicated immediately. Instead,
-  // source particles are marked with the index of
-  int high_target_index = num - 1;
-  for ( rs = num - 1 ; rs >= 0 ; rs-- )
-  {
-    if ( weight[rs] >= 0.0 )
-      continue;
-
-    int low_target_index = -(weight[rs]+1);
-
-    // how does this happen? is it a problem?
-    if ( low_target_index >= num || low_target_index < 0 )
-    {
-      continue;
-      printf("bad low target index %d\n", low_target_index);
-    }
-
-    for ( rt = low_target_index ; rt < high_target_index ; rt++ )
-    {
-      //printf( "copying %d to %d\n", rs, rt );
-      copy_particle( rs , rt , wcutoff_increment );
-      perturb_particle( rt );
-    }
-
-    high_target_index = low_target_index;
-  }
-}
-
-// the weight array of particles that are slated to
-// be duplicated is used to store the smallest particle
-// index it will be copied into
-//
-// the index is encoded as -(index+1) so it cannot be
-// mistaken as a normalized weight
-void mark_particle( int source_index, int target_index )
-{
-  //printf( "marked %d with %d\n", source_index, target_index );
-  weight[source_index] = -(target_index + 1);
 }
 
 void copy_particle( int source_index, int target_index, float particle_weight )
