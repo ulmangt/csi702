@@ -78,7 +78,7 @@ int main( int argc, char** argv )
     current_time = obs->time;
     float diff_time = current_time - previous_time;
     time_update( d_particle_list, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
-    //information_update( obs, d_particle_list, NUM_PARTICLES );
+    information_update( obs, d_particle_list, NUM_PARTICLES );
     float weight_sum = sum_weight( d_particle_list, d_weights, h_weights, NUM_PARTICLES );
 
     printf("weight sum %f\n", weight_sum );
