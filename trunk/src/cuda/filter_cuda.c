@@ -12,16 +12,98 @@
 #include "filter_cuda_util.h"
 #include "filter_constants.h"
 
+// host particle arrays
+
+float *h_x_pos; // meters
+float *h_y_pos; // meters
+float *h_x_vel; // meters/second
+float *h_y_vel; // meters/second
+float *h_weight;
+float *h_seed; // random seed for particle
+
+// device particle arrays
+
+float *d_x_pos; // meters
+float *d_y_pos; // meters
+float *d_x_vel; // meters/second
+float *d_y_vel; // meters/second
+float *d_weight;
+float *d_seed; // random seed for particle
+
+// temporary device array for calculating sums
+float *d_temp_weight1;
+float *d_temp_weight2;
+
 // inititalize random seeds
 // cuda kernels do not have access to c library rand function
-void h_init_seed( struct particles *host, int num )
+void h_init_seed( )
 {
   int i;
 
-  for ( i = 0 ; i < num ; i++ )
+  for ( i = 0 ; i < NUM_PARTICLES ; i++ )
   {
-    host[i].seed = rand();
+    h_seed[i] = rand();
   }
+}
+
+void h_init_particles( )
+{
+  h_x_pos = h_init_array_mem( NUM_PARTICLES );
+  h_y_pos = h_init_array_mem( NUM_PARTICLES );
+  h_x_vel = h_init_array_mem( NUM_PARTICLES );
+  h_y_vel = h_init_array_mem( NUM_PARTICLES );
+  h_weight = h_init_array_mem( NUM_PARTICLES );
+  h_seed = h_init_array_mem( NUM_PARTICLES );
+}
+
+void d_init_particles( )
+{
+  d_x_pos = d_init_array_mem( NUM_PARTICLES );
+  d_y_pos = d_init_array_mem( NUM_PARTICLES );
+  d_x_vel = d_init_array_mem( NUM_PARTICLES );
+  d_y_vel = d_init_array_mem( NUM_PARTICLES );
+  d_weight = d_init_array_mem( NUM_PARTICLES );
+  d_seed = d_init_array_mem( NUM_PARTICLES );
+}
+
+void h_free_particles( )
+{
+  h_free_particle_mem( h_x_pos );
+  h_free_particle_mem( h_y_pos );
+  h_free_particle_mem( h_x_vel );
+  h_free_particle_mem( h_y_vel );
+  h_free_particle_mem( h_weight );
+  h_free_particle_mem( h_seed );
+}
+
+void d_free_particles( )
+{
+  d_free_particle_mem( d_x_pos );
+  d_free_particle_mem( d_y_pos );
+  d_free_particle_mem( d_x_vel );
+  d_free_particle_mem( d_y_vel );
+  d_free_particle_mem( d_weight );
+  d_free_particle_mem( d_seed );
+}
+
+void copy_particles_host_to_device( )
+{
+  copy_array_host_to_device( h_x_pos, d_x_pos, NUM_PARTICLES );
+  copy_array_host_to_device( h_y_pos, d_y_pos, NUM_PARTICLES );
+  copy_array_host_to_device( h_x_vel, d_x_vel, NUM_PARTICLES );
+  copy_array_host_to_device( h_y_vel, d_y_vel, NUM_PARTICLES );
+  copy_array_host_to_device( h_weight, d_weight, NUM_PARTICLES );
+  copy_array_host_to_device( h_seed, d_seed, NUM_PARTICLES );
+}
+
+void copy_particles_device_to_host( )
+{
+  copy_array_device_to_host( h_x_pos, d_x_pos, NUM_PARTICLES );
+  copy_array_device_to_host( h_y_pos, d_y_pos, NUM_PARTICLES );
+  copy_array_device_to_host( h_x_vel, d_x_vel, NUM_PARTICLES );
+  copy_array_device_to_host( h_y_vel, d_y_vel, NUM_PARTICLES );
+  copy_array_device_to_host( h_weight, d_weight, NUM_PARTICLES );
+  copy_array_device_to_host( h_seed, d_seed, NUM_PARTICLES );
 }
 
 int main( int argc, char** argv )
@@ -50,21 +132,21 @@ int main( int argc, char** argv )
   print_observations( h_obs_list );
 
   // initialize particle memory
-  struct particles *d_particle_list = d_init_particle_mem( NUM_PARTICLES );
-  struct particles *h_particle_list = h_init_particle_mem( NUM_PARTICLES );
+  h_init_particles( );
+  d_init_particles( );
 
   // initialize temporary weight array on device and host
-  float *d_weights = d_init_farray_mem( NUM_PARTICLES / THREADS_PER_BLOCK );
-  float *h_weights = (float *) malloc( sizeof(float) * ( NUM_PARTICLES / THREADS_PER_BLOCK ) );
+  d_temp_weight1 = d_init_array_mem( NUM_PARTICLES );
+  d_temp_weight2 = d_init_array_mem( NUM_PARTICLES );
 
   // initialize random seeds for each particle using host random number generator
-  h_init_seed( h_particle_list, NUM_PARTICLES );
+  h_init_seed( );
 
   // copy particles to device
-  copy_particles_host_to_device( d_particle_list, h_particle_list, NUM_PARTICLES );
+  copy_particles_host_to_device( );
 
   // initialize particle positions 
-  init_particles( d_particle_list, NUM_PARTICLES );
+  init_particles( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
 
   int i;
   float previous_time = 0.0;
@@ -77,22 +159,19 @@ int main( int argc, char** argv )
     previous_time = current_time;
     current_time = obs->time;
     float diff_time = current_time - previous_time;
-    time_update( d_particle_list, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
-    information_update( obs, d_particle_list, NUM_PARTICLES );
-    float weight_sum = sum_weight( d_particle_list, d_weights, h_weights, NUM_PARTICLES );
-
+    time_update( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
+    //information_update( obs, d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
+    float weight_sum = sum_weight( d_weight, d_temp_weight1, d_temp_weight2, NUM_PARTICLES );
     printf("weight sum %f\n", weight_sum );
-
-    //resample2( NUM_PARTICLES );
   }
 
   // copy particles back to host
-  copy_particles_device_to_host( h_particle_list, d_particle_list, NUM_PARTICLES );
+  copy_particles_device_to_host( );
 
-  //write_particles( h_particle_list, OUTPUT_NAME, NUM_PARTICLES, 10 );
-  //print_particles( h_particle_list, NUM_PARTICLES, 1000 );
+  write_particles( h_x_pos, h_y_pos, h_x_vel, h_y_vel, h_weight, h_seed, OUTPUT_NAME, NUM_PARTICLES, 10 );
+  //print_particles( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed,, NUM_PARTICLES, 1000 );
 
   // free host and device memory
-  h_free_particle_mem( h_particle_list );
-  d_free_particle_mem( d_particle_list );
+  h_free_particles( );
+  d_free_particles( );
 }
