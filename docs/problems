@@ -27,6 +27,8 @@ lack of good debugging techniques/tools for kernel functions -- have to copy dat
 limited testing since running on single gfx card
 
 
+originally had particle struct for convenience -- replaced with arrays for each particle field to better fit cuda memory model (discuss coalesing / no caching )
+
 
 Notes:
 resampling:

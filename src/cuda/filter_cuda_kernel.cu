@@ -76,42 +76,41 @@ void checkCUDAError(const char *msg)
 }
 
 // CUDA kernel function : time update a particle
-__global__ void time_update_kernel( struct particles *list, float time_sec, float mean_maneuver )
+__global__ void time_update_kernel( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, float time_sec, float mean_maneuver )
 {
   // get the current particle index and retrieve the particle
   int index = blockIdx.x * blockDim.x + threadIdx.x;
-  struct particles *particle = list + index;
 
   // store the particle's random seed
-  float seed = list->seed;
+  float seed = d_seed[index];
 
   // use the random seed to make a random draw from an exponential distribution with mean time_sec
   // if the draw is larger than mean_maneuver, the particle maneuvers
   if ( device_erand( seed, time_sec ) > mean_maneuver )
   {
     seed = device_lcg_rand( seed );
-    particle->x_vel = particle->x_vel + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+    d_x_vel[index] = d_x_vel[index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
     seed = device_lcg_rand( seed );
-    particle->y_vel = particle->y_vel + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+    d_y_vel[index] = d_y_vel[index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
   }
 
   // update the random seed and store it back in the particle storage
-  list->seed = device_lcg_rand( seed );
+  d_seed[index] = device_lcg_rand( seed );
 
   // update the particle's position and velocity
-  particle->x_pos = particle->x_pos + particle->x_vel * time_sec;
-  particle->y_pos = particle->y_pos + particle->y_vel * time_sec;
+  d_x_pos[index] = d_x_pos[index] + d_x_vel[index] * time_sec;
+  d_y_pos[index] = d_y_pos[index] + d_y_vel[index] * time_sec;
 }
 
 // updates the position of all particles based on their current velocity
-extern "C" void time_update( struct particles *list, int num, float time_sec, float mean_maneuver )
+extern "C" void time_update( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, int num, float time_sec, float mean_maneuver )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
   // launch kernel
   dim3 dimGrid(numBlocks);
   dim3 dimBlock(THREADS_PER_BLOCK);
-  time_update_kernel<<< dimGrid, dimBlock >>>( list, time_sec, mean_maneuver );
+  time_update_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, time_sec, mean_maneuver );
 
   // block until the device has completed kernel execution
   cudaThreadSynchronize();
@@ -121,30 +120,28 @@ extern "C" void time_update( struct particles *list, int num, float time_sec, fl
 }
 
 // CUDA kernel function : initialize a particle
-__global__ void init_particles_kernel( struct particles *list )
+__global__ void init_particles_kernel( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-  struct particles *particle = list + index;
+  int seed = d_seed[index];
 
-  int seed = particle->seed;
+  d_x_pos[index]  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
+  seed = device_lcg_rand( seed );
+  d_y_pos[index]  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
+  seed = device_lcg_rand( seed );
+  d_x_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
+  seed = device_lcg_rand( seed );
+  d_y_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
+  seed = device_lcg_rand( seed );
+  d_weight[index] = 1.0;
 
-  particle->x_pos  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
-  seed = device_lcg_rand( seed );
-  particle->y_pos  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
-  seed = device_lcg_rand( seed );
-  particle->x_vel  = device_frand( seed, -MAX_VEL, MAX_VEL );
-  seed = device_lcg_rand( seed );
-  particle->y_vel  = device_frand( seed, -MAX_VEL, MAX_VEL );
-  seed = device_lcg_rand( seed );
-  particle->weight = 1.0;
-
-  particle->seed = seed;
+  d_seed[index] = seed;
 }
 
 // modified from reduction code example in CUDA sdk
 // num must be a power of 2 for this routine to function
-__global__ void sum_weight_particle_kernel( struct particles *list , float *weights, int num )
+__global__ void sum_weight_array_kernel( float *d_weight_in, float *d_weight_out, int num )
 {
   // allocate a shared memory array the size of the current block
   __shared__ float s_shared[THREADS_PER_BLOCK];
@@ -156,91 +153,17 @@ __global__ void sum_weight_particle_kernel( struct particles *list , float *weig
   // the indexes assigned to the threads in each block
   int i = blockIdx.x * ( blockDim.x * 2 ) + threadIdx.x;
 
-
   // copy weights from global memory into shared memory for
   // num / 2 threads (only half the threads are from blocks
   // whose i indexes corrispond to actual indexes)
-  struct particles *particle = list + i;
-  s_shared[ tid ] = i < num ? particle->weight : 0 ;
+  s_shared[ tid ] = i < num ? d_weight_in[ i ] : 0 ;
 
   // perform the first stage of the reduction reading from global memory
   // threads in block n add the weight of their corrisponding particle
   // in block n + 1, half the threads sit idle
   if ( i + blockDim.x < num )
   {
-    particle = list + i + blockDim.x;
-    s_shared[ tid ] += particle->weight;
-  }
-
-  // wait for s_shared to be fully populated
-  __syncthreads();
-
-
-  // offset tracks the distance between the two entries from
-  // s_shared that are added together in the current iteration
-  // also, each iteration, offset threads are used
-  unsigned int offset = blockDim.x / 2;
-  while ( offset > 32 )
-  {
-    if ( tid < offset )
-    {
-      s_shared[ tid ] += s_shared[ tid + offset ];
-    }
-
-    offset = offset >> 1; // divide offset by 2
-
-    __syncthreads();
-  }
-
-  // after offset is 32, all our threads are working within a single warp
-  // this means all operations they perform are SIMD (simultanious) and
-  // require no __syncthreads()
-  // thus, each line corrisponds to an unrolled iteration of the above loop 
-  if ( tid < 32 )
-  {
-    s_shared[ tid ] += s_shared[ tid + 32 ];
-    s_shared[ tid ] += s_shared[ tid + 16 ];
-    s_shared[ tid ] += s_shared[ tid + 8 ];
-    s_shared[ tid ] += s_shared[ tid + 4 ];
-    s_shared[ tid ] += s_shared[ tid + 2 ];
-    s_shared[ tid ] += s_shared[ tid + 1 ];
-  }
-
-  // s_shatred[0] now contains the final weight for this block
-  // write that result to the global weights array position
-  // corrisponding to this block's id
-  if ( tid == 0 )
-  {
-    weights[ blockIdx.x ] = s_shared[ 0 ];
-  }
-}
-
-// reduction routine very similar to sum_weight_particle_kernel
-// except the weights are kept in a separate array
-__global__ void sum_weight_array_kernel( float *weights, int num )
-{
-  // allocate a shared memory array the size of the current block
-  __shared__ float s_shared[THREADS_PER_BLOCK];
-
-  int tid = threadIdx.x; // thread id within block
-
-  // similar to the standard global array index calculation
-  // except that blockDimx.x sized spaces are left between
-  // the indexes assigned to the threads in each block
-  int i = blockIdx.x * ( blockDim.x * 2 ) + threadIdx.x;
-
-
-  // copy weights from global memory into shared memory for
-  // num / 2 threads (only half the threads are from blocks
-  // whose i indexes corrispond to actual indexes)
-  s_shared[ tid ] = i < num ? weights[ i ] : 0 ;
-
-  // perform the first stage of the reduction reading from global memory
-  // threads in block n add the weight of their corrisponding particle
-  // in block n + 1, half the threads sit idle
-  if ( i + blockDim.x < num )
-  {
-    s_shared[ tid ] += weights[ i + blockDim.x ];
+    s_shared[ tid ] += d_weight_in[ i + blockDim.x ];
   }
 
   // wait for s_shared to be fully populated
@@ -276,24 +199,24 @@ __global__ void sum_weight_array_kernel( float *weights, int num )
     s_shared[ tid ] += s_shared[ tid + 1 ];
   }
 
-  // s_shatred[0] now contains the final weight for this block
+  // s_shared[0] now contains the final weight for this block
   // write that result to the global weights array position
   // corrisponding to this block's id
   if ( tid == 0 )
   {
-    weights[ blockIdx.x ] = s_shared[ 0 ];
+    d_weight_out[ blockIdx.x ] = s_shared[ 0 ];
   }
 }
 
 // final reduction routine optimized to work with a single block
-__global__ void sum_weight_final_kernel( float *weights, int num )
+__global__ void sum_weight_final_kernel( float *d_weight_in, float *d_weight_out, int num )
 {
   // allocate a shared memory array the size of the current block
   __shared__ float s_shared[THREADS_PER_BLOCK];
 
   int tid = threadIdx.x; // thread id within block
 
-  s_shared[ tid ] = weights[ tid ] ;
+  s_shared[ tid ] = d_weight_in[ tid ] ;
 
   // offset tracks the distance between the two entries from
   // s_shared that are added together in the current iteration
@@ -315,61 +238,30 @@ __global__ void sum_weight_final_kernel( float *weights, int num )
   // write that result to the global weights array position 0
   if ( tid == 0 )
   {
-    weights[ 0 ] = s_shared[ 0 ];
+    d_weight_out[ 0 ] = s_shared[ 0 ];
   }
 }
 
-//TODO this function is made more complicated by the fact that the first kernel has
-//     to work with particle structs while the rest work with float arrays
-extern "C" float sum_weight( struct particles *list, float *d_weights, float *h_weights, int num )
+//TODO we need a temporary device array to avoid blowing away the original weights
+extern "C" float sum_weight( float *d_weights, float *d_temp_weight_in, float *d_temp_weight_out, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
-
-  // launch kernel
-  dim3 dimGrid(numBlocks);
-  dim3 dimBlock(THREADS_PER_BLOCK);
   int shared_mem_size = sizeof( float ) * THREADS_PER_BLOCK;
-  
-  printf("running first kernel blocks: %d \n", numBlocks );
 
-  sum_weight_particle_kernel<<< dimGrid, dimBlock, shared_mem_size >>>( list, d_weights, num );
+  // copy the particles into a temporary array
+  cudaMemcpy( d_temp_weight_in, d_weights, num * sizeof(float), cudaMemcpyDeviceToDevice );
 
-  // block until the device has completed kernel execution
-  cudaThreadSynchronize();
-
-  // check if the init_particle_val kernel generated errors
-  checkCUDAError("sum_weight");
-
-  if ( numBlocks != 1 )
+  // each iteration d_temp_weight_out is populated with numBlocks weights
+  // for the next iteration, numBlocks is used as numThreads until
+  // numBlocks is less than 512, in which case the next iteration
+  // can finish the reduction using a single block
+  do
   {
+    printf("running kernel blocks: %d num: %d smsize: %d \n", numBlocks, num, shared_mem_size );
 
-    // each iteration d_weights is poluated with numBlocks weights
-    // for the next iteration, numBlocks is used as numThreads until
-    // numBlocks is less than 512, in which case the next iteration
-    // can finish the reduction using a single block
-    while( numBlocks > THREADS_PER_BLOCK )
-    {
-      num = numBlocks;
-      numBlocks = num / THREADS_PER_BLOCK;
-
-      printf("running second kernel blocks: %d \n", numBlocks );
-
-      dim3 dimGrid2(numBlocks);
-      dim3 dimBlock2(THREADS_PER_BLOCK);
-      sum_weight_array_kernel<<< dimGrid2, dimBlock2, shared_mem_size >>>( d_weights, num );
-
-      // block until the device has completed kernel execution
-      cudaThreadSynchronize();
-
-      // check if the init_particle_val kernel generated errors
-      checkCUDAError("sum_weight");
-    }
-
-    printf("running final kernel block size: %d \n", numBlocks );
-
-    dim3 dimGrid3(1);
-    dim3 dimBlock3(numBlocks);
-    sum_weight_final_kernel<<< dimGrid3, dimBlock3, shared_mem_size >>>( d_weights, numBlocks );
+    dim3 dimGrid(numBlocks);
+    dim3 dimBlock(THREADS_PER_BLOCK);
+    sum_weight_array_kernel<<< dimGrid, dimBlock, shared_mem_size >>>( d_temp_weight_in, d_temp_weight_out, num );
 
     // block until the device has completed kernel execution
     cudaThreadSynchronize();
@@ -377,34 +269,51 @@ extern "C" float sum_weight( struct particles *list, float *d_weights, float *h_
     // check if the init_particle_val kernel generated errors
     checkCUDAError("sum_weight");
 
+    // for the next iteration, use the out array as the new in array
+    float *temp = d_temp_weight_out;
+    d_temp_weight_out = d_temp_weight_in;
+    d_temp_weight_in = temp;
+
+    // update array size and block count
+    num = numBlocks;
+    numBlocks = num / THREADS_PER_BLOCK;
+
+     printf("finished kernel blocks: %d num: %d smsize: %d \n", numBlocks, num, shared_mem_size );
   }
+  while( num > THREADS_PER_BLOCK );
+
+  printf("running final kernel block size: %d \n", numBlocks );
+
+  dim3 dimGridFinal(1);
+  dim3 dimBlockFinal(num);
+  sum_weight_final_kernel<<< dimGridFinal, dimBlockFinal, shared_mem_size >>>( d_temp_weight_in, d_temp_weight_out, shared_mem_size );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the init_particle_val kernel generated errors
+  checkCUDAError("sum_weight");
+
+  float final_sum = 0;
 
   // each block has reported its sum, now copy those block sums
   // back to the host and sum the blocks weight sums in serial
   // remembering that only half the entries contain partial sums
-  cudaMemcpy( h_weights, d_weights, 1 * sizeof(float), cudaMemcpyDeviceToHost );
+  cudaMemcpy( &final_sum, d_temp_weight_out, sizeof(float), cudaMemcpyDeviceToHost );
 
-  /* for testing purposes
-  int i;
-  for ( i = 0 ; i < shared_mem_size ; i++ )
-  {
-    printf( "weight %d %f\n", i, h_weights[i] );
-  }
-  */
-
-  return h_weights[0];
+  return final_sum;
 }
 
 // initialize particles, use random seeds to set random positions and velocities
 // also set weights of all particles to 1.0
-extern "C" void init_particles( struct particles *host, int num )
+extern "C" void init_particles( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
   // launch kernel
   dim3 dimGrid(numBlocks);
   dim3 dimBlock(THREADS_PER_BLOCK);
-  init_particles_kernel<<< dimGrid, dimBlock >>>( host );
+  init_particles_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed );
 
   // block until the device has completed kernel execution
   cudaThreadSynchronize();
@@ -443,35 +352,31 @@ __device__ float range( float to_x_pos, float to_y_pos, float from_x_pos, float 
 }
 
 // CUDA kernel function : apply an azimuth observation (adjust particle weight)
-__global__ void apply_azimuth_observation_kernel( struct particles *list, float x_pos, float y_pos, float value, float error )
+__global__ void apply_azimuth_observation_kernel( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, float sensor_x_pos, float sensor_y_pos, float obs_value, float obs_error )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-  struct particles *particle = list + index;
+  float particle_azimuth = azimuth( sensor_x_pos , sensor_y_pos , d_x_pos[index] , d_y_pos[index] );
+  float observed_azimuth = obs_value;
+  float likelihood = gvalue( particle_azimuth - observed_azimuth , 0.0 , obs_error );
 
-  float particle_azimuth = azimuth( x_pos , y_pos , particle->x_pos , particle->y_pos );
-  float observed_azimuth = value;
-  float likelihood = gvalue( particle_azimuth - observed_azimuth , 0.0 , error );
-
-  particle->weight = particle->weight * likelihood;
+  d_weight[index] = d_weight[index] * likelihood;
 }
 
 // CUDA kernel function : apply a range observation (adjust particle weight)
-__global__ void apply_range_observation_kernel( struct particles *list, float x_pos, float y_pos, float value, float error )
+__global__ void apply_range_observation_kernel( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, float sensor_x_pos, float sensor_y_pos, float obs_value, float obs_error )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-  struct particles *particle = list + index;
+  float particle_range = range( sensor_x_pos , sensor_y_pos , d_x_pos[index] , d_y_pos[index] );
+  float observed_range = obs_value;
+  float likelihood = gvalue( particle_range - observed_range , 0.0 , obs_error );
 
-  float particle_range = range( x_pos , y_pos , particle->x_pos , particle->y_pos );
-  float observed_range = value;
-  float likelihood = gvalue( particle_range - observed_range , 0.0 , error );
-
-  particle->weight = particle->weight * likelihood;
+  d_weight[index] = d_weight[index] * likelihood;
 }
 
 // apply observation obs to the particle list, adjusting particle weights
-extern "C" void information_update( struct observation *obs, struct particles *list, int num )
+extern "C" void information_update( struct observation *obs, float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
@@ -482,10 +387,10 @@ extern "C" void information_update( struct observation *obs, struct particles *l
   switch( obs->type )
   {
     case AZIMUTH:
-      apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( list, obs->x_pos, obs->y_pos, obs->value, obs->error );
+      apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, obs->x_pos, obs->y_pos, obs->value, obs->error );
       break;
     case RANGE:
-      apply_range_observation_kernel<<< dimGrid, dimBlock >>>( list, obs->x_pos, obs->y_pos, obs->value, obs->error );
+      apply_range_observation_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, obs->x_pos, obs->y_pos, obs->value, obs->error );
       break;
   }
 
@@ -497,23 +402,30 @@ extern "C" void information_update( struct observation *obs, struct particles *l
 }
 
 // copy particles from host (cpu) to device (video card)
-extern "C" void copy_particles_host_to_device( struct particles *device, struct particles *host, int num )
+extern "C" void copy_array_host_to_device( float *host, float *device, int num )
 {
-  int size = sizeof( struct particles ) * num;
+  int size = sizeof( float ) * num;
 
   cudaMemcpy( device, host, size, cudaMemcpyHostToDevice );
 }
 
 // copy particles from device (video card) to host (cpu)
-extern "C" void copy_particles_device_to_host( struct particles *host, struct particles *device, int num )
+extern "C" void copy_array_device_to_host( float *host, float *device, int num )
 {
-  int size = sizeof( struct particles ) * num;
+  int size = sizeof( float ) * num;
 
   cudaMemcpy( host, device, size, cudaMemcpyDeviceToHost );
 }
 
-// allocate memory for a float array of size num on device
-extern "C" float* d_init_farray_mem( int num )
+// allocate memory for num particles on host
+extern "C" float* h_init_array_mem( int num )
+{
+  int size = sizeof( float ) * num ;
+  return ( float * ) malloc( size );
+}
+
+// allocate memory for num particles on device
+extern "C" float* d_init_array_mem( int num )
 {
   int size = sizeof( float ) * num ;
   float *array;
@@ -523,32 +435,14 @@ extern "C" float* d_init_farray_mem( int num )
   return array;
 }
 
-// allocate memory for num particles on host
-extern "C" struct particles * h_init_particle_mem( int num )
-{
-  int size = sizeof( struct particles ) * num ;
-  return ( struct particles * ) malloc( size );
-}
-
-// allocate memory for num particles on device
-extern "C" struct particles *d_init_particle_mem( int num )
-{
-  int size = sizeof( struct particles ) * num ;
-  struct particles *list;
-
-  cudaMalloc( (void **) &list, size );
-
-  return list;
-}
-
 // free particle memory on host
-extern "C" void h_free_particle_mem( struct particles *list )
+extern "C" void h_free_particle_mem( float *list )
 {
   free( list );
 }
 
 // free particle memory on device
-extern "C" void d_free_particle_mem( struct particles *list )
+extern "C" void d_free_particle_mem( float *list )
 {
   cudaFree( list );
 }
