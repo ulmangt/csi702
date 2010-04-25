@@ -490,8 +490,71 @@ extern "C" void floor_array( float *array, int num )
 
 
 
+// device function to copy and perturb a single particle
+__device__ void copy_particle( int from_index, int to_index,
+                                float *d_x_pos, float *d_y_pos, float *d_x_vel,
+                                float *d_y_vel, float *d_weight, float *d_seed,
+                                float *d_x_pos_swap, float *d_y_pos_swap, float *d_x_vel_swap,
+                                float *d_y_vel_swap, float *d_weight_swap, float *d_seed_swap )
+{
 
-extern "C" void resample( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, float sum_weight, int num )
+}
+
+// prior to calling this kernel, the particle weights have been overwritten with:
+//
+// weight[i] = weight[i] * ( length( weight[] / sum( weight[] ) )
+//
+// this value (ignorring the decimal component for the moment) tells us aproximately
+// how many particles this particle should be resampled into. The trick is to also
+// determine where the resampled particles should go, so the resampling can proceed
+// in paralle. This is accomplished by further modifying the weight:
+//
+// weight[i] = floor( cumulative_sum( weight[i] ) )
+//
+// Now, weight[i-1] gives the index into the global memory particle array that copies
+// of this particle should be placed in and weight[i] - weight[i-1] gives the number
+// of particle this particle should be resampled into.
+__global__ void copy_particles_kernel( float *d_x_pos, float *d_y_pos, float *d_x_vel,
+                                       float *d_y_vel, float *d_weight, float *d_seed,
+                                       float *d_x_pos_swap, float *d_y_pos_swap, float *d_x_vel_swap,
+                                       float *d_y_vel_swap, float *d_weight_swap, float *d_seed_swap )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  // this is coalesced memory access
+  int resample_start_index = index == 0 ? 0 : (int) d_weight[index-1];
+  int resample_num_copies = d_weight[index] - resample_start_index;
+
+  
+}
+
+extern "C" void copy_particles( float *d_x_pos, float *d_y_pos, float *d_x_vel,
+                                float *d_y_vel, float *d_weight, float *d_seed,
+                                float *d_x_pos_swap, float *d_y_pos_swap, float *d_x_vel_swap,
+                                float *d_y_vel_swap, float *d_weight_swap, float *d_seed_swap,
+                                int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  copy_particles_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed,
+                                                  d_x_pos_swap, d_y_pos_swap, d_x_vel_swap, d_y_vel_swap, d_weight_swap, d_seed_swap );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("copy_particles");
+}
+
+
+
+extern "C" void resample( float *d_x_pos, float *d_y_pos, float *d_x_vel,
+                          float *d_y_vel, float *d_weight, float *d_seed,
+                          float *d_x_pos_swap, float *d_y_pos_swap, float *d_x_vel_swap,
+                          float *d_y_vel_swap, float *d_weight_swap, float *d_seed_swap,
+                          int num )
 {
   // renormalize weights then multiply by NUM_PARTICLES
   // weight now contains aproximately the number of particles each particle should be resampled into

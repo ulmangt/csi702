@@ -21,13 +21,21 @@ float *h_weight;
 float *h_seed; // random seed for particle
 
 // device particle arrays
-
 float *d_x_pos; // meters
 float *d_y_pos; // meters
 float *d_x_vel; // meters/second
 float *d_y_vel; // meters/second
 float *d_weight;
 float *d_seed; // random seed for particle
+
+// swap arrays -- double buffering strategy
+// is used since resampling is not performed in place
+float *d_x_pos_swap; // meters
+float *d_y_pos_swap; // meters
+float *d_x_vel_swap; // meters/second
+float *d_y_vel_swap; // meters/second
+float *d_weight_swap;
+float *d_seed_swap; // random seed for particle
 
 // temporary device array for calculating sums
 float *d_temp_weight1;
@@ -43,6 +51,31 @@ void h_init_seed( )
   {
     h_seed[i] = rand();
   }
+}
+
+// double buffering strategy is used since resampling is not performed in place
+void swap_device_arrays( )
+{
+  float *d_x_pos_temp = d_x_pos;
+  float *d_y_pos_temp = d_y_pos;
+  float *d_x_vel_temp = d_x_vel;
+  float *d_y_vel_temp = d_y_vel;
+  float *d_weight_temp = d_weight;
+  float *d_seed_temp = d_seed;
+
+  d_x_pos = d_x_pos_swap;
+  d_y_pos = d_y_pos_swap;
+  d_x_vel = d_x_vel_swap;
+  d_y_vel = d_y_vel_swap;
+  d_weight = d_weight_swap;
+  d_seed = d_seed_swap;
+
+  d_x_pos_swap =d_x_pos_temp;
+  d_y_pos_swap =d_y_pos_temp;
+  d_x_vel_swap =d_x_vel_temp;
+  d_y_vel_swap =d_y_vel_temp;
+  d_weight_swap =d_weight_temp;
+  d_seed_swap =d_seed_temp;
 }
 
 void h_init_particles( )
@@ -63,6 +96,13 @@ void d_init_particles( )
   d_y_vel = d_init_array_mem( NUM_PARTICLES );
   d_weight = d_init_array_mem( NUM_PARTICLES );
   d_seed = d_init_array_mem( NUM_PARTICLES );
+
+  d_x_pos_swap = d_init_array_mem( NUM_PARTICLES );
+  d_y_pos_swap = d_init_array_mem( NUM_PARTICLES );
+  d_x_vel_swap = d_init_array_mem( NUM_PARTICLES );
+  d_y_vel_swap = d_init_array_mem( NUM_PARTICLES );
+  d_weight_swap = d_init_array_mem( NUM_PARTICLES );
+  d_seed_swap = d_init_array_mem( NUM_PARTICLES );
 }
 
 void h_free_particles( )
@@ -83,6 +123,13 @@ void d_free_particles( )
   d_free_particle_mem( d_y_vel );
   d_free_particle_mem( d_weight );
   d_free_particle_mem( d_seed );
+
+  d_free_particle_mem( d_x_pos_swap );
+  d_free_particle_mem( d_y_pos_swap );
+  d_free_particle_mem( d_x_vel_swap );
+  d_free_particle_mem( d_y_vel_swap );
+  d_free_particle_mem( d_weight_swap );
+  d_free_particle_mem( d_seed_swap );
 }
 
 void copy_particles_host_to_device( )
@@ -169,7 +216,11 @@ int main( int argc, char** argv )
     information_update( obs, d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
 
     // remove particles with low weights and replace them with perturbed copies of particles with higher weights
-    resample( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
+    resample( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed,
+              d_x_pos_swap, d_y_pos_swap, d_x_vel_swap, d_y_vel_swap, d_weight_swap, d_seed_swap,
+              NUM_PARTICLES );
+
+    swap_device_arrays( );
   }
 
   // copy particles back to host
