@@ -72,6 +72,9 @@ void checkCUDAError(const char *msg)
     }
 }
 
+
+
+
 // CUDA kernel function : time update a particle
 __global__ void time_update_kernel( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, float time_sec, float mean_maneuver )
 {
@@ -116,6 +119,10 @@ extern "C" void time_update( float *d_x_pos, float *d_y_pos, float *d_x_vel, flo
   checkCUDAError("time_update");
 }
 
+
+
+
+
 // CUDA kernel function : initialize a particle
 __global__ void init_particles_kernel( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed )
 {
@@ -131,10 +138,30 @@ __global__ void init_particles_kernel( float *d_x_pos, float *d_y_pos, float *d_
   seed = device_lcg_rand( seed );
   d_y_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
   seed = device_lcg_rand( seed );
-  d_weight[index] = 1.0;
+  d_weight[index] = 2.0;
 
   d_seed[index] = seed;
 }
+
+// initialize particles, use random seeds to set random positions and velocities
+// also set weights of all particles to 1.0
+extern "C" void init_particles( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  // launch kernel
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  init_particles_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the init_particle_val kernel generated errors
+  checkCUDAError("init_particles");
+}
+
+
 
 // modified from reduction code example in CUDA sdk
 // num must be a power of 2 for this routine to function
@@ -307,22 +334,15 @@ extern "C" float sum_weight_thrust( float *d_weights, int num )
   return sum;
 }
 
-// initialize particles, use random seeds to set random positions and velocities
-// also set weights of all particles to 1.0
-extern "C" void init_particles( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, int num )
+
+
+// device function to calculate the distance between two particles
+__device__ float range( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
 {
-  int numBlocks = num / THREADS_PER_BLOCK;
+  float x_diff = from_x_pos - to_x_pos;
+  float y_diff = from_y_pos - to_y_pos;
 
-  // launch kernel
-  dim3 dimGrid(numBlocks);
-  dim3 dimBlock(THREADS_PER_BLOCK);
-  init_particles_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed );
-
-  // block until the device has completed kernel execution
-  cudaThreadSynchronize();
-
-  // check if the init_particle_val kernel generated errors
-  checkCUDAError("init_particles");
+  return sqrt( x_diff * x_diff + y_diff * y_diff );
 }
 
 // device function to calculate the azimuth between two particles
@@ -343,15 +363,6 @@ __device__ float gvalue( float value, float mean, float sigma )
 {
   float z = ( value - mean ) / sigma ;
   return exp( -0.5 * z * z ) / ( sqrt( 2.0 * DEVICE_PI ) * sigma );
-}
-
-// device function to calculate the distance between two particles
-__device__ float range( float to_x_pos, float to_y_pos, float from_x_pos, float from_y_pos )
-{
-  float x_diff = from_x_pos - to_x_pos;
-  float y_diff = from_y_pos - to_y_pos;
-
-  return sqrt( x_diff * x_diff + y_diff * y_diff );
 }
 
 // CUDA kernel function : apply an azimuth observation (adjust particle weight)
@@ -402,6 +413,71 @@ extern "C" void information_update( struct observation *obs, float *d_x_pos, flo
 
   // check if the init_particle_val kernel generated errors
   checkCUDAError("information_update");
+}
+
+
+
+
+// CUDA kernel function : multiply an array by a constant value
+__global__ void multiply_kernel( float *array, float factor )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  array[index] = array[index] * factor;
+}
+
+extern "C" void multiply( float *array, float factor, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  multiply_kernel<<< dimGrid, dimBlock >>>( array, factor );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("multiply");
+}
+
+
+
+
+__global__ void init_array_kernel( float *array, float value )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  array[index] = value;
+}
+
+extern "C" void init_array( float *array, float value, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  init_array_kernel<<< dimGrid, dimBlock >>>( array, value );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("init_array");
+}
+
+
+extern "C" void resample( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, float sum_weight, int num )
+{
+  // renormalize weights then multiply by NUM_PARTICLES
+  // weight now contains aproximately the number of particles each particle should be resampled into
+  // to values near 0 indicating that particle should be removed
+  float weight_sum = sum_weight_thrust( d_weight, NUM_PARTICLES );
+  multiply( d_weight, (float) NUM_PARTICLES / weight_sum, NUM_PARTICLES );
+
+  // wrap arrays in thrust data structures
+  thrust::device_ptr<float> device_weights( d_weight );
+
+  // repace weights with cumulative sum of weights
+  thrust::inclusive_scan(device_weights, device_weights + num, device_weights);
 }
 
 // copy particles from host (cpu) to device (video card)
