@@ -1,8 +1,8 @@
 
 
-all: filter_serial filter_cuda
+all: filter_serial filter_cuda summation_test
 
-clean: clean_cuda clean_serial
+clean: clean_cuda clean_serial clean_summation_test
 
 
 #
@@ -22,7 +22,7 @@ filter_cuda_kernel.o:
 	nvcc -I hdr -c src/cuda/filter_cuda_kernel.cu -o src/cuda/filter_cuda_kernel.o
 
 clean_cuda:
-	rm bin/filter_cuda src/cuda/filter_cuda_util.o src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o
+	rm bin/filter_cuda src/cuda/filter_cuda_util.o src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o
 
 #
 # Serial Code
@@ -94,4 +94,7 @@ summation_test.o:
 
 summation_test_thrust.o:
 	nvcc -I hdr -lcuda -lcudart -lm -c src/cuda/summation_test_thrust.cu -o src/cuda/summation_test_thrust.o
+
+clean_summation_test:
+	rm bin/summation_test bin/filter_cuda src/cuda/summation_test.o src/cuda/summation_test_thrust.o src/cuda/filter_cuda_kernel.o
 

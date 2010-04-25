@@ -7,7 +7,7 @@
 #include <math.h>
 #include <time.h>
 
-#define NUM_TRIALS 3000
+#define NUM_TRIALS 1
 
 extern void run_thrust_tests( float *data, int N, int reps );
 
@@ -55,7 +55,7 @@ float *generate_data( int N )
   int i, j;
   for ( i = 0 ; i < N ; i++ )
   {
-    data[i] = (float) rand() / (float) RAND_MAX;
+    data[i] = 1.0f;//(float) rand() / (float) RAND_MAX;
   }
 
   return data;
@@ -63,8 +63,8 @@ float *generate_data( int N )
 
 int main( int argc, char** argv )
 {
-  float *data = generate_data( NUM_PARTICLES );
+  float *data = generate_data( 1000 );
 
-  run_test( data, NUM_PARTICLES, NUM_TRIALS );
-  run_thrust_tests( data, NUM_PARTICLES, NUM_TRIALS );
+  run_test( data, 1000, NUM_TRIALS );
+  run_thrust_tests( data, 1000, NUM_TRIALS );
 }

@@ -125,7 +125,7 @@ int main( int argc, char** argv )
   //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
   //struct observation_list *h_obs_list = combine_observations( range_obs_list, azimuth_obs_list );
 
-  struct observation_list *h_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 100.0 );
+  struct observation_list *h_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 0.0 );
 
   printf("Observations:\n");
   print_observations( h_obs_list );
@@ -154,21 +154,28 @@ int main( int argc, char** argv )
   {
     printf("observation %d\n", i);
 
+    // get the next observation from the list
     struct observation *obs = (h_obs_list->observations) + i;
+    
+    // calculate how much time has passed since the last observation
     previous_time = current_time;
     current_time = obs->time;
     float diff_time = current_time - previous_time;
+
+    // time updated the particles to the time of the new observation
     time_update( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
-    //information_update( obs, d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
-    //float weight_sum = sum_weight( d_weight, d_temp_weight1, d_temp_weight2, NUM_PARTICLES );
-    float weight_sum = sum_weight_thrust( d_weight, NUM_PARTICLES );
-    printf("weight sum %f\n", weight_sum );
+    
+    // adjust particle weights based on the observation (using a likelihood function)
+    information_update( obs, d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
+
+    // remove particles with low weights and replace them with perturbed copies of particles with higher weights
+    resample( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
   }
 
   // copy particles back to host
   copy_particles_device_to_host( );
 
-  write_particles( h_x_pos, h_y_pos, h_x_vel, h_y_vel, h_weight, h_seed, OUTPUT_NAME, NUM_PARTICLES, 10 );
+  write_particles( h_x_pos, h_y_pos, h_x_vel, h_y_vel, h_weight, h_seed, OUTPUT_NAME, NUM_PARTICLES, 1 );
   //print_particles( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed,, NUM_PARTICLES, 1000 );
 
   // free host and device memory

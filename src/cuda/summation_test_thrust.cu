@@ -61,11 +61,9 @@ extern "C" void run_thrust_tests( float *data, int N, int reps )
   diff = (float) (end - start) / CLOCKS_PER_SEC;
   printf( "Parallel Scan (thrust) Time (sec): %0.5f\n", diff );
 
-  // don't print the cumulative sum array 
-  /*
-  for ( i = 0 ; i < N ; i++ )
+  // don't print the cumulative sum array
+  for ( j = 0 ; j < N ; j++ )
   {
-    printf("%f\n", host_scan_data[i]);
+    printf("%f\n", host_scan_data[j]);
   }
-  */
 }

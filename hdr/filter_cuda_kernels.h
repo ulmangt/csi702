@@ -14,6 +14,13 @@ extern void information_update( struct observation *obs, float *d_x_pos, float *
 
 extern void time_update( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, int num, float time_sec, float mean_maneuver );
 
+extern void resample( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, int num );
+
+extern void init_array( float *array, float value, int num );
+
+extern void multiply( float *array, float factor, int num );
+
+
 
 
 extern void copy_array_host_to_device( float *host, float *device, int num );
