@@ -465,19 +465,47 @@ extern "C" void init_array( float *array, float value, int num )
 }
 
 
+
+
+__global__ void floor_array_kernel( float *array )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  array[index] = floor(array[index]);
+}
+
+extern "C" void floor_array( float *array, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  floor_array_kernel<<< dimGrid, dimBlock >>>( array );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("floor_array");
+}
+
+
+
+
 extern "C" void resample( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, float sum_weight, int num )
 {
   // renormalize weights then multiply by NUM_PARTICLES
   // weight now contains aproximately the number of particles each particle should be resampled into
   // to values near 0 indicating that particle should be removed
-  float weight_sum = sum_weight_thrust( d_weight, NUM_PARTICLES );
-  multiply( d_weight, (float) NUM_PARTICLES / weight_sum, NUM_PARTICLES );
+  float weight_sum = sum_weight_thrust( d_weight, num );
+  multiply( d_weight, (float) num / weight_sum, num );
 
   // wrap arrays in thrust data structures
   thrust::device_ptr<float> device_weights( d_weight );
 
   // repace weights with cumulative sum of weights
   thrust::inclusive_scan(device_weights, device_weights + num, device_weights);
+
+  floor_array( d_weight, num );
 }
 
 // copy particles from host (cpu) to device (video card)
