@@ -8,7 +8,6 @@
 #include "convert.h"
 #include "filter_io.h"
 #include "filter_cuda_kernels.h"
-#include "filter_cuda_data.h"
 #include "filter_cuda_util.h"
 #include "filter_constants.h"
 

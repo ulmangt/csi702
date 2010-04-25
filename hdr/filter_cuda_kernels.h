@@ -2,7 +2,7 @@
 #ifndef FILTER_CUDA_KERNELS_H_INCLUDED
 #define FILTER_CUDA_KERNELS_H_INCLUDED
 
-#include "filter_cuda_data.h"
+#include "obs_math.h"
 
 extern void init_particles( float *d_x_pos, float *d_y_pos, float *d_x_vel, float *d_y_vel, float *d_weight, float *d_seed, int num );
 
