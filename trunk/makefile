@@ -95,11 +95,3 @@ summation_test.o:
 summation_test_thrust.o:
 	nvcc -I hdr -lcuda -lcudart -lm -c src/cuda/summation_test_thrust.cu -o src/cuda/summation_test_thrust.o
 
-#summation_test: summation_test_thrust.o summation_test.o
-#	nvcc -I hdr -lcuda -lcudart -lm src/cuda/summation_test_thrust.o  src/cuda/summation_test.cu -o bin/scan_sum_test
-
-#scan_sum_test: filter_cuda_kernel.o scan_sum_test.o
-#	nvcc -I hdr -lcuda -lcudart -lm src/cuda/filter_cuda_kernel.o -o bin/scan_sum_test
-
-#scan_sum_test.o:
-#	nvcc -I hdr -c src/cuda/scan_sum_test.cu -o src/cuda/scan_sum_test.o
