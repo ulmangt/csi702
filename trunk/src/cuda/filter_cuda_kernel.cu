@@ -3,8 +3,6 @@
 #include <assert.h>
 
 #include "obs_math.h"
-
-#include "filter_cuda_data.h"
 #include "filter_constants.h"
 
 #define MAX_RANGE 20000 // meters
@@ -68,10 +66,6 @@ void checkCUDAError(const char *msg)
     {
         fprintf(stderr, "Cuda error: %s: %s.\n", msg, cudaGetErrorString( err) );
         exit(-1);
-    }
-    else
-    {
-        fprintf(stderr, "No error: %s.\n", msg);
     }
 }
 
@@ -257,7 +251,7 @@ extern "C" float sum_weight( float *d_weights, float *d_temp_weight_in, float *d
   // can finish the reduction using a single block
   do
   {
-    printf("running kernel blocks: %d num: %d smsize: %d \n", numBlocks, num, shared_mem_size );
+    //printf("running kernel blocks: %d num: %d smsize: %d \n", numBlocks, num, shared_mem_size );
 
     dim3 dimGrid(numBlocks);
     dim3 dimBlock(THREADS_PER_BLOCK);
@@ -278,11 +272,11 @@ extern "C" float sum_weight( float *d_weights, float *d_temp_weight_in, float *d
     num = numBlocks;
     numBlocks = num / THREADS_PER_BLOCK;
 
-     printf("finished kernel blocks: %d num: %d smsize: %d \n", numBlocks, num, shared_mem_size );
+    //printf("finished kernel blocks: %d num: %d smsize: %d \n", numBlocks, num, shared_mem_size );
   }
   while( num > THREADS_PER_BLOCK );
 
-  printf("running final kernel block size: %d \n", numBlocks );
+  //printf("running final kernel block size: %d \n", numBlocks );
 
   dim3 dimGridFinal(1);
   dim3 dimBlockFinal(num);
