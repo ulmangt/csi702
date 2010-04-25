@@ -5,6 +5,9 @@
 #include "obs_math.h"
 #include "filter_constants.h"
 
+#include <thrust/device_ptr.h>
+#include <thrust/reduce.h>
+
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
 
@@ -236,7 +239,6 @@ __global__ void sum_weight_final_kernel( float *d_weight_in, float *d_weight_out
   }
 }
 
-//TODO we need a temporary device array to avoid blowing away the original weights
 extern "C" float sum_weight( float *d_weights, float *d_temp_weight_in, float *d_temp_weight_out, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -296,6 +298,13 @@ extern "C" float sum_weight( float *d_weights, float *d_temp_weight_in, float *d
   cudaMemcpy( &final_sum, d_temp_weight_out, sizeof(float), cudaMemcpyDeviceToHost );
 
   return final_sum;
+}
+
+extern "C" float sum_weight_thrust( float *d_weights, int num )
+{
+  thrust::device_ptr<float> device_data( d_weights );
+  float sum = thrust::reduce(device_data, device_data + num, 0.0f, thrust::plus<float>());
+  return sum;
 }
 
 // initialize particles, use random seeds to set random positions and velocities

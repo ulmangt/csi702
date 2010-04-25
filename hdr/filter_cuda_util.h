@@ -2,8 +2,6 @@
 #ifndef FILTER_CUDA_UTIL_H_INCLUDED
 #define FILTER_CUDA_UTIL_H_INCLUDED
 
-#include "filter_cuda_data.h"
-
 // prints a single particle's information to the console
 void print_particle( float x_pos, float y_pos, float x_vel, float y_vel, float weight, float seed );
 

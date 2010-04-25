@@ -160,7 +160,8 @@ int main( int argc, char** argv )
     float diff_time = current_time - previous_time;
     time_update( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
     //information_update( obs, d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
-    float weight_sum = sum_weight( d_weight, d_temp_weight1, d_temp_weight2, NUM_PARTICLES );
+    //float weight_sum = sum_weight( d_weight, d_temp_weight1, d_temp_weight2, NUM_PARTICLES );
+    float weight_sum = sum_weight_thrust( d_weight, NUM_PARTICLES );
     printf("weight sum %f\n", weight_sum );
   }
 
