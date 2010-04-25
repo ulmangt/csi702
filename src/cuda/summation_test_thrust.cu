@@ -19,6 +19,12 @@ extern "C" void run_thrust_tests( float *data, int N, int reps )
   // alloate host array
   thrust::host_vector<float> host_data( N );
 
+  int j;
+  for ( j = 0 ; j < N ; j++ )
+  {
+    host_data[j] = data[j];
+  }
+
   // copy data to device
   thrust::device_vector<float> device_data = host_data;
 
@@ -26,7 +32,6 @@ extern "C" void run_thrust_tests( float *data, int N, int reps )
   // perform summation on device (gpu)
   time_t start = clock( );
   float sum;
-  int j;
   for ( j = 0 ; j < reps ; j++ )
   {
     sum = thrust::reduce(device_data.begin(), device_data.end(), 0.0f, thrust::plus<float>());
