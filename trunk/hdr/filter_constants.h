@@ -7,7 +7,8 @@
 // THREADS_PER_BLOCK must be greater than or equal to 64
 // (routines have unrolled loops which fail for smaller numbers of threads per block)
 #define THREADS_PER_BLOCK 512
-#define NUM_BLOCKS 512 * 8
+//#define NUM_BLOCKS 512 * 8
+#define NUM_BLOCKS 512 * 64
 #define NUM_PARTICLES THREADS_PER_BLOCK * NUM_BLOCKS
 
 #define MAX_RANGE 20000 // meters
