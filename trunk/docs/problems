@@ -38,3 +38,6 @@ calculate sum
 multiply by num_particles/sum
 calculate cumulative sum
 round all values down (w[n] - w[n-1] is the number of particles n should be resampled into)
+
+
+include cpu specs as output by deviceQuery
