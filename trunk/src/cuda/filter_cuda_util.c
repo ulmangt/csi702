@@ -3,12 +3,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+
 #include "obs_math.h"
 #include "filter_io.h"
 #include "convert.h"
-
 #include "filter_cuda_kernels.h"
-#include "filter_cuda_data.h"
 
 
 // prints a single particle's information to the console
