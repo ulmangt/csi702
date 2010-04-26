@@ -52,23 +52,23 @@ void h_init_particles( )
 
 void d_init_particles( )
 {
-  device_particles = d_init_particles_mem( );
+  device_particles = h_init_particles_mem( );
 
-  device_particles->x_pos = d_init_array_mem( NUM_PARTICLES );
-  device_particles->y_pos = d_init_array_mem( NUM_PARTICLES );
-  device_particles->x_vel = d_init_array_mem( NUM_PARTICLES );
-  device_particles->y_vel = d_init_array_mem( NUM_PARTICLES );
-  device_particles->weight = d_init_array_mem( NUM_PARTICLES );
-  device_particles->seed = d_init_array_mem( NUM_PARTICLES );
+  d_init_array_mem( &(device_particles->x_pos), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles->y_pos), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles->x_vel), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles->y_vel), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles->weight), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles->seed), NUM_PARTICLES );
 
-  device_particles_swap = d_init_particles_mem( );
+  device_particles_swap = h_init_particles_mem( );
 
-  device_particles_swap->x_pos = d_init_array_mem( NUM_PARTICLES );
-  device_particles_swap->y_pos = d_init_array_mem( NUM_PARTICLES );
-  device_particles_swap->x_vel = d_init_array_mem( NUM_PARTICLES );
-  device_particles_swap->y_vel = d_init_array_mem( NUM_PARTICLES );
-  device_particles_swap->weight = d_init_array_mem( NUM_PARTICLES );
-  device_particles_swap->seed = d_init_array_mem( NUM_PARTICLES );
+  d_init_array_mem( &(device_particles_swap->x_pos), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles_swap->y_pos), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles_swap->x_vel), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles_swap->y_vel), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles_swap->weight), NUM_PARTICLES );
+  d_init_array_mem( &(device_particles_swap->seed), NUM_PARTICLES );
 }
 
 void h_free_particles( )
@@ -153,11 +153,14 @@ int main( int argc, char** argv )
   h_init_particles( );
   d_init_particles( );
 
+
   // initialize random seeds for each particle using host random number generator
   h_init_seed( );
 
   // copy particles to device
   copy_particles_host_to_device( );
+
+/*
 
   // initialize particle positions 
   init_particles( device_particles, NUM_PARTICLES );
@@ -177,9 +180,10 @@ int main( int argc, char** argv )
     current_time = obs->time;
     float diff_time = current_time - previous_time;
 
+
     // time updated the particles to the time of the new observation
     time_update( device_particles, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
-    
+ 
     // adjust particle weights based on the observation (using a likelihood function)
     information_update( obs, device_particles, NUM_PARTICLES );
 
@@ -187,6 +191,7 @@ int main( int argc, char** argv )
     resample( device_particles, device_particles_swap, NUM_PARTICLES );
 
     swap_device_arrays( );
+
   }
 
   // copy particles back to host
@@ -197,4 +202,6 @@ int main( int argc, char** argv )
   // free host and device memory
   h_free_particles( );
   d_free_particles( );
+
+*/
 }
