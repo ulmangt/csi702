@@ -167,8 +167,6 @@ int main( int argc, char** argv )
   // initialize particle positions 
   init_particles( *device_particles, NUM_PARTICLES );
 
-/*
-
   int i;
   float previous_time = 0.0;
   float current_time = 0.0;
@@ -184,18 +182,16 @@ int main( int argc, char** argv )
     current_time = obs->time;
     float diff_time = current_time - previous_time;
 
-
     // time updated the particles to the time of the new observation
-    time_update( device_particles, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
- 
+    time_update( *device_particles, NUM_PARTICLES, diff_time, MEAN_MANEUVER_TIME );
+
     // adjust particle weights based on the observation (using a likelihood function)
-    information_update( obs, device_particles, NUM_PARTICLES );
+    information_update( *obs, *device_particles, NUM_PARTICLES );
 
     // remove particles with low weights and replace them with perturbed copies of particles with higher weights
-    resample( device_particles, device_particles_swap, NUM_PARTICLES );
+    resample( *device_particles, *device_particles_swap, NUM_PARTICLES );
 
     swap_device_arrays( );
-
   }
 
   // copy particles back to host
@@ -206,6 +202,4 @@ int main( int argc, char** argv )
   // free host and device memory
   h_free_particles( );
   d_free_particles( );
-
-*/
 }
