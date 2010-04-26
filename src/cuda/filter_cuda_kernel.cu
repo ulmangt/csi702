@@ -496,8 +496,8 @@ __device__ void copy_particle( int from_index, int to_index,
                                struct particles device_array,
                                struct particles device_array_swap )
 {
+  // the problem here is that device_array.seed[from_index]; will be the same for each particle
   int seed = device_array.seed[from_index];
-  seed = device_lcg_rand( seed );
   device_array_swap.x_pos[to_index] = device_array.x_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
   seed = device_lcg_rand( seed );
   device_array_swap.y_pos[to_index] = device_array.y_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
@@ -507,6 +507,7 @@ __device__ void copy_particle( int from_index, int to_index,
   device_array_swap.y_vel[to_index] = device_array.y_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
   seed = device_lcg_rand( seed );
   device_array_swap.weight[to_index] = 1.0f;
+  device_array.seed[from_index] = seed;
   device_array_swap.seed[to_index] = seed;
 }
 
