@@ -77,34 +77,34 @@ void checkCUDAError(const char *msg)
 
 
 // CUDA kernel function : time update a particle
-__global__ void time_update_kernel( struct particles *device_particles, float time_sec, float mean_maneuver )
+__global__ void time_update_kernel( struct particles device_particles, float time_sec, float mean_maneuver )
 {
   // get the current particle index and retrieve the particle
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
   // store the particle's random seed
-  float seed = device_particles->seed[index];
+  float seed = device_particles.seed[index];
 
   // use the random seed to make a random draw from an exponential distribution with mean time_sec
   // if the draw is larger than mean_maneuver, the particle maneuvers
   if ( device_erand( seed, time_sec ) > mean_maneuver )
   {
     seed = device_lcg_rand( seed );
-    device_particles->x_vel[index] = device_particles->x_vel[index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+    device_particles.x_vel[index] = device_particles.x_vel[index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
     seed = device_lcg_rand( seed );
-    device_particles->y_vel[index] = device_particles->y_vel[index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+    device_particles.y_vel[index] = device_particles.y_vel[index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
   }
 
   // update the random seed and store it back in the particle storage
-  device_particles->seed[index] = device_lcg_rand( seed );
+  device_particles.seed[index] = device_lcg_rand( seed );
 
   // update the particle's position and velocity
-  device_particles->x_pos[index] = device_particles->x_pos[index] + device_particles->x_vel[index] * time_sec;
-  device_particles->y_pos[index] = device_particles->y_pos[index] + device_particles->y_vel[index] * time_sec;
+  device_particles.x_pos[index] = device_particles.x_pos[index] + device_particles.x_vel[index] * time_sec;
+  device_particles.y_pos[index] = device_particles.y_pos[index] + device_particles.y_vel[index] * time_sec;
 }
 
 // updates the position of all particles based on their current velocity
-extern "C" void time_update( struct particles *device_particles, int num, float time_sec, float mean_maneuver )
+extern "C" void time_update( struct particles device_particles, int num, float time_sec, float mean_maneuver )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
@@ -125,28 +125,28 @@ extern "C" void time_update( struct particles *device_particles, int num, float 
 
 
 // CUDA kernel function : initialize a particle
-__global__ void init_particles_kernel( struct particles *device_particles )
+__global__ void init_particles_kernel( struct particles device_particles )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-  int seed = device_particles->seed[index];
+  int seed = device_particles.seed[index];
 
-  device_particles->x_pos[index]  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
+  device_particles.x_pos[index]  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
   seed = device_lcg_rand( seed );
-  device_particles->y_pos[index]  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
+  device_particles.y_pos[index]  = device_frand( seed, -MAX_RANGE, MAX_RANGE );
   seed = device_lcg_rand( seed );
-  device_particles->x_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
+  device_particles.x_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
   seed = device_lcg_rand( seed );
-  device_particles->y_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
+  device_particles.y_vel[index]  = device_frand( seed, -MAX_VEL, MAX_VEL );
   seed = device_lcg_rand( seed );
-  device_particles->weight[index] = 2.0;
+  device_particles.weight[index] = 2.0;
 
-  device_particles->seed[index] = seed;
+  device_particles.seed[index] = seed;
 }
 
 // initialize particles, use random seeds to set random positions and velocities
 // also set weights of all particles to 1.0
-extern "C" void init_particles( struct particles *device_particles, int num )
+extern "C" void init_particles( struct particles device_particles, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
@@ -367,35 +367,31 @@ __device__ float gvalue( float value, float mean, float sigma )
 }
 
 // CUDA kernel function : apply an azimuth observation (adjust particle weight)
-__global__ void apply_azimuth_observation_kernel( struct particles *device_particles,
-                                                  float sensor_x_pos, float sensor_y_pos,
-                                                  float obs_value, float obs_error )
+__global__ void apply_azimuth_observation_kernel( struct particles device_particles,
+                                                  struct observation obs )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-  float particle_azimuth = azimuth( sensor_x_pos , sensor_y_pos , device_particles->x_pos[index] , device_particles->y_pos[index] );
-  float observed_azimuth = obs_value;
-  float likelihood = gvalue( particle_azimuth - observed_azimuth , 0.0 , obs_error );
+  float particle_azimuth = azimuth( obs.x_pos , obs.y_pos , device_particles.x_pos[index] , device_particles.y_pos[index] );
+  float likelihood = gvalue( particle_azimuth - obs.value , 0.0 , obs.error );
 
-  device_particles->weight[index] = device_particles->weight[index] * likelihood;
+  device_particles.weight[index] = device_particles.weight[index] * likelihood;
 }
 
 // CUDA kernel function : apply a range observation (adjust particle weight)
-__global__ void apply_range_observation_kernel( struct particles *device_particles,
-                                                float sensor_x_pos, float sensor_y_pos,
-                                                float obs_value, float obs_error )
+__global__ void apply_range_observation_kernel( struct particles device_particles,
+                                                struct observation obs )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-  float particle_range = range( sensor_x_pos , sensor_y_pos , device_particles->x_pos[index] , device_particles->y_pos[index] );
-  float observed_range = obs_value;
-  float likelihood = gvalue( particle_range - observed_range , 0.0 , obs_error );
+  float particle_range = range( obs.x_pos , obs.y_pos , device_particles.x_pos[index] , device_particles.y_pos[index] );
+  float likelihood = gvalue( particle_range - obs.value , 0.0 , obs.error );
 
-  device_particles->weight[index] = device_particles->weight[index] * likelihood;
+  device_particles.weight[index] = device_particles.weight[index] * likelihood;
 }
 
 // apply observation obs to the particle list, adjusting particle weights
-extern "C" void information_update( struct observation *obs, struct particles *device_particles, int num )
+extern "C" void information_update( struct observation obs, struct particles device_particles, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
 
@@ -403,13 +399,13 @@ extern "C" void information_update( struct observation *obs, struct particles *d
   dim3 dimGrid(numBlocks);
   dim3 dimBlock(THREADS_PER_BLOCK);
 
-  switch( obs->type )
+  switch( obs.type )
   {
     case AZIMUTH:
-      apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( device_particles, obs->x_pos, obs->y_pos, obs->value, obs->error );
+      apply_azimuth_observation_kernel<<< dimGrid, dimBlock >>>( device_particles, obs );
       break;
     case RANGE:
-      apply_range_observation_kernel<<< dimGrid, dimBlock >>>( device_particles, obs->x_pos, obs->y_pos, obs->value, obs->error );
+      apply_range_observation_kernel<<< dimGrid, dimBlock >>>( device_particles, obs );
       break;
   }
 
@@ -497,21 +493,21 @@ extern "C" void floor_array( float *array, int num )
 
 // device function to copy and perturb a single particle
 __device__ void copy_particle( int from_index, int to_index,
-                               struct particles *device_array,
-                               struct particles *device_array_swap )
+                               struct particles device_array,
+                               struct particles device_array_swap )
 {
-  int seed = device_array->seed[from_index];
+  int seed = device_array.seed[from_index];
   seed = device_lcg_rand( seed );
-  device_array_swap->x_pos[to_index] = device_array->x_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  device_array_swap.x_pos[to_index] = device_array.x_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
   seed = device_lcg_rand( seed );
-  device_array_swap->y_pos[to_index] = device_array->y_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  device_array_swap.y_pos[to_index] = device_array.y_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
   seed = device_lcg_rand( seed );
-  device_array_swap->x_vel[to_index] = device_array->x_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  device_array_swap.x_vel[to_index] = device_array.x_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
   seed = device_lcg_rand( seed );
-  device_array_swap->y_vel[to_index] = device_array->y_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  device_array_swap.y_vel[to_index] = device_array.y_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
   seed = device_lcg_rand( seed );
-  device_array_swap->weight[to_index] = 1.0f;
-  device_array_swap->seed[to_index] = seed;
+  device_array_swap.weight[to_index] = 1.0f;
+  device_array_swap.seed[to_index] = seed;
 }
 
 // prior to calling this kernel, the particle weights have been overwritten with:
@@ -528,14 +524,14 @@ __device__ void copy_particle( int from_index, int to_index,
 // Now, weight[i-1] gives the index into the global memory particle array that copies
 // of this particle should be placed in and weight[i] - weight[i-1] gives the number
 // of particle this particle should be resampled into.
-__global__ void copy_particles_kernel( struct particles *device_array,
-                                       struct particles *device_array_swap )
+__global__ void copy_particles_kernel( struct particles device_array,
+                                       struct particles device_array_swap )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
   // this is coalesced memory access
-  int resample_start_index = index == 0 ? 0 : (int) device_array->weight[index-1];
-  int resample_num_copies = device_array->weight[index] - resample_start_index;
+  int resample_start_index = index == 0 ? 0 : (int) device_array.weight[index-1];
+  int resample_num_copies = device_array.weight[index] - resample_start_index;
 
   int i;
   for ( i = 0 ; i < resample_num_copies ; i++ )
@@ -544,8 +540,8 @@ __global__ void copy_particles_kernel( struct particles *device_array,
   }  
 }
 
-extern "C" void copy_particles( struct particles *device_array,
-                                struct particles *device_array_swap,
+extern "C" void copy_particles( struct particles device_array,
+                                struct particles device_array_swap,
                                 int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -563,23 +559,23 @@ extern "C" void copy_particles( struct particles *device_array,
 
 
 
-extern "C" void resample( struct particles *device_array,
-                          struct particles *device_array_swap,
+extern "C" void resample( struct particles device_array,
+                          struct particles device_array_swap,
                           int num )
 {
   // renormalize weights then multiply by NUM_PARTICLES
   // weight now contains aproximately the number of particles each particle should be resampled into
   // to values near 0 indicating that particle should be removed
-  float weight_sum = sum_weight_thrust( device_array->weight, num );
-  multiply( device_array->weight, (float) num / weight_sum, num );
+  float weight_sum = sum_weight_thrust( device_array.weight, num );
+  multiply( device_array.weight, (float) num / weight_sum, num );
 
   // wrap arrays in thrust data structures
-  thrust::device_ptr<float> device_weights( device_array->weight );
+  thrust::device_ptr<float> device_weights( device_array.weight );
 
   // repace weights with cumulative sum of weights
   thrust::inclusive_scan(device_weights, device_weights + num, device_weights);
 
-  floor_array( device_array->weight, num );
+  floor_array( device_array.weight, num );
 
   copy_particles( device_array, device_array_swap, num );
 }

@@ -106,6 +106,10 @@ void d_free_particles( )
 
 void copy_particles_host_to_device( )
 {
+
+  printf( "%p %p \n" , host_particles->x_pos, device_particles->x_pos );
+  printf( "%p %p \n" , host_particles->y_pos, device_particles->y_pos );
+
   copy_array_host_to_device( host_particles->x_pos, device_particles->x_pos, NUM_PARTICLES );
   copy_array_host_to_device( host_particles->y_pos, device_particles->y_pos, NUM_PARTICLES );
   copy_array_host_to_device( host_particles->x_vel, device_particles->x_vel, NUM_PARTICLES );
@@ -160,10 +164,10 @@ int main( int argc, char** argv )
   // copy particles to device
   copy_particles_host_to_device( );
 
-/*
-
   // initialize particle positions 
-  init_particles( device_particles, NUM_PARTICLES );
+  init_particles( *device_particles, NUM_PARTICLES );
+
+/*
 
   int i;
   float previous_time = 0.0;
