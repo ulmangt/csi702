@@ -8,6 +8,6 @@ struct particles {
   float *y_vel;
   float *weight;
   float *seed;
-}
+};
 
 #endif
