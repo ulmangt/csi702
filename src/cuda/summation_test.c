@@ -14,9 +14,13 @@ extern void run_thrust_tests( float *data, int N, int reps );
 void run_test( float *data, int N, int reps )
 {
   // perform summation using custom cuda kernel (gpu)
-  float *device_array = d_init_array_mem( N );
-  float *device_temp1 = d_init_array_mem( N );
-  float *device_temp2 = d_init_array_mem( N );
+  float *device_array;
+  float *device_temp1;
+  float *device_temp2;
+
+  d_init_array_mem( &device_array, N );
+  d_init_array_mem( &device_temp1, N );
+  d_init_array_mem( &device_temp2, N );
   copy_array_host_to_device( data, device_array, N );
 
   float sum;

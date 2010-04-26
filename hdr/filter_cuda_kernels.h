@@ -29,11 +29,11 @@ extern void copy_array_device_to_host( float *host, float *device, int num );
 extern float* h_init_array_mem( int num );
 
 // allocate memory for num particles on device
-extern float*d_init_array_mem( int num );
+extern void d_init_array_mem( float**, int num );
 
 extern struct particles* h_init_particles_mem( );
 
-extern struct particles* d_init_particles_mem( );
+extern void d_init_particles_mem( struct particles** );
 
 // free particle memory on host
 extern void h_free_mem( void * );

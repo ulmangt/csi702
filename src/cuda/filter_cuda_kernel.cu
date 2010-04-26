@@ -608,14 +608,11 @@ extern "C" float* h_init_array_mem( int num )
 }
 
 // allocate memory for num particles on device
-extern "C" float* d_init_array_mem( int num )
+extern "C" void d_init_array_mem( float **array, int num )
 {
   int size = sizeof( float ) * num ;
-  float *array;
 
-  cudaMalloc( (void **) &array, size );
-
-  return array;
+  cudaMalloc( (void **) array, size );
 }
 
 // allocate memory for num particles on host
@@ -626,14 +623,11 @@ extern "C" struct particles* h_init_particles_mem( )
 }
 
 // allocate memory for num particles on device
-extern "C" struct particles* d_init_particles_mem( )
+extern "C" void d_init_particles_mem( struct particles **device_particles )
 {
   int size = sizeof( struct particles ) ;
-  struct particles *device_particles;
 
-  cudaMalloc( (void **) &device_particles, size );
-
-  return device_particles;
+  cudaMalloc( (void **) device_particles, size );
 }
 
 // free particle memory on host
