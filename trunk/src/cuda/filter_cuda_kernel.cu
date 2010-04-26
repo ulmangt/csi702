@@ -497,7 +497,18 @@ __device__ void copy_particle( int from_index, int to_index,
                                 float *d_x_pos_swap, float *d_y_pos_swap, float *d_x_vel_swap,
                                 float *d_y_vel_swap, float *d_weight_swap, float *d_seed_swap )
 {
-
+  int seed = d_seed[from_index];
+  seed = device_lcg_rand( seed );
+  d_x_pos_swap[to_index] = d_x_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  seed = device_lcg_rand( seed );
+  d_y_pos_swap[to_index] = d_y_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  seed = device_lcg_rand( seed );
+  d_x_vel_swap[to_index] = d_x_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  seed = device_lcg_rand( seed );
+  d_y_vel_swap[to_index] = d_y_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  seed = device_lcg_rand( seed );
+  d_weight_swap[to_index] = 1.0f;
+  d_seed_swap[to_index] = seed;
 }
 
 // prior to calling this kernel, the particle weights have been overwritten with:
@@ -525,7 +536,15 @@ __global__ void copy_particles_kernel( float *d_x_pos, float *d_y_pos, float *d_
   int resample_start_index = index == 0 ? 0 : (int) d_weight[index-1];
   int resample_num_copies = d_weight[index] - resample_start_index;
 
-  
+  int i;
+  for ( i = 0 ; i < resample_num_copies ; i++ )
+  {
+    copy_particle( index, resample_start_index + i, 
+                   d_x_pos, d_y_pos, d_x_vel,
+                   d_y_vel, d_weight, d_seed,
+                   d_x_pos_swap, d_y_pos_swap, d_x_vel_swap,
+                   d_y_vel_swap, d_weight_swap, d_seed_swap );
+  }  
 }
 
 extern "C" void copy_particles( float *d_x_pos, float *d_y_pos, float *d_x_vel,
