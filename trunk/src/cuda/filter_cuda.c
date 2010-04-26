@@ -106,10 +106,6 @@ void d_free_particles( )
 
 void copy_particles_host_to_device( )
 {
-
-  printf( "%p %p \n" , host_particles->x_pos, device_particles->x_pos );
-  printf( "%p %p \n" , host_particles->y_pos, device_particles->y_pos );
-
   copy_array_host_to_device( host_particles->x_pos, device_particles->x_pos, NUM_PARTICLES );
   copy_array_host_to_device( host_particles->y_pos, device_particles->y_pos, NUM_PARTICLES );
   copy_array_host_to_device( host_particles->x_vel, device_particles->x_vel, NUM_PARTICLES );
@@ -197,7 +193,7 @@ int main( int argc, char** argv )
   // copy particles back to host
   copy_particles_device_to_host( );
 
-  write_particles( host_particles, OUTPUT_NAME, NUM_PARTICLES, 20 );
+  write_particles( host_particles, OUTPUT_NAME, NUM_PARTICLES, 100 );
 
   // free host and device memory
   h_free_particles( );
