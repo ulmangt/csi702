@@ -10,6 +10,7 @@
 #include "filter_cuda_kernels.h"
 #include "filter_cuda_util.h"
 #include "filter_constants.h"
+#include "filter_cuda_data.h"
 
 // host particle arrays
 
@@ -215,20 +216,18 @@ int main( int argc, char** argv )
     // adjust particle weights based on the observation (using a likelihood function)
     information_update( obs, d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed, NUM_PARTICLES );
 
-/*
     // remove particles with low weights and replace them with perturbed copies of particles with higher weights
     resample( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed,
               d_x_pos_swap, d_y_pos_swap, d_x_vel_swap, d_y_vel_swap, d_weight_swap, d_seed_swap,
               NUM_PARTICLES );
 
     swap_device_arrays( );
-*/
   }
 
   // copy particles back to host
   copy_particles_device_to_host( );
 
-  write_particles( h_x_pos, h_y_pos, h_x_vel, h_y_vel, h_weight, h_seed, OUTPUT_NAME, NUM_PARTICLES, 1 );
+  write_particles( h_x_pos, h_y_pos, h_x_vel, h_y_vel, h_weight, h_seed, OUTPUT_NAME, NUM_PARTICLES, 20 );
   //print_particles( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed,, NUM_PARTICLES, 1000 );
 
   // free host and device memory

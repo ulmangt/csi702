@@ -557,8 +557,10 @@ extern "C" void copy_particles( float *d_x_pos, float *d_y_pos, float *d_x_vel,
 
   dim3 dimGrid(numBlocks);
   dim3 dimBlock(THREADS_PER_BLOCK);
-  copy_particles_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel, d_y_vel, d_weight, d_seed,
-                                                  d_x_pos_swap, d_y_pos_swap, d_x_vel_swap, d_y_vel_swap, d_weight_swap, d_seed_swap );
+  copy_particles_kernel<<< dimGrid, dimBlock >>>( d_x_pos, d_y_pos, d_x_vel,
+                                                  d_y_vel, d_weight, d_seed,
+                                                  d_x_pos_swap, d_y_pos_swap, d_x_vel_swap,
+                                                  d_y_vel_swap, d_weight_swap, d_seed_swap );
 
   // block until the device has completed kernel execution
   cudaThreadSynchronize();
@@ -588,6 +590,12 @@ extern "C" void resample( float *d_x_pos, float *d_y_pos, float *d_x_vel,
   thrust::inclusive_scan(device_weights, device_weights + num, device_weights);
 
   floor_array( d_weight, num );
+
+  copy_particles( d_x_pos, d_y_pos, d_x_vel,
+                  d_y_vel, d_weight, d_seed,
+                  d_x_pos_swap, d_y_pos_swap, d_x_vel_swap,
+                  d_y_vel_swap, d_weight_swap, d_seed_swap,
+                  num );
 }
 
 // copy particles from host (cpu) to device (video card)
