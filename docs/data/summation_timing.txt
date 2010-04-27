@@ -1,0 +1,18 @@
+# array size       cuda         serial        thrust
+65536               0.75         0.8          2.15
+131072              1.19         1.63         2.17
+262144              2.07         3.22         2.24
+524288              3.92         6.51         2.39
+1048576             7.49        13.03         2.75
+2097152            14.51        26.24         3.50
+4194304            28.56        52.48         4.89
+8388608            56.75       106.17         8.22
+16777216          114.21       210.67
+#
+#
+# Differences in cuda/serial sum: 8389084.000000 , 8389528.000000
+#
+# thrust fails at this size:
+# terminate called after throwing an instance of 'std::bad_alloc'
+# what():  std::bad_alloc
+#
