@@ -20,6 +20,8 @@
 
 #define INITIAL_MAX_WAYPOINTS 10
 
-#define OUTPUT_NAME "particles.out"
+#define OUTPUT_NAME "data/particles.out"
+#define OWNSHIP_POS_NAME "data/ownship.out"
+#define TARGET_POS_NAME "data/target.out"
 
 #endif
