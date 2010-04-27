@@ -63,6 +63,7 @@ int main( int argc, char* argv )
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
 
+/*
   int i;
   float previous_time = 0.0;
   float current_time = 0.0;
@@ -77,8 +78,9 @@ int main( int argc, char* argv )
     information_update( NUM_PARTICLES, obs );
     resample( NUM_PARTICLES );
   }
+*/
 
-  write_particles( OUTPUT_NAME, NUM_PARTICLES, 10 );
+  write_particles( OUTPUT_NAME, NUM_PARTICLES, 1000 );
   //print_particles( NUM_PARTICLES );
 
   free_particle_mem( );
