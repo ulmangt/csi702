@@ -17,7 +17,14 @@
 A simple geographic tracking problem traditionally consists of estimating the state of a target using errored observations of some function of the target state. The problem explored here assumes a four-dimensional state space with two cartesian position dimensions and two veocity dimensions. To simplify the problem, the possibility of false alarms (observations which do not corrispond to an actual target) is ignorred. Further, all observations are assumed to corrispond to a single target of interest (associating observations with the correct target track is an additional complicating concern in multi-target tracking problems).
 
 \subsection{Prior Distribution}
-Employing bayesian tracking to estimate the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This probability density function describes the probability that the target's true state is \(x\) prior to receving any observations on the target. This prior distribution is generally based on engineering knowledge of the targets and of the sensors used to generate observations. The simple priors used in this tracking problem assume the sensor has a maximum detection range and thus that targets will not be detected until they are inside that range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state space dimensions.
+Employing bayesian tracking to estimate the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This probability density function describes the probability that the target's true state is \(x\) prior to receving any observations on the target. This prior distribution is generally based on engineering knowledge of the targets and of the sensors used to generate observations. The simple priors used in this tracking problem assume the sensor has a maximum detection range and thus that targets will not be detected until they are inside that range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state space dimensions. Figure \ref{prior} displays the x and y position components of a random sample of particles drawn from the prior described above with a 20000 meter maximum detection range. Because all particles are initially weighted equally, any particle has an equal likelihood of being the true state of the target.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/particles_prior.png}
+\caption{Prior Particle Position Distribution}
+\label{prior}
+\end{figure}
 
 \subsection{Likelihood Functions}
 
