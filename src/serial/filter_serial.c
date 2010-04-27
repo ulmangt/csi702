@@ -29,6 +29,7 @@ void mark_particle( int, int );
 void copy_particle( int, int, float );
 void perturb_particle( int );
 
+void write_positions( char*, struct waypoint_list*, float );
 void write_particles( char*, int, int );
 
 void print_particles( int, int );
@@ -54,7 +55,7 @@ int main( int argc, char* argv )
   //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
   //struct observation_list *obs_list = combine_observations( range_obs_list, azimuth_obs_list );
   
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 100.0 );
 
   printf("Observations:\n");
   print_observations( obs_list );
@@ -63,7 +64,6 @@ int main( int argc, char* argv )
   init_particle_mem( NUM_PARTICLES );
   init_particle_val( NUM_PARTICLES, MAX_RANGE, MAX_VEL );
 
-/*
   int i;
   float previous_time = 0.0;
   float current_time = 0.0;
@@ -78,10 +78,10 @@ int main( int argc, char* argv )
     information_update( NUM_PARTICLES, obs );
     resample( NUM_PARTICLES );
   }
-*/
 
+  write_positions( OWNSHIP_POS_NAME, waypoints1, current_time );
+  write_positions( TARGET_POS_NAME, waypoints2, current_time );
   write_particles( OUTPUT_NAME, NUM_PARTICLES, 1000 );
-  //print_particles( NUM_PARTICLES );
 
   free_particle_mem( );
 }
@@ -273,7 +273,19 @@ void perturb_particle( int index )
   y_vel[index] += frand( -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
 }
 
+// writes the interpolated x and y positions at the given time along the waypoints list
+// this is used to record the position of the sensor and ownship at the end of the scenario
+// for graphical output purposes 
+void write_positions( char* out_name, struct waypoint_list *waypoints, float time )
+{
+  float x_pos, y_pos;
+  interpolate( waypoints , time , &x_pos, &y_pos );
+  
+  FILE* file = fopen( out_name, "w" );
+  fprintf( file, "%f\t%f\n", x_pos, y_pos );
 
+  int success = fclose( file );
+}
 
 // writes the current set of particles out to disk as
 // a tab delimited text file
