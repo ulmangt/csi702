@@ -13,11 +13,11 @@
 
 \tableofcontents
 
-\section{Background}
+\section{Background}\label{Background}
 A simple geographic tracking problem traditionally consists of estimating the state of a target using errored observations of some function of the target state. The problem explored here assumes a four-dimensional state space with two cartesian position dimensions and two veocity dimensions. To simplify the problem, the possibility of false alarms (observations which do not corrispond to an actual target) is ignorred. Further, all observations are assumed to corrispond to a single target of interest (associating observations with the correct target track is an additional complicating concern in multi-target tracking problems).
 
 \subsection{Prior Distribution}
-Employing bayesian tracking to estimate the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This probability density function describes the probability that the target's true state is \(x\) prior to receving any observations on the target. This prior distribution is generally based on engineering knowledge of the targets and of the sensors used to generate observations. The simple priors used in this tracking problem assume the sensor has a maximum detection range and thus that targets will not be detected until they are inside that range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state space dimensions. Figure \ref{prior} displays the x and y position components of a random sample of particles drawn from the prior described above with a 20000 meter maximum detection range. Because all particles are initially weighted equally, any particle has an equal likelihood of being the true state of the target.
+Employing Bayesian tracking to estimate the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This probability density function describes the probability that the target's true state is \(x\) prior to receving any observations on the target. This prior distribution is generally based on engineering knowledge of the targets and of the sensors used to generate observations. The simple priors used in this tracking problem assume the sensor has a maximum detection range and thus that targets will not be detected until they are inside that range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state space dimensions. Figure \ref{prior} displays the x and y position components of a random sample of particles drawn from the prior described above with a 20000 meter maximum detection range. Because all particles are initially weighted equally, any particle has an equal likelihood of being the true state of the target.
 
 \begin{figure}
 \centering
@@ -27,12 +27,22 @@ Employing bayesian tracking to estimate the true state \(x \in S\) of a target i
 \end{figure}
 
 \subsection{Likelihood Functions}
+A likelihood function \(L\) for random variable \(X\) which takes on value in a state space \(S\) and observation \(Y=y\) on some function of the state space is defined in Equation \ref{lfunc1}. The function \(P(\cdot|x)\) is a probability density function describing the probability of various observations \(y\) given a known target state \(x\).
 
+However, in Bayesian tracking, the function \(P(y|\cdot)\) is far more interesting. This is because once an observation \(y\) is received it is fixed and we wish to determine what that observation tells us about the true target state \(x\). The name likelihood function arises from the fact that if \(L(y|x_{1})>L(y|x_{2})\) then the observation \(y\) is more liekly to have come from a target with state \(x_{1}\) than a target with state \(x_{2}\). Is should be noted that unlike \(P(\cdot|x)\), the likelihood function usually not a proability density function\cite{bmtt}.
+
+\begin{equation}\label{lfunc1}
+L(y|x) = P( Y=y | X=x ) \verb! for ! x \in S
+\end{equation}
+
+The likelihood function, in conjunction with Bayes' rule, tells us how to modify our prior distribution \(p(x)\) (discussed in Section \ref{Background}) to incorporate the information from an observation \(y\). Applying Bayes' rule we arrive at Equation \ref{lfunc2}. The probabiltiy density function P(\cdot|y) is known as the posterior distribution and represents the prior adjusted to reflect the addition of the new information contained in the observation \(y\). This posterior distribution can have further likelihood functions applied to it using Function \ref{lfunc2} to incorporate additional information. This process is knwon as Bayesian tracking.
+
+\begin{equation}\label{lfunc2}
+P(x|y) = \frac{L(y|x)p(x)}{\int \! L(y|x)p(x) \, dx}
+\end{equation}
 
 \subsection{Motion Model}
-
-
- employs Bayes' Theorem to combine errored observations on functions of a state space \(S\) into a posterior distribution p
+In kinematic problems, observations often occur at different times. In our particular problem, the existance of velocity components in the state space \(S\) indicates that the position components are changing over time. In addition, the possibility that the target might change its velocity must be modeled. Motion updating can be described much more generally and rigorously, but in our case the step is simple. The target is assumed to make instantaneous velocity adjustments with an exponentially distributed mean time between adjustments. During periods where no adjustment is made, the target travels at a constant velocity.
 
 \section{Design}
 Text...
