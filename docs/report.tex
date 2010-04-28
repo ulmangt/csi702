@@ -83,7 +83,7 @@ As each block completes its parallel summation, it writes its sum to an array in
 \label{summation_plot}
 \end{figure}
 
-However, as Figure \ref{summation_plot} indicates, writing complex parallel algorithms in cuda efficiently is very difficult. Performance for the serial implementation, custom cuda implementation, and thrust implementation all scale linearly with array size, which makes sense given that the array summation problem has \(O(n)\) time complexity. What is striking is the difference in performance between the custom cuda implementation and the thrust implementation. For the largest arrays tested, the custom cuda implementation was only about twice as fast as the serial implementation whereas the thrust implementation was 12.9 times faster. These results highlight cuda's sensitivity to subtle factors like uncoalesced memory access, shared memory bank conflicts (threads from multiple warps accessing the same sections of shared memory), expensive gpu operations, and other performance gotchas which can have significant impact on performance\cite{bestprac}.
+However, as Figure \ref{summation_plot} indicates, writing complex parallel algorithms in cuda efficiently is very difficult. Performance for the serial implementation, custom cuda implementation, and thrust implementation all scale linearly with array size, which makes sense given that the array summation problem has \(O(n)\) time complexity. What is striking is the difference in performance between the custom cuda implementation and the thrust implementation. For the largest arrays tested, the custom cuda implementation was only about twice as fast as the serial implementation whereas the thrust implementation was 12.9 times faster. These results highlight cuda's sensitivity to subtle factors like uncoalesced memory access, shared memory bank conflicts (threads from multiple warps accessing the same sections of shared memory), expensive gpu operations, and other performance gotchas which can have significant impact on performance.\cite{bestprac}
 
 \subsection{Random Number Generation}
 Particle filter tracking is a stochastic process: as particles are time updated, they maneuver randomly according to their motion model; as particles are resampled, their replacements are randomly perturbed copies of existing particles. Thus, performing particle filter tracking using CUDA required generating random numbers efficiently on the GPU. The thrust library provides random number generation capabilities, and the CUDA SDK provides a parallel MersenneTwister example. My random number generator implementation is a simpler linear congruential generator which relies on independent seeds stored for each particle.
@@ -107,6 +107,15 @@ w_{i}=\verb!floor!(C\sum_{j=0}^{i} w_{j})
 \end{equation}
 
 Equation \ref{resample1} describes the transformation applied to particle weights \(w_{i}\) to obtain the number of copies to make of each particle. However, to implement the copy operation in parallel in CUDA, each particle must also know where in the global memory particle array that its copies should be placed. Equation \ref{resample2} solves this problem by calculating a cumulative sum of weights. With the cumulative sum in hand, particle \(i\) is copied \(w_{i}-w_{i-1}\) times with the first copy placed at position \(w_{i-1}\) in the global memory array.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/profile_cuda_version1_pic1.png}
+\caption{CUDA Visual Profiler Version 1 Results}
+\label{profiler1}
+\end{figure}
+
+Unfortunately, as indicated by Figure \ref{profiler1}, this approach is very slow on GPU hardware because of the large ammount of uncoalesed memory access which it must perform.
 
 \section{Challenges}
 Text...
