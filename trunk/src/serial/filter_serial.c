@@ -55,7 +55,8 @@ int main( int argc, char* argv )
   //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
   //struct observation_list *obs_list = combine_observations( range_obs_list, azimuth_obs_list );
   
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 100.0 );
+  //struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 0.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 2, 100.0, 0.0, 100.0, 1900.0 );
 
   printf("Observations:\n");
   print_observations( obs_list );
@@ -69,8 +70,6 @@ int main( int argc, char* argv )
   float current_time = 0.0;
   for ( i = 0 ; i < obs_list->size ; i++ )
   {
-    printf("observation %d\n", i);
-
     struct observation *obs = (obs_list->observations) + i;
     previous_time = current_time;
     current_time = obs->time;
@@ -139,16 +138,12 @@ void time_update( int num, float seconds, float mean_maneuver )
 
   for ( i = 0 ; i < num ; i++ )
   {
-    //printf("Updating particle %d seconds %f\n", i, seconds);
-
     remaining_time = seconds;
 
     while ( 1 )
     {
       if ( next_maneuver < remaining_time )
       {
-        //printf("Particle %d maneuvering update time (next_maneuver) %f remaining_time %f\n", i, next_maneuver, remaining_time);
-
         time_update_index( i, next_maneuver );
         maneuver_index( i );
         remaining_time -= next_maneuver;
@@ -156,12 +151,8 @@ void time_update( int num, float seconds, float mean_maneuver )
       }
       else
       {
-        //printf("Particle %d finished time update time %f\n", i, remaining_time);
-
         time_update_index( i, remaining_time );
         next_maneuver -= remaining_time;
-
-        //printf("next maneuver %f\n", next_maneuver);
         break;
       }
     }
@@ -198,7 +189,7 @@ void information_update( int num, struct observation *obs )
 void resample( int num )
 {
   int i;
-  // sum weights
+  // sum particle weights
   float weight_sum = 0.0;
   for ( i = 0 ; i < num ; i++ )
   {
@@ -213,6 +204,10 @@ void resample( int num )
   int rsum = 0;
   // running total of discarded particles
   int dsum = 0;
+
+  // replace each particle weight with the number of times the particle should be duplicated
+  // this is essentially equal to weight * ( num / weight_sum )
+  // the added complexity deals with accumulating fractional weights and assigning them to a particle
   for ( i = 0 ; i < num ; i++ )
   {
     wsum += wcutoff_increment * weight[i];
@@ -224,17 +219,14 @@ void resample( int num )
     weight[i] = r;
     rsum += r;
 
-    //printf("i %d wsum %f rsum %d weight %d\n", i, wsum, rsum, r);
-
     if ( r == 0 )
       dsum++;
   }
 
+  // overwrite the particles with weight 0 with copies of particles with weight > 0
   int overwrite = -1;
   for ( i = 0 ; i < num ; i++ )
   {
-    //printf("source %d weight %f\n", i, weight[i]);
-
     if ( weight[i] <= 1 )
       continue;
 
@@ -244,9 +236,9 @@ void resample( int num )
       do {
         overwrite++;
       }
-      while ( weight[overwrite] != 0 );
+      while ( overwrite < num && weight[overwrite] != 0 );
       
-      //printf("source %d target %d\n", i, overwrite);
+      if ( overwrite >= num ) break;
 
       copy_particle( i , overwrite , 1.0 );
       perturb_particle( overwrite );
