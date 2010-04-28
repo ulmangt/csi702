@@ -47,3 +47,12 @@ keep data in global memory -- keep all computations on gpu -- tempting to move b
 
 
 where are pointers (on host or device?) example: structure of arrays (can't allocate structure with cudaMalloc since pointer will be on device and will fail when you try to access the struct members from the host to cudaMalloc them) -- need to pass struct by value to kernel
+
+
+
+RUNNING CUDA PROFILER
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/cudaprof/bin
+/usr/local/cuda/cudaprof/bin/cudaprof
+
+
