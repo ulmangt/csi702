@@ -190,6 +190,7 @@ int main( int argc, char** argv )
     swap_device_arrays( );
   }
 
+/*
   // copy particles back to host
   copy_particles_device_to_host( );
 
@@ -200,4 +201,7 @@ int main( int argc, char** argv )
   // free host and device memory
   h_free_particles( );
   d_free_particles( );
+*/
+
+  return 0;
 }

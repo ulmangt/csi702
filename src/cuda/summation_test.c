@@ -71,4 +71,6 @@ int main( int argc, char** argv )
 
   run_test( data, 1000, NUM_TRIALS );
   run_thrust_tests( data, 1000, NUM_TRIALS );
+
+  return 0;
 }
