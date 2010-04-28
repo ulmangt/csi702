@@ -65,7 +65,8 @@ In kinematic problems, observations often occur at different times. In our parti
 \end{figure}
 
 \section{Design}
-Text...
+Most portions of the Bayesian tracking recursion are embarrisingly parallel operations which map directly to CUDA without much trouble. Initialization of particle positions, time updating, and information updating are all operations on a single particle and are independent of each other particle. However, the CUDA implementation other portions of the algorithm, including particle weight summation (and more generally, particle resampling), and random number generation, provide interesting challenges.
+
 \subsection{Parallel Reduction}
 The thrust library provides prewritten parallel algorithms for common CUDA tasks, including reducing an array of values to a single value through repeated application of a binary reduction function.\cite{thrust}
 
@@ -92,6 +93,20 @@ X_{n+1}=(aX_{n}+c \mod m)
 \end{equation}
 
 With properly chosen \(a\), \(c\) and \(m\) values linear congruential generator can provide sufficiently random values for particle filtering\cite{lcg}. The values I used are those used by the java.util.Random class. This approach is attractive because it is theoretically very fast and requires very little state, allowing each particle to generate its own independent stream of random values. Unfortunately, the recurrence relation in equation \ref{lcgeq1} relies on the modulus operator, which is extremely slow on NVIDA hardware.\cite{oprc}
+
+\subsection{Resampling}
+As observations arrive and their information about the target's state is incorporated into the prior distribution using appropriate likelihood functions, some particles will match very poorly with the observations, because of their initial state or due to the motion model, and their weight will be very small. Eventually keeping this particle around serves very little purpse, since the Bayesian tracker has already indicated that it matches poorly with the observations and is thus unlikely to be close to the true target state. The effective particle count has been reduced. Resampling is a technique for remedying this situation by periodically repacing particles with very small weight with slightly perturbed copies of particles with very high weight.
+
+\[ C = \frac{n}{\sum_{i=0}^{n} w_{i}} \]
+\begin{equation}\label{resample1}
+w_{i}=C w_{j}
+\end{equation}
+
+\begin{equation}\label{resample2}
+w_{i}=\verb!floor!(C\sum_{j=0}^{i} w_{j})
+\end{equation}
+
+Equation \ref{resample1} describes the transformation applied to particle weights \(w_{i}\) to obtain the number of copies to make of each particle. However, to implement the copy operation in parallel in CUDA, each particle must also know where in the global memory particle array that its copies should be placed. Equation \ref{resample2} solves this problem by calculating a cumulative sum of weights. With the cumulative sum in hand, particle \(i\) is copied \(w_{i}-w_{i-1}\) times with the first copy placed at position \(w_{i-1}\) in the global memory array.
 
 \section{Challenges}
 Text...
