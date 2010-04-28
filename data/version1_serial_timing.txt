@@ -1,0 +1,11 @@
+# serial
+# version 1
+# svn revision 201
+# block size 256 * num blocks 512 * 16 = particles 2,097,152
+15.373
+15.325
+15.192
+13.242
+16.107
+14.912
+13.378
