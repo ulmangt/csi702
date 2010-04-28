@@ -55,8 +55,8 @@ int main( int argc, char* argv )
   //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
   //struct observation_list *obs_list = combine_observations( range_obs_list, azimuth_obs_list );
   
-  //struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 0.0 );
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 2, 100.0, 0.0, 100.0, 1900.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 1900.0 );
+  //struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 2, 100.0, 0.0, 100.0, 1900.0 );
 
   printf("Observations:\n");
   print_observations( obs_list );
@@ -70,6 +70,8 @@ int main( int argc, char* argv )
   float current_time = 0.0;
   for ( i = 0 ; i < obs_list->size ; i++ )
   {
+    printf("observation %d\n", i);
+
     struct observation *obs = (obs_list->observations) + i;
     previous_time = current_time;
     current_time = obs->time;
