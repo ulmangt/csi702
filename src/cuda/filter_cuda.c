@@ -144,7 +144,7 @@ int main( int argc, char** argv )
   //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
   //struct observation_list *h_obs_list = combine_observations( range_obs_list, azimuth_obs_list );
 
-  struct observation_list *h_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 0.0 );
+  struct observation_list *h_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 1900.0 );
 
   printf("Observations:\n");
   print_observations( h_obs_list );
@@ -193,6 +193,8 @@ int main( int argc, char** argv )
   // copy particles back to host
   copy_particles_device_to_host( );
 
+  write_positions( OWNSHIP_POS_NAME, waypoints1, current_time );
+  write_positions( TARGET_POS_NAME, waypoints2, current_time );
   write_particles( host_particles, OUTPUT_NAME, NUM_PARTICLES, 100 );
 
   // free host and device memory
