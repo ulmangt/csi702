@@ -9,6 +9,19 @@
 #include "convert.h"
 #include "filter_cuda_kernels.h"
 
+// writes the interpolated x and y positions at the given time along the waypoints list
+// this is used to record the position of the sensor and ownship at the end of the scenario
+// for graphical output purposes 
+void write_positions( char* out_name, struct waypoint_list *waypoints, float time )
+{
+  float x_pos, y_pos;
+  interpolate( waypoints , time , &x_pos, &y_pos );
+  
+  FILE* file = fopen( out_name, "w" );
+  fprintf( file, "%f\t%f\n", x_pos, y_pos );
+
+  int success = fclose( file );
+}
 
 // prints a single particle's information to the console
 void print_particle( float x_pos, float y_pos, float x_vel, float y_vel, float weight, float seed )

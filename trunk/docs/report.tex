@@ -93,6 +93,9 @@ X_{n+1}=(aX_{n}+c \mod m)
 
 With properly chosen \(a\), \(c\) and \(m\) values linear congruential generator can provide sufficiently random values for particle filtering\cite{lcg}. The values I used are those used by the java.util.Random class. This approach is attractive because it is theoretically very fast and requires very little state, allowing each particle to generate its own independent stream of random values. Unfortunately, the recurrence relation in equation \ref{lcgeq1} relies on the modulus operator, which is extremely slow on NVIDA hardware.\cite{oprc}
 
+\section{Challenges}
+Text...
+
 \section{Performance}
 Text...
 
