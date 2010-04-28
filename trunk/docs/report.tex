@@ -35,14 +35,34 @@ However, in Bayesian tracking, the function \(P(y|\cdot)\) is far more interesti
 L(y|x) = P( Y=y | X=x ) \verb! for ! x \in S
 \end{equation}
 
-The likelihood function, in conjunction with Bayes' rule, tells us how to modify our prior distribution \(p(x)\) (discussed in Section \ref{Background}) to incorporate the information from an observation \(y\). Applying Bayes' rule we arrive at Equation \ref{lfunc2}. The probabiltiy density function P(\cdot|y) is known as the posterior distribution and represents the prior adjusted to reflect the addition of the new information contained in the observation \(y\). This posterior distribution can have further likelihood functions applied to it using Function \ref{lfunc2} to incorporate additional information. This process is knwon as Bayesian tracking.
+The likelihood function, in conjunction with Bayes' rule, tells us how to modify our prior distribution \(p(x)\) (discussed in Section \ref{Background}) to incorporate the information from an observation \(y\). Applying Bayes' rule we arrive at Equation \ref{lfunc2}. The probability density function \(P(\cdot|y)\) is known as the posterior distribution and represents the prior adjusted to reflect the addition of the new information contained in the observation \(y\). This posterior distribution can have further likelihood functions applied to it using Function \ref{lfunc2} to incorporate additional information. This process is knwon as Bayesian tracking.
 
 \begin{equation}\label{lfunc2}
 P(x|y) = \frac{L(y|x)p(x)}{\int \! L(y|x)p(x) \, dx}
 \end{equation}
 
+Figure \ref{posterior1} shows the posterior distribution after the likelihood for a single azimuth observation is applied to the prior distribution from Figure \ref{prior}. An azimuth observation is a single angle value indicating that the target is somewhere along the ray starting at the sensor's current position and continuing in the given angle. The likelihood function which we associate with such observations, shown in Equation \ref{lfunc3}, is a simple Gaussian distribution in azimuth space. Here \(\theta\) is an azimuth observation, \(x \in S\) is an element of the state space, \(\sigma\) is the standard deviation assigned to the observation, and \(b(\alpha,x)\) is a function which gives the azimuth from the sensor position \(\alpha\) to the position \(x\). Applying this function to each particle gives us new weights for the particles with those particles closer to the observed azimuth receving higher weight.
+
+\begin{equation}\label{lfunc3}
+L(\theta|x)=(2\pi\sigma^{2})^{\frac{-1}{2}}e^{\frac{-(\theta-b(\alpha,x))^{2}}{2\sigma^{2}}}
+\end{equation}\cite{bmtt}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/particles_azimuth_obs.png}
+\caption{Posterior Particle Position Distribution after Azimuth Observation}
+\label{posterior1}
+\end{figure}
+
 \subsection{Motion Model}
-In kinematic problems, observations often occur at different times. In our particular problem, the existance of velocity components in the state space \(S\) indicates that the position components are changing over time. In addition, the possibility that the target might change its velocity must be modeled. Motion updating can be described much more generally and rigorously, but in our case the step is simple. The target is assumed to make instantaneous velocity adjustments with an exponentially distributed mean time between adjustments. During periods where no adjustment is made, the target travels at a constant velocity.
+In kinematic problems, observations often occur at different times. In our particular problem, the existance of velocity components in the state space \(S\) indicates that the position components are changing over time. In addition, the possibility that the target might change its velocity must be modeled. Motion updating can be described much more generally and rigorously, but in our case the step is simple. The target is assumed to make instantaneous velocity adjustments with an exponentially distributed mean time between adjustments. During periods where no adjustment is made, the target travels at a constant velocity. If no observations are received for an extended period of time, as has happened in Figure \ref{posterior2}, the particles will drift apart on their constant velocity paths and the posterior distribution will become more difuse to indicate our increasing uncertainty about the current location of the target (since we do not know what it has done since the last observation).
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/particles_azimuth_obs.png}
+\caption{Posterior Particle Position Distribution after Azimuth Observation and Motion Update}
+\label{posterior2}
+\end{figure}
 
 \section{Design}
 Text...
