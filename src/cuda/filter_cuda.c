@@ -195,7 +195,7 @@ int main( int argc, char** argv )
 
   write_positions( OWNSHIP_POS_NAME, waypoints1, current_time );
   write_positions( TARGET_POS_NAME, waypoints2, current_time );
-  write_particles( host_particles, OUTPUT_NAME, NUM_PARTICLES, 100 );
+  write_particles( host_particles, OUTPUT_NAME, NUM_PARTICLES, 1000 );
 
   // free host and device memory
   h_free_particles( );
