@@ -97,6 +97,8 @@ With properly chosen \(a\), \(c\) and \(m\) values linear congruential generator
 \subsection{Resampling}
 As observations arrive and their information about the target's state is incorporated into the prior distribution using appropriate likelihood functions, some particles will match very poorly with the observations, because of their initial state or due to the motion model, and their weight will be very small. Eventually keeping this particle around serves very little purpse, since the Bayesian tracker has already indicated that it matches poorly with the observations and is thus unlikely to be close to the true target state. The effective particle count has been reduced. Resampling is a technique for remedying this situation by periodically repacing particles with very small weight with slightly perturbed copies of particles with very high weight.
 
+\subsubsection{Resampling Implementation 1}
+
 \[ C = \frac{n}{\sum_{i=0}^{n} w_{i}} \]
 \begin{equation}\label{resample1}
 w_{i}=C w_{j}
@@ -116,6 +118,8 @@ Equation \ref{resample1} describes the transformation applied to particle weight
 \end{figure}
 
 Unfortunately, as indicated by Figure \ref{profiler1}, this approach is very slow on GPU hardware because of the large ammount of uncoalesed memory access which it must perform.
+
+\subsubsection{Resampling Implementation 2}
 
 \section{Challenges}
 Text...
