@@ -56,3 +56,10 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/cudaprof/bin
 /usr/local/cuda/cudaprof/bin/cudaprof
 
 
+
+thrust gather
+
+http://thrust.googlecode.com/svn/tags/1.1.0/doc/html/group__gathering.html
+http://code.google.com/p/thrust/source/browse/examples/dot_products_with_zip.cu?r=1.2.0
+http://code.google.com/p/thrust/wiki/QuickStartGuide
+

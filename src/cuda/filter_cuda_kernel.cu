@@ -1,4 +1,4 @@
-#import <stdlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 
@@ -6,8 +6,12 @@
 #include "filter_constants.h"
 #include "filter_cuda_data.h"
 
+#include <thrust/gather.h>
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
+#include <thrust/functional.h>
+#include <thrust/transform.h>
+#include <thrust/iterator/zip_iterator.h>
 
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
@@ -490,6 +494,65 @@ extern "C" void floor_array( float *array, int num )
 }
 
 
+__global__ void perturb_particles_v3_kernel( float *seeds, struct particles device_array_swap )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  int seed = seeds[index];
+  device_array_swap.x_pos[index] = device_array_swap.x_pos[index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  seed = device_lcg_rand( seed );
+  device_array_swap.y_pos[index] = device_array_swap.y_pos[index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  seed = device_lcg_rand( seed );
+  device_array_swap.x_vel[index] = device_array_swap.x_vel[index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  seed = device_lcg_rand( seed );
+  device_array_swap.y_vel[index] = device_array_swap.y_vel[index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  seed = device_lcg_rand( seed );
+  device_array_swap.seed[index] = seed;
+}
+
+extern "C" void perturb_particles_v3( float *seeds, struct particles device_array_swap, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  perturb_particles_v3_kernel<<< dimGrid, dimBlock >>>( seeds, device_array_swap );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("perturb_particles_v3");
+}
+
+
+__global__ void cap_array_v3_kernel( float *device_array, float value )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if ( device_array[index] >= value )
+  {
+    device_array[index] = 0;
+  }
+  
+}
+
+extern "C" void cap_array_v3( float *device_array, float value, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  cap_array_v3_kernel<<< dimGrid, dimBlock >>>( device_array, value );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("cap_array_v");
+}
+
+
 
 // device function to copy and perturb a single particle
 __device__ void copy_particle( int from_index, int to_index,
@@ -641,6 +704,28 @@ extern "C" void copy_particles_v2(  struct particles device_array,
   checkCUDAError("copy_particles_v2");
 }
 
+__global__ void copy_float_to_int_kernel( float *from, int *to )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  to[index] = (int) from[index];
+}
+
+extern "C" void copy_float_to_int(  float *from, int *to, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  copy_float_to_int_kernel<<< dimGrid, dimBlock >>>( from, to );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("copy_float_to_int");
+}
+
 extern "C" void resample( struct particles device_array,
                           struct particles device_array_swap,
                           int num )
@@ -695,6 +780,102 @@ extern "C" void resample_v2( struct particles device_array,
   // reset all particle weights to 1.0
   init_array( device_array_swap.weight, 1.0f, num );
 }
+
+extern "C" void resample_v3( struct particles device_array,
+                             struct particles device_array_swap,
+                             int num )
+{
+  // renormalize weights then multiply by NUM_PARTICLES
+  // weight now contains aproximately the number of particles each particle should be resampled into
+  // to values near 0 indicating that particle should be removed
+  float weight_sum = sum_weight_thrust( device_array.weight, num );
+  multiply( device_array.weight, (float) num / weight_sum, num );
+
+  // wrap arrays in thrust data structures
+  thrust::device_ptr<float> device_weights( device_array.weight );
+
+  // repace weights with cumulative sum of weights
+  thrust::inclusive_scan(device_weights, device_weights + num, device_weights);
+
+  // convert cumulative weights to array indexes
+  floor_array( device_array.weight, num );
+
+  // copy the index of the particle which will overwrite it into each particle's weight
+  copy_indexes( device_array, device_array_swap, num );
+
+  // ensure that there are no entries with indexes larger than num
+  //cap_array_v3( device_array_swap.weight, num, num );
+
+  // wrap arrays in thrust data structures
+  thrust::device_ptr<float> device_weight_swap( device_array_swap.weight );
+  thrust::device_ptr<float> device_x_pos( device_array.x_pos );
+  thrust::device_ptr<float> device_x_pos_swap( device_array_swap.x_pos );
+  thrust::device_ptr<float> device_y_pos( device_array.y_pos );
+  thrust::device_ptr<float> device_y_pos_swap( device_array_swap.y_pos );
+  thrust::device_ptr<float> device_x_vel( device_array.x_vel );
+  thrust::device_ptr<float> device_x_vel_swap( device_array_swap.x_vel );
+  thrust::device_ptr<float> device_y_vel( device_array.y_vel );
+  thrust::device_ptr<float> device_y_vel_swap( device_array_swap.y_vel );
+  //thrust::device_ptr<float> device_seed( device_array.seed );
+  //thrust::device_ptr<float> device_seed_swap( device_array_swap.seed );
+
+  //thrust::gather(device_x_pos_swap, device_x_pos_swap+num, device_weight_swap, device_x_pos);
+
+  // use a thrust 'gather' to copy data from indexes calculated by copy_indexes_kernel
+  // see: http://thrust.googlecode.com/svn/tags/1.1.0/doc/html/group__gathering.html
+  // for an expanation of the thrust::deprecated::gather namespace, see:
+  // http://groups.google.com/group/thrust-users/browse_thread/thread/f5f0583cb97b51fd/38b9550437e0989c?lnk=gst&q=gather#38b9550437e0989c
+/*
+  thrust::deprecated::gather(
+                  thrust::make_zip_iterator(make_tuple(device_x_pos_swap, device_y_pos_swap, device_x_vel_swap, device_y_vel_swap)),
+                  thrust::make_zip_iterator(make_tuple(device_x_pos_swap+num, device_y_pos_swap+num, device_x_vel_swap+num, device_y_vel_swap+num)),
+                  device_weight_swap,
+                  thrust::make_zip_iterator(make_tuple(device_x_pos, device_y_pos, device_x_vel, device_y_vel)) );
+*/
+
+  float *host_array = (float *) malloc( sizeof( float ) * num );
+  cudaMemcpy( host_array, device_array_swap.weight, sizeof( float ) * num, cudaMemcpyDeviceToHost );
+  int i;
+  for ( i = num - 20 ; i < num ; i++ )
+  {
+    printf( "%d %f\n", i, host_array[i] );
+  }
+  free( host_array);
+
+/*
+  int *array;
+  int size = sizeof( int ) * num ;
+  cudaMalloc( (void **) &array, size );
+
+  copy_float_to_int( device_array_swap.weight, array, num );
+  
+  thrust::device_ptr<int> device_int_array( array );
+*/
+
+  thrust::next::gather(device_weight_swap, device_weight_swap+num,
+                       thrust::make_zip_iterator(make_tuple(device_x_pos, device_y_pos, device_x_vel, device_y_vel)),
+                       thrust::make_zip_iterator(make_tuple(device_x_pos_swap, device_y_pos_swap, device_x_vel_swap, device_y_vel_swap)) );
+
+//  cudaFree( array );
+
+  perturb_particles_v3( device_array.seed, device_array_swap, num );
+
+  // reset all particle weights to 1.0
+  init_array( device_array_swap.weight, 1.0f, num );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // copy particles from host (cpu) to device (video card)
 extern "C" void copy_array_host_to_device( float *host, float *device, int num )
