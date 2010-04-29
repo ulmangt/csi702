@@ -496,7 +496,6 @@ __device__ void copy_particle( int from_index, int to_index,
                                struct particles device_array,
                                struct particles device_array_swap )
 {
-  // the problem here is that device_array.seed[from_index]; will be the same for each particle
   int seed = device_array.seed[from_index];
   device_array_swap.x_pos[to_index] = device_array.x_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
   seed = device_lcg_rand( seed );
@@ -506,8 +505,24 @@ __device__ void copy_particle( int from_index, int to_index,
   seed = device_lcg_rand( seed );
   device_array_swap.y_vel[to_index] = device_array.y_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
   seed = device_lcg_rand( seed );
-  device_array_swap.weight[to_index] = 1.0f;
   device_array.seed[from_index] = seed;
+  device_array_swap.seed[to_index] = seed;
+}
+
+// device function to copy and perturb a single particle
+__device__ void copy_particle_v2( int from_index, int to_index,
+                               struct particles device_array,
+                               struct particles device_array_swap )
+{
+  int seed = device_array.seed[to_index];
+  device_array_swap.x_pos[to_index] = device_array.x_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  seed = device_lcg_rand( seed );
+  device_array_swap.y_pos[to_index] = device_array.y_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
+  seed = device_lcg_rand( seed );
+  device_array_swap.x_vel[to_index] = device_array.x_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  seed = device_lcg_rand( seed );
+  device_array_swap.y_vel[to_index] = device_array.y_vel[from_index] + device_frand( seed, -MAX_VEL_PERTURB, MAX_VEL_PERTURB );
+  seed = device_lcg_rand( seed );
   device_array_swap.seed[to_index] = seed;
 }
 
@@ -559,6 +574,69 @@ extern "C" void copy_particles( struct particles device_array,
 }
 
 
+__global__ void copy_indexes_kernel( struct particles device_array,
+                                     struct particles device_array_swap )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  // this is coalesced memory access
+  int resample_start_index = index == 0 ? 0 : (int) device_array.weight[index-1];
+  int resample_num_copies = device_array.weight[index] - resample_start_index;
+
+  int i;
+  for ( i = 0 ; i < resample_num_copies ; i++ )
+  {
+    device_array_swap.weight[ resample_start_index + i ] = index;
+  }  
+}
+
+extern "C" void copy_indexes( struct particles device_array,
+                              struct particles device_array_swap,
+                              int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  copy_indexes_kernel<<< dimGrid, dimBlock >>>( device_array, device_array_swap );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("copy_indexes");
+}
+
+__global__ void copy_particles_v2_kernel( struct particles device_array,
+                                          struct particles device_array_swap,
+                                          int num )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  int copy_from_index = (int) device_array_swap.weight[index];
+
+  if ( copy_from_index < num )
+  {
+    copy_particle_v2( copy_from_index, index, device_array, device_array_swap );
+  }
+}
+
+extern "C" void copy_particles_v2(  struct particles device_array,
+                                    struct particles device_array_swap,
+                                    int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  copy_particles_v2_kernel<<< dimGrid, dimBlock >>>( device_array, device_array_swap, num );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("copy_particles_v2");
+}
 
 extern "C" void resample( struct particles device_array,
                           struct particles device_array_swap,
@@ -576,9 +654,43 @@ extern "C" void resample( struct particles device_array,
   // repace weights with cumulative sum of weights
   thrust::inclusive_scan(device_weights, device_weights + num, device_weights);
 
+  // convert cumulative weights to array indexes
   floor_array( device_array.weight, num );
 
+  // make copies of particles
   copy_particles( device_array, device_array_swap, num );
+
+  // reset all particle weights to 1.0
+  init_array( device_array_swap.weight, 1.0f, num );
+}
+
+extern "C" void resample_v2( struct particles device_array,
+                             struct particles device_array_swap,
+                             int num )
+{
+  // renormalize weights then multiply by NUM_PARTICLES
+  // weight now contains aproximately the number of particles each particle should be resampled into
+  // to values near 0 indicating that particle should be removed
+  float weight_sum = sum_weight_thrust( device_array.weight, num );
+  multiply( device_array.weight, (float) num / weight_sum, num );
+
+  // wrap arrays in thrust data structures
+  thrust::device_ptr<float> device_weights( device_array.weight );
+
+  // repace weights with cumulative sum of weights
+  thrust::inclusive_scan(device_weights, device_weights + num, device_weights);
+
+  // convert cumulative weights to array indexes
+  floor_array( device_array.weight, num );
+
+  // copy the index of the particle which will overwrite it into each particle's weight
+  copy_indexes( device_array, device_array_swap, num );
+
+  // overwrite/copy particles based on the weights set above
+  copy_particles_v2( device_array, device_array_swap, num);
+
+  // reset all particle weights to 1.0
+  init_array( device_array_swap.weight, 1.0f, num );
 }
 
 // copy particles from host (cpu) to device (video card)

@@ -185,12 +185,11 @@ int main( int argc, char** argv )
     information_update( *obs, *device_particles, NUM_PARTICLES );
 
     // remove particles with low weights and replace them with perturbed copies of particles with higher weights
-    resample( *device_particles, *device_particles_swap, NUM_PARTICLES );
+    resample_v2( *device_particles, *device_particles_swap, NUM_PARTICLES );
 
     swap_device_arrays( );
   }
 
-/*
   // copy particles back to host
   copy_particles_device_to_host( );
 
@@ -201,7 +200,6 @@ int main( int argc, char** argv )
   // free host and device memory
   h_free_particles( );
   d_free_particles( );
-*/
 
   return 0;
 }

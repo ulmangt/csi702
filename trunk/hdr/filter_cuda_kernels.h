@@ -17,6 +17,8 @@ extern void time_update( struct particles device_particles, int num, float time_
 
 extern void resample( struct particles device_particles, struct particles device_particles_swap, int num );
 
+extern void resample_v2( struct particles device_particles, struct particles device_particles_swap, int num );
+
 extern void init_array( float *array, float value, int num );
 
 extern void multiply( float *array, float factor, int num );
