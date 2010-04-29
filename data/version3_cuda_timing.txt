@@ -1,0 +1,9 @@
+# version 3
+# svn revision 229
+# block size 256 * num blocks 512 * 16 = particles 2,097,152
+1.325
+1.349
+1.367
+1.328
+1.319
+1.353
