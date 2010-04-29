@@ -496,6 +496,10 @@ __device__ void copy_particle( int from_index, int to_index,
                                struct particles device_array,
                                struct particles device_array_swap )
 {
+  // copy_particle is called by the thread corrisponding to from_index
+  // for each to_index in serial, thus we get the seed from from_index
+  // and store it back so the next iteration can use the new seed
+  // (this is quite inefficient)
   int seed = device_array.seed[from_index];
   device_array_swap.x_pos[to_index] = device_array.x_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
   seed = device_lcg_rand( seed );
@@ -514,6 +518,8 @@ __device__ void copy_particle_v2( int from_index, int to_index,
                                struct particles device_array,
                                struct particles device_array_swap )
 {
+  // copy_particle_v2 is called by the thread corrisponding to to_index
+  // thus we get the seed to use from that index
   int seed = device_array.seed[to_index];
   device_array_swap.x_pos[to_index] = device_array.x_pos[from_index] + device_frand( seed, -MAX_POS_PERTURB, MAX_POS_PERTURB );
   seed = device_lcg_rand( seed );
@@ -615,10 +621,7 @@ __global__ void copy_particles_v2_kernel( struct particles device_array,
 
   int copy_from_index = (int) device_array_swap.weight[index];
 
-  if ( copy_from_index < num )
-  {
-    copy_particle_v2( copy_from_index, index, device_array, device_array_swap );
-  }
+  copy_particle_v2( copy_from_index, index, device_array, device_array_swap );
 }
 
 extern "C" void copy_particles_v2(  struct particles device_array,
