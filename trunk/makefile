@@ -19,7 +19,7 @@ filter_cuda_util.o:
 	gcc -I hdr -c src/cuda/filter_cuda_util.c -o src/cuda/filter_cuda_util.o
 
 filter_cuda_kernel.o:
-	nvcc -I hdr -c src/cuda/filter_cuda_kernel.cu -o src/cuda/filter_cuda_kernel.o
+	nvcc -I hdr -lcuda -lcudart -lm -c src/cuda/filter_cuda_kernel.cu -o src/cuda/filter_cuda_kernel.o
 
 clean_cuda:
 	rm bin/filter_cuda src/cuda/filter_cuda_util.o src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o
