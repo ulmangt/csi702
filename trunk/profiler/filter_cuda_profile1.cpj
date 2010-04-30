@@ -20,5 +20,15 @@
    <context totalcountercount="0" invalidcountercount="0" id="0" label="Context_0" truncatedcountercount="0" />
   </device>
  </session>
+ <session>
+  <name>Session3</name>
+  <progpath>"/home/ulman/CSI702/final_project/bin/filter_cuda"</progpath>
+  <workdirpath>/home/ulman/CSI702/final_project</workdirpath>
+  <datetime>29 Apr 2010 00:57:42</datetime>
+  <normalizedcounter>false</normalizedcounter>
+  <device id="0" label="Device_0" >
+   <context totalcountercount="0" invalidcountercount="0" id="0" label="Context_0" truncatedcountercount="0" />
+  </device>
+ </session>
 </cpj>
 

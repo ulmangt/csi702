@@ -1,5 +1,6 @@
 \documentclass{article}
 
+\usepackage{algorithmic}
 \usepackage{amsmath}
 \usepackage{graphicx}
 
@@ -59,7 +60,7 @@ In kinematic problems, observations often occur at different times. In our parti
 
 \begin{figure}
 \centering
-\includegraphics[width=0.7\textwidth]{data/particles_azimuth_obs.png}
+\includegraphics[width=0.7\textwidth]{data/particles_motion.png}
 \caption{Posterior Particle Position Distribution after Azimuth Observation and Motion Update}
 \label{posterior2}
 \end{figure}
@@ -70,11 +71,19 @@ Most portions of the Bayesian tracking recursion are embarrisingly parallel oper
 \subsection{Parallel Reduction}
 The thrust library provides prewritten parallel algorithms for common CUDA tasks, including reducing an array of values to a single value through repeated application of a binary reduction function.\cite{thrust}
 
-My parallel array summation implementation is based on the NVIDIA white paper on the subject included in the CUDA SDK.\cite{oprc} Understanding the overall summation algorithm requires first understanding the basic shared memory summation algorithm for a single block. A simple fan-in reduction is used. At the first iteration, the first \(\frac{blockDim.x}{2}\) threads in the block add their shared memory value to the shared memory value of their counterpart in the second half of the block. The second iteration continues using \(\frac{blockDim.x}{4}\) threads, and so on. Each iteration is synchronized using \verb!__syncthreads()!. Although the values to be summed are passed to the kernel using global memory, each block immediately copies its values to shared memory and performs the rest of the reduction there. Because shared memory is hundreds of times faster than global memory\cite{tutorial1} this strategy is necessary for adequate performance.
+My parallel array summation implementation is based on the NVIDIA white paper on the subject included in the CUDA SDK.\cite{oprc} Understanding the overall summation algorithm requires first understanding the basic shared memory summation algorithm for a single block. A simple fan-in reduction is used. As Figure \ref{sum1} indicates, theads add their partial sums together in a tree pattern until a single partial sum for the entire block remains. Each iteration is synchronized using \verb!__syncthreads()!. Although the values to be summed are passed to the kernel using global memory, each block immediately copies its values to shared memory and performs the rest of the reduction there. Because shared memory is hundreds of times faster than global memory\cite{tutorial1} this strategy is necessary for adequate performance.
 
-However, the loop construct that controls this iteration is expensive, as are the \verb!__syncthreads()! calls. Fortunately, we can take advantage of the specifics of the NVIDA hardware to get substatial additional savings once the number of values in shared memory to sum drops below 32. CUDA threads are grouped into \emph{warps} of 32 threads which execute commands simultaniously as a single operation on the GPU (and thus require no synchronization). Therefore, by stopping the reduction iteration and unrolling the final iterations, we can avoid synchronization for the iterations where all the summations are occuring simultaniously automatically.
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/summation.png}
+\caption{Inner-block Reduction In Shared Memory Example}
+\label{sum1}
+\end{figure}
 
-As each block completes its parallel summation, it writes its sum to an array in global memory. Thus, after the first iteration, the global memory result array will contain one value for each block. To sum these values, the kernel is called iteratively until fewer value remain than the number of threads in a single block. At this point, the kernel is called one last time with a single block which writes the final overall sum to global memory.
+
+However, the loop construct that controls this iteration is expensive, as are the \verb!__syncthreads()! calls. Fortunately, because CUDA threads are grouped into \emph{warps} of 32 threads which execute commands simultaniously as a single operation on the GPU, substatial additional savings are possible once the number of partial sums in shared memory drops below 32. By stopping the reduction iteration and unrolling the final iterations, we can avoid synchronization for the iterations where all the summations are occuring simultaniously automatically.
+
+As each block completes its parallel summation, it writes its sum to an array in global memory. Thus, after the first iteration, global memory will contain one partial sum for each block. To sum these values, the kernel is called iteratively until fewer partial sums remain than the number of threads in a single block. At this point, the kernel is called one last time with a single block which writes the final overall sum to global memory.
 
 \begin{figure}
 \centering
@@ -110,6 +119,10 @@ w_{i}=\verb!floor!(C\sum_{j=0}^{i} w_{j})
 
 Equation \ref{resample1} describes the transformation applied to particle weights \(w_{i}\) to obtain the number of copies to make of each particle. However, to implement the copy operation in parallel in CUDA, each particle must also know where in the global memory particle array that its copies should be placed. Equation \ref{resample2} solves this problem by calculating a cumulative sum of weights. With the cumulative sum in hand, particle \(i\) is copied \(w_{i}-w_{i-1}\) times with the first copy placed at position \(w_{i-1}\) in the global memory array.
 
+\begin{algorithmic}
+\STATE $weight_sum\gets Sum Particle Weights$
+\end{algorithmic}
+
 \begin{figure}
 \centering
 \includegraphics[width=0.7\textwidth]{data/profile_cuda_version1_pic1.png}
@@ -117,9 +130,18 @@ Equation \ref{resample1} describes the transformation applied to particle weight
 \label{profiler1}
 \end{figure}
 
-Unfortunately, as indicated by Figure \ref{profiler1}, this approach is very slow on GPU hardware because of the large ammount of uncoalesed memory access which it must perform.
+Unfortunately, as indicated by Figure \ref{profiler1}, this approach is very slow on GPU hardware because of the large amount of uncoalesed memory access which it must perform.
 
 \subsubsection{Resampling Implementation 2}
+
+The second resampling algorithm implementation improves on the first by reducing uncoalesed memory access.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/profile_cuda_version2_pic1.png}
+\caption{CUDA Visual Profiler Version 2 Results}
+\label{profiler2}
+\end{figure}
 
 \section{Challenges}
 Text...
