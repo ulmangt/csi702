@@ -106,7 +106,7 @@ With properly chosen \(a\), \(c\) and \(m\) values linear congruential generator
 \subsection{Resampling}
 As observations arrive and their information about the target's state is incorporated into the prior distribution using appropriate likelihood functions, some particles will match very poorly with the observations, because of their initial state or due to the motion model, and their weight will be very small. Eventually keeping this particle around serves very little purpse, since the Bayesian tracker has already indicated that it matches poorly with the observations and is thus unlikely to be close to the true target state. The effective particle count has been reduced. Resampling is a technique for remedying this situation by periodically repacing particles with very small weight with slightly perturbed copies of particles with very high weight.
 
-\subsubsection{Resampling Implementation 1}
+\subsubsection{First Resampling Implementation}
 
 \[ C = \frac{n}{\sum_{i=0}^{n} w_{i}} \]
 \begin{equation}\label{resample1}
@@ -117,11 +117,7 @@ w_{i}=C w_{j}
 w_{i}=\verb!floor!(C\sum_{j=0}^{i} w_{j})
 \end{equation}
 
-Equation \ref{resample1} describes the transformation applied to particle weights \(w_{i}\) to obtain the number of copies to make of each particle. However, to implement the copy operation in parallel in CUDA, each particle must also know where in the global memory particle array that its copies should be placed. Equation \ref{resample2} solves this problem by calculating a cumulative sum of weights. With the cumulative sum in hand, particle \(i\) is copied \(w_{i}-w_{i-1}\) times with the first copy placed at position \(w_{i-1}\) in the global memory array.
-
-\begin{algorithmic}
-\STATE $weight_sum\gets Sum Particle Weights$
-\end{algorithmic}
+Equation \ref{resample1} describes the transformation applied to particle weights \(w_{i}\) to obtain the number of copies to make of each particle. However, to implement the copy operation in parallel in CUDA, each particle must also know where in the global memory particle array that its copies should be placed. Equation \ref{resample2} solves this problem by calculating a cumulative sum of weights. With the cumulative sum in hand, thread \(i\) makes \(w_{i}-w_{i-1}\) copies of the particle at index \(i\) and places them in the contiguous block of memory from \(w_{i-1}\) to \(w_{i}\).
 
 \begin{figure}
 \centering
@@ -130,11 +126,11 @@ Equation \ref{resample1} describes the transformation applied to particle weight
 \label{profiler1}
 \end{figure}
 
-Unfortunately, as indicated by Figure \ref{profiler1}, this approach is very slow on GPU hardware because of the large amount of uncoalesed memory access which it must perform.
+Unfortunately, as indicated by Figure \ref{profiler1}, this approach is very slow on GPU hardware because of the large amount of uncoalesed memory access which it must perform. Further, most threads sit idle (those with low enough weights that they make 0 copies of themselves) while a very few perform all the memory copies.
 
-\subsubsection{Resampling Implementation 2}
+\subsubsection{Second Resampling Implementation}
 
-The second resampling algorithm implementation improves on the first by reducing uncoalesed memory access.
+The second resampling algorithm implementation improves on the first dividing the work of duplicating particles more evenly among the threads. Instead of the copy-from thread making \(w_{i}-w_{i-1}\) copies of itself, it simply overwrites \(w_{i-1}\) through \(w_{i}\) with its index \(i\). Then, in a separate kernel, each copy-to thread duplicates the particle at the index stored in \(w{i}\) and perturbs it. This approach does not solve the uncoalesed memory access issues, but by evenly dividing the work of copying and perturbing among all threads, it still produces a significant speedup as shown in Figure \ref{profiler2}.
 
 \begin{figure}
 \centering
