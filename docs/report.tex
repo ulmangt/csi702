@@ -42,11 +42,11 @@ The likelihood function, in conjunction with Bayes' rule, tells us how to modify
 P(x|y) = \frac{L(y|x)p(x)}{\int \! L(y|x)p(x) \, dx}
 \end{equation}
 
-Figure \ref{posterior1} shows the posterior distribution after the likelihood for a single azimuth observation is applied to the prior distribution from Figure \ref{prior}. An azimuth observation is a single angle value indicating that the target is somewhere along the ray starting at the sensor's current position and continuing in the given angle. The likelihood function which we associate with such observations, shown in Equation \ref{lfunc3}, is a simple Gaussian distribution in azimuth space. Here \(\theta\) is an azimuth observation, \(x \in S\) is an element of the state space, \(\sigma\) is the standard deviation assigned to the observation, and \(b(\alpha,x)\) is a function which gives the azimuth from the sensor position \(\alpha\) to the position \(x\). Applying this function to each particle gives us new weights for the particles with those particles closer to the observed azimuth receving higher weight.
+Figure \ref{posterior1} shows the posterior distribution after the likelihood for a single azimuth observation is applied to the prior distribution from Figure \ref{prior}. An azimuth observation is a single angle value indicating that the target is somewhere along the ray starting at the sensor's current position and continuing in the given angle. The likelihood function which we associate with such observations, shown in Equation \ref{lfunc3}, is a simple Gaussian distribution in azimuth space.\cite{bmtt} Here \(\theta\) is an azimuth observation, \(x \in S\) is an element of the state space, \(\sigma\) is the standard deviation assigned to the observation, and \(b(\alpha,x)\) is a function which gives the azimuth from the sensor position \(\alpha\) to the position \(x\). Applying this function to each particle gives us new weights for the particles with those particles closer to the observed azimuth receving higher weight.
 
 \begin{equation}\label{lfunc3}
 L(\theta|x)=(2\pi\sigma^{2})^{\frac{-1}{2}}e^{\frac{-(\theta-b(\alpha,x))^{2}}{2\sigma^{2}}}
-\end{equation}\cite{bmtt}
+\end{equation}
 
 \begin{figure}
 \centering
