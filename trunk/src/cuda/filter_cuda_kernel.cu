@@ -727,6 +727,49 @@ extern "C" void copy_float_to_int(  float *from, int *to, int num )
   checkCUDAError("copy_float_to_int");
 }
 
+
+__global__ void calc_effective_particle_count_helper_kernel( float *d_weights, float *d_weights_swap, float weight_sum )
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  float weight = d_weights[index] / weight_sum ;
+
+  d_weights_swap[index] = weight * weight;
+}
+
+extern "C" void calc_effective_particle_count_helper( float *d_weights, float *d_weights_swap, float weight_sum, int num )
+{
+  int numBlocks = num / THREADS_PER_BLOCK;
+
+  dim3 dimGrid(numBlocks);
+  dim3 dimBlock(THREADS_PER_BLOCK);
+  calc_effective_particle_count_helper_kernel<<< dimGrid, dimBlock >>>( d_weights, d_weights_swap, weight_sum );
+
+  // block until the device has completed kernel execution
+  cudaThreadSynchronize();
+
+  // check if the kernel generated errors
+  checkCUDAError("calc_effective_particle_count");
+}
+
+
+extern "C" float calc_effective_particle_count_thrust( float *d_weights, float *d_weights_swap, float weight_sum, int num )
+{
+  thrust::device_ptr<float> device_data( d_weights );
+  float sum = thrust::reduce(device_data, device_data + num, 0.0f, thrust::plus<float>());
+}
+
+// provides an estimate of the total number of particles
+// which are actually contributing information to the distribution
+// see: http://en.wikipedia.org/wiki/Particle_filter#Sampling_Importance_Resampling_.28SIR.29
+extern "C" float calc_effective_particle_count( struct particles device_array,
+                                                struct particles device_array_swap,
+                                                int num )
+{
+  float weight_sum = sum_weight_thrust( device_array.weight, num );
+  float effective_count = calc_effective_particle_count_thrust( device_array.weight, device_array_swap.weight, weight_sum, num );
+}
+
 extern "C" void resample( struct particles device_array,
                           struct particles device_array_swap,
                           int num )
