@@ -41,8 +41,8 @@ int main( int argc, char* argv )
   srand( time( NULL ) );
 
   // read waypoint lists for sensor and target
-  struct waypoint_list *waypoints1 = read_waypoints( "data/waypoints1.txt" );
-  struct waypoint_list *waypoints2 = read_waypoints( "data/waypoints2.txt" );
+  struct waypoint_list *waypoints1 = read_waypoints( "data/waypoints3.txt" );
+  struct waypoint_list *waypoints2 = read_waypoints( "data/waypoints4.txt" );
 
   printf("Sensor Waypoints:\n");
   print_waypoints( waypoints1 );
@@ -55,8 +55,7 @@ int main( int argc, char* argv )
   //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
   //struct observation_list *obs_list = combine_observations( range_obs_list, azimuth_obs_list );
   
-  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 1900.0 );
-  //struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 2, 100.0, 0.0, 100.0, 1900.0 );
+  struct observation_list *obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 4000.0 );
 
   printf("Observations:\n");
   print_observations( obs_list );

@@ -1,0 +1,8 @@
+# timing test results
+# 40 observations, waypoints3.txt, waypoints 4.txt
+#num particles         time serial       time parallel
+524288                    7.135              
+1048576                  12.982              1.219
+2097152                  26.062              2.097
+4194304                  51.527              3.807
+8388608                  104.179               

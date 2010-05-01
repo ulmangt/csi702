@@ -185,7 +185,7 @@ int main( int argc, char** argv )
     information_update( *obs, *device_particles, NUM_PARTICLES );
 
     // remove particles with low weights and replace them with perturbed copies of particles with higher weights
-    resample_v3( *device_particles, *device_particles_swap, NUM_PARTICLES );
+    resample_v2( *device_particles, *device_particles_swap, NUM_PARTICLES );
 
     swap_device_arrays( );
   }
