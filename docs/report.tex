@@ -68,6 +68,10 @@ In kinematic problems, observations often occur at different times. In our parti
 \section{Design}
 Most portions of the Bayesian tracking recursion are embarrisingly parallel operations which map directly to CUDA without much trouble. Initialization of particle positions, time updating, and information updating are all operations on a single particle and are independent of each other particle. However, the CUDA implementation other portions of the algorithm, including particle weight summation (and more generally, particle resampling), and random number generation, provide interesting challenges.
 
+\subsection{Data Structures}
+
+\subsection{Code Organization}
+
 \subsection{Parallel Reduction}
 The thrust library provides prewritten parallel algorithms for common CUDA tasks, including reducing an array of values to a single value through repeated application of a binary reduction function.\cite{thrust}
 
@@ -128,7 +132,7 @@ Equation \ref{resample1} describes the transformation applied to particle weight
 
 Unfortunately, as indicated by Figure \ref{profiler1}, this approach is very slow on GPU hardware because of the large amount of uncoalesed memory access which it must perform. Further, most threads sit idle (those with low enough weights that they make 0 copies of themselves) while a very few perform all the memory copies.
 
-\subsubsection{Second Resampling Implementation}
+\subsubsection{Second Resampling Implementation}\label{resamplesection2}
 
 The second resampling algorithm implementation improves on the first dividing the work of duplicating particles more evenly among the threads. Instead of the copy-from thread making \(w_{i}-w_{i-1}\) copies of itself, it simply overwrites \(w_{i-1}\) through \(w_{i}\) with its index \(i\). Then, in a separate kernel, each copy-to thread duplicates the particle at the index stored in \(w{i}\) and perturbs it. This approach does not solve the uncoalesed memory access issues, but by evenly dividing the work of copying and perturbing among all threads, it still produces a significant speedup as shown in Figure \ref{profiler2}.
 
@@ -138,6 +142,9 @@ The second resampling algorithm implementation improves on the first dividing th
 \caption{CUDA Visual Profiler Version 2 Results}
 \label{profiler2}
 \end{figure}
+
+\subsubsection{Third Resampling Implementation}
+The third resampling algorithm optimization was based on the observation that once the copy-from indexes had been stored in the weight array at the copy-to index, the weights were equivalent to a gather map used in the thrust::gather algorithm.\cite{thrust} Gather copies items from a source array \(s[i]\) into a destination array \(d[i]\) using a map array \(m[i]\) such that \(s[i]=d[m[i]]\). Surprsingly, especially given the amazing efficiency of thrust's reduction and scan algorithms, thrust::gather provided no speedup over my custom implementation from Section \ref{resamplesection2}. The inefficiency of the inherently uncoalesced nature of the memory access that gather must perform simply overwhelms any subtle performance tweaks that thrust::gather might add.
 
 \section{Challenges}
 Text...
