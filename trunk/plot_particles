@@ -1,10 +1,10 @@
 #!/usr/bin/gnuplot -persist
-set xrange [-30000:30000]
-set yrange [-30000:30000]
+set xrange [-20000:30000]
+set yrange [-20000:30000]
 set style line 1 lt 1 lw 3
 set style line 2 lt 3 lw 3
 set pointsize 2
-plot "data/particles.out" using 1:2 with dots title 'Particle Positions', "data/waypoints1.txt" using 2:3 with lines title 'Ownship Path' ls 1, "data/waypoints2.txt" using 2:3 with lines title 'Target Path' ls 2, "data/ownship.out" using 1:2 with points title 'Ownship Position' pt 5, "data/target.out" using 1:2 with points title 'Target Position' pt 7
+plot "data/particles.out" using 1:2 with dots title 'Particle Positions', "data/waypoints3.txt" using 2:3 with lines title 'Ownship Path' ls 1, "data/waypoints4.txt" using 2:3 with lines title 'Target Path' ls 2, "data/ownship.out" using 1:2 with points title 'Ownship Position' pt 5, "data/target.out" using 1:2 with points title 'Target Position' pt 7
 load 'docs/data/saveplot.plt'
 !convert my-plot.ps data/particles.png
 !rm my-plot.ps
