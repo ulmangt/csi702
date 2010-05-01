@@ -29,6 +29,8 @@ void mark_particle( int, int );
 void copy_particle( int, int, float );
 void perturb_particle( int );
 
+float calc_effective_particle_count( int );
+
 void write_positions( char*, struct waypoint_list*, float );
 void write_particles( char*, int, int );
 
@@ -76,6 +78,9 @@ int main( int argc, char* argv )
     current_time = obs->time;
     time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
     information_update( NUM_PARTICLES, obs );
+
+printf( "%f\n",calc_effective_particle_count( NUM_PARTICLES ) );
+
     resample( NUM_PARTICLES );
   }
 
@@ -105,6 +110,29 @@ void free_particle_mem( )
   free( x_vel );
   free( y_vel );
   free( weight );
+}
+
+// provides an estimate of the total number of particles
+// which are actually contributing information to the distribution
+// see: http://en.wikipedia.org/wiki/Particle_filter#Sampling_Importance_Resampling_.28SIR.29
+float calc_effective_particle_count( int num )
+{
+    int j;
+    // sum particle weights
+    float weight_sum = 0.0;
+    for ( j = 0 ; j < num ; j++ )
+    {
+      weight_sum += weight[j];
+    }
+
+    float sum_normalized_squared = 0.0;
+    for ( j = 0 ; j < num ; j++ )
+    {
+      float norm_weight = weight[j] / weight_sum;
+      sum_normalized_squared += norm_weight * norm_weight;
+    }
+
+    return 1.0 / sum_normalized_squared;
 }
 
 // initialize positions, velocities, and weights of num particles
