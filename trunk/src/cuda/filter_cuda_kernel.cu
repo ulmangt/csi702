@@ -684,7 +684,8 @@ __global__ void copy_particles_v2_kernel( struct particles device_array,
 
   int copy_from_index = (int) device_array_swap.weight[index];
 
-  copy_particle_v2( copy_from_index, index, device_array, device_array_swap );
+  if ( copy_from_index < num )
+    copy_particle_v2( copy_from_index, index, device_array, device_array_swap );
 }
 
 extern "C" void copy_particles_v2(  struct particles device_array,
