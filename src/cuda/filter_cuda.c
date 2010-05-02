@@ -12,8 +12,11 @@
 #include "filter_constants.h"
 #include "filter_cuda_data.h"
 
-// host particle arrays
+// uncomment to perform effective particle count calculation before resampling
+//#define CALC_EFFECTIVE_COUNT
 
+// host and device arrays and temporary device array
+// for operations that require double buffering/swapping of particle data
 struct particles *host_particles;
 struct particles *device_particles;
 struct particles *device_particles_swap;
@@ -38,6 +41,7 @@ void swap_device_arrays( )
   device_particles_swap = temp_particles;
 }
 
+// initialize particle memory on host
 void h_init_particles( )
 {
   host_particles = h_init_particles_mem( );
@@ -50,6 +54,7 @@ void h_init_particles( )
   host_particles->seed = h_init_array_mem( NUM_PARTICLES );
 }
 
+// initialize particle memory on device
 void d_init_particles( )
 {
   device_particles = h_init_particles_mem( );
@@ -71,6 +76,7 @@ void d_init_particles( )
   d_init_array_mem( &(device_particles_swap->seed), NUM_PARTICLES );
 }
 
+// free particle memory on host
 void h_free_particles( )
 {
   h_free_mem( host_particles->x_pos );
@@ -83,6 +89,7 @@ void h_free_particles( )
   h_free_mem( host_particles );
 }
 
+// free particle memory on device
 void d_free_particles( )
 {
   d_free_mem( device_particles->x_pos );
@@ -104,6 +111,7 @@ void d_free_particles( )
   d_free_mem( device_particles_swap );
 }
 
+// copy particles from host to device
 void copy_particles_host_to_device( )
 {
   copy_array_host_to_device( host_particles->x_pos, device_particles->x_pos, NUM_PARTICLES );
@@ -114,6 +122,7 @@ void copy_particles_host_to_device( )
   copy_array_host_to_device( host_particles->seed, device_particles->seed, NUM_PARTICLES );
 }
 
+// copy particles from device to host
 void copy_particles_device_to_host( )
 {
   copy_array_device_to_host( host_particles->x_pos, device_particles->x_pos, NUM_PARTICLES );
@@ -140,10 +149,14 @@ int main( int argc, char** argv )
   print_waypoints( waypoints2 );
 
   // generate errored range and azimuth observations based on the waypoints
-  //struct observation_list *range_obs_list = generate_observations( waypoints1, waypoints2, 2, 100, 0.0, 500.0, 2000.0 );
-  //struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
-  //struct observation_list *h_obs_list = combine_observations( range_obs_list, azimuth_obs_list );
+  // this example combines two lists of observations into a single observation list
+/*
+  struct observation_list *range_obs_list = generate_observations( waypoints1, waypoints2, 2, 100, 0.0, 500.0, 2000.0 );
+  struct observation_list *azimuth_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 2000.0 );
+  struct observation_list *h_obs_list = combine_observations( range_obs_list, azimuth_obs_list );
+*/
 
+  // generate a single list of errored azimuth observations
   struct observation_list *h_obs_list = generate_observations( waypoints1, waypoints2, 1, fromDegrees(8.0), 0.0, 100.0, 4000.0 );
 
   printf("Observations:\n");
@@ -152,7 +165,6 @@ int main( int argc, char** argv )
   // initialize particle memory
   h_init_particles( );
   d_init_particles( );
-
 
   // initialize random seeds for each particle using host random number generator
   h_init_seed( );
@@ -185,14 +197,23 @@ int main( int argc, char** argv )
     information_update( *obs, *device_particles, NUM_PARTICLES );
 
     // remove particles with low weights and replace them with perturbed copies of particles with higher weights
-    resample_v2( *device_particles, *device_particles_swap, NUM_PARTICLES );
-
-    swap_device_arrays( );
+    // if CALC_EFFECTIVE_COUNT is indefined, this is done for every observation, otherwise resampling is only
+    // performed when the calculated effective number of particles drops below a threshold defined by NUM_EFFECT_CUTOFF
+    float effective_count = 0;
+#ifdef CALC_EFFECTIVE_COUNT
+    effective_count = calc_effective_particle_count( *device_particles, *device_particles_swap, NUM_PARTICLES);
+#endif
+    if ( effective_count < NUM_EFFECT_CUTOFF )
+    {
+      resample_v2( *device_particles, *device_particles_swap, NUM_PARTICLES );
+      swap_device_arrays( );
+    }
   }
 
   // copy particles back to host
   copy_particles_device_to_host( );
 
+  // write final sensor and target positions and particle values to output files
   write_positions( OWNSHIP_POS_NAME, waypoints1, current_time );
   write_positions( TARGET_POS_NAME, waypoints2, current_time );
   write_particles( host_particles, OUTPUT_NAME, NUM_PARTICLES, 1000 );
