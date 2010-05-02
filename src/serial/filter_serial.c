@@ -78,9 +78,6 @@ int main( int argc, char* argv )
     current_time = obs->time;
     time_update( NUM_PARTICLES, current_time - previous_time, MEAN_MANEUVER_TIME );
     information_update( NUM_PARTICLES, obs );
-
-printf( "%f\n",calc_effective_particle_count( NUM_PARTICLES ) );
-
     resample( NUM_PARTICLES );
   }
 
