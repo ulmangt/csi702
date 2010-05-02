@@ -752,13 +752,6 @@ extern "C" void calc_effective_particle_count_helper( float *d_weights, float *d
   checkCUDAError("calc_effective_particle_count");
 }
 
-
-extern "C" float calc_effective_particle_count_thrust( float *d_weights, float *d_weights_swap, float weight_sum, int num )
-{
-  thrust::device_ptr<float> device_data( d_weights );
-  float sum = thrust::reduce(device_data, device_data + num, 0.0f, thrust::plus<float>());
-}
-
 // provides an estimate of the total number of particles
 // which are actually contributing information to the distribution
 // see: http://en.wikipedia.org/wiki/Particle_filter#Sampling_Importance_Resampling_.28SIR.29
@@ -767,7 +760,10 @@ extern "C" float calc_effective_particle_count( struct particles device_array,
                                                 int num )
 {
   float weight_sum = sum_weight_thrust( device_array.weight, num );
-  float effective_count = calc_effective_particle_count_thrust( device_array.weight, device_array_swap.weight, weight_sum, num );
+  calc_effective_particle_count_helper( device_array.weight, device_array_swap.weight, weight_sum, num );
+  float effective_count_inv = sum_weight_thrust( device_array_swap.weight, num );
+
+  return 1.0f / effective_count_inv;
 }
 
 extern "C" void resample( struct particles device_array,

@@ -9,6 +9,7 @@
 #define THREADS_PER_BLOCK 256
 #define NUM_BLOCKS 512 * 16
 #define NUM_PARTICLES THREADS_PER_BLOCK * NUM_BLOCKS
+#define NUM_EFFECT_CUTOFF NUM_PARTICLES >> 4
 
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second

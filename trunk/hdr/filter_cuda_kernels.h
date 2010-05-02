@@ -19,6 +19,10 @@ extern void resample( struct particles device_particles, struct particles device
 
 extern void resample_v2( struct particles device_particles, struct particles device_particles_swap, int num );
 
+extern void resample_v3( struct particles device_particles, struct particles device_particles_swap, int num );
+
+extern float calc_effective_particle_count( struct particles device_array, struct particles device_array_swap, int num );
+
 extern void init_array( float *array, float value, int num );
 
 extern void multiply( float *array, float factor, int num );
