@@ -1,9 +1,25 @@
 # timing test results
 # 40 observations, waypoints3.txt, waypoints 4.txt
 #
-# plot "data/timing_obs40_scenario3-4.txt" using 1:2 with linespoints title 'Serial', "data/timing_obs40_scenario3-4.txt" using 1:3 with linespoints title 'CUDA', "data/timing_obs40_scenario3-4.txt" using 1:4 with linespoints title 'CUDA with EPC'
+#
+# set log x
+# set log y
+# set xlabel "Particle Count"
+# set ylabel "Time (sec)"
+# set rmargin 3
+# plot "data/timing_obs40_scenario3-4.txt" using 1:2 with linespoints title 'Serial', "data/timing_obs40_scenario3-4.txt" using 1:4 with linespoints title 'CUDA v1', "data/timing_obs40_scenario3-4.txt" using 1:3 with linespoints title 'CUDA v2', "data/timing_obs40_scenario3-4.txt" using 1:5 with linespoints title 'CUDA v2 with EPC'
+#
+#
+# unset log x
+# unset log y
+# set xlabel "Particle Count"
+# set ylabel "Speedup"
+# plot "data/timing_obs40_scenario3-4.txt" using 1:8 with linespoints title 'CUDA v1', "data/timing_obs40_scenario3-4.txt" using 1:6 with linespoints title 'CUDA v2', "data/timing_obs40_scenario3-4.txt" using 1:7 with linespoints title 'CUDA v2 with EPC'
+#
+#
 #
 #num particles         time serial       time parallel v2        v1             parallel w/ effective particle count             speedup        effective particle count speedup     v1 speedup
+#
 131072                    1.623              0.328              0.595              0.377                                            4.948         4.305                                2.728
 262144                    3.238              0.520              0.907              0.481                                            6.227         6.732                                3.570
 524288                    7.135              0.772              1.536              0.637                                            9.242        11.200                                4.645
