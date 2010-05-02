@@ -7,7 +7,7 @@
 // THREADS_PER_BLOCK must be greater than or equal to 64
 // (routines have unrolled loops which fail for smaller numbers of threads per block)
 #define THREADS_PER_BLOCK 256
-#define NUM_BLOCKS 512 * 16
+#define NUM_BLOCKS 512 * 32
 #define NUM_PARTICLES THREADS_PER_BLOCK * NUM_BLOCKS
 #define NUM_EFFECT_CUTOFF NUM_PARTICLES >> 4
 
