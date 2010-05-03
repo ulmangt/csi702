@@ -1,0 +1,47 @@
+\documentclass{beamer}
+
+\usepackage[latin1]{inputenc}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\title{Bayesian Particle Filter Tracking with CUDA}
+\author{Geoffrey Ulman}
+\date{May 6, 2010}
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Likelihood Function}
+\begin{equation}
+L(y|x) = P( Y=y | X=x ) \hspace{0.5cm} \mbox{for} \hspace{0.5cm} x \in S
+\end{equation}
+
+\vspace{1cm}
+
+\begin{itemize}
+\item \(X\) Random variable on \(S\)
+\item \(Y\) Random variable on measurment space \(H\)
+\item \(P(\cdot|x)\) Probability density function on \(H\)
+\item \(P(y|\cdot)\) Likelihood function relating \(X\) and \(Y\)
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Bayesian Inference}
+\begin{equation}
+P(x|y) = \frac{L(y|x)p(x)}{p(y)} = \frac{L(y|x)p(x)}{\int \! L(y|x)p(x) \, dx}
+\end{equation}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
