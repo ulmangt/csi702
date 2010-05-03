@@ -48,6 +48,23 @@ L(y|x) = P( Y=y | X=x ) \hspace{0.5cm} \mbox{for} \hspace{0.5cm} x \in S
 
 \end{frame}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Likelihood Function}
+
+Why is \(P(y|\cdot)\) called a "Likelihood Function"?
+
+\vspace{1cm}
+
+For \hspace{0.25cm} \(x_{1}, x_{2} \in S \) \hspace{0.25cm} if \hspace{0.25cm} \(L(y|x_{1})>L(y|x_{2})\) \hspace{0.25cm} then:
+
+\vspace{1cm}
+
+The observation \(y\) is more likely to have come from a target with state \(x_{1}\) than a target with state \(x_{2}\)
+
+\end{frame}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}{Bayesian Inference}
@@ -120,15 +137,15 @@ C = \frac{n}{\sum_{i=0}^{n} w_{i}}
 \vspace{0.5cm}
 
 \begin{itemize}
+\item \(C\) Normalizing constant
 \item \(w_{i}\) Particle weights
 \item \(n\) Number of particles
-\item \(C\) Normalizing constant
 \end{itemize}
 
 \vspace{0.5cm}
 
 \begin{center}
-Example \(w_{i}\) Array
+Example \(w_{i}\) Array:
 \end{center}
 
 \renewcommand{\tabcolsep}{0.5cm}
@@ -158,7 +175,7 @@ Example \(w_{i}\) Array
 \vspace{0.5cm}
 
 \begin{center}
-Example \(\overline{w}_{i}\) Array
+Example \(\overline{w}_{i}\) Array:
 \end{center}
 
 \renewcommand{\tabcolsep}{0.5cm}
@@ -184,10 +201,14 @@ Example \(\overline{w}_{i}\) Array
 \vspace{0.5cm}
 
 \begin{center}
-Example \(\hat{w}_{i}\) Array
+Example \(\hat{w}_{i}\) Array:
 \end{center}
 
 \renewcommand{\tabcolsep}{0.5cm}
+
+\begin{center}
+Cumulative Sums:
+\end{center}
 \begin{center}
 \begin{tabular}{ | c | c | c | c | c | c | }
   \hline
@@ -197,6 +218,10 @@ Example \(\hat{w}_{i}\) Array
 \end{center}
 
 \renewcommand{\tabcolsep}{0.65cm}
+
+\begin{center}
+Floor:
+\end{center}
 \begin{center}
 \begin{tabular}{ | c | c | c | c | c | c | }
   \hline
@@ -257,5 +282,40 @@ Example \(\hat{w}_{i}\) Array
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{frame}{Effective Particle Count}
+
+\begin{equation}
+\overline{w}_{i} = \frac{w_{i}}{\sum_{i=1}^{n} w_{i}}
+\end{equation}
+
+\vspace{0.2cm}
+
+\begin{equation}
+N_{eff} = \frac{1}{\sum_{i=1}^{n} \overline{w}_{i}^2}
+\end{equation}
+
+\vspace{1cm}
+
+\begin{center}
+
+For \hspace{0.3cm} \(\overline{w}_{i}=\frac{1}{n}\) \hspace{2.4cm} \(N_{eff} = \frac{1}{n\frac{1}{n^2}} = n \)
+
+\vspace{1cm}
+
+For \hspace{0.3cm} \(
+\overline{w}_{i} = \begin{cases}
+
+  1 & \text{for $i=0$} \\
+
+  0 & \text{otherwise}
+
+\end{cases}
+\)\hspace{0.4cm} \(N_{eff} = \frac{1}{1} = 1 \)
+
+\end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \end{document}

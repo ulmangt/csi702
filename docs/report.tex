@@ -14,6 +14,11 @@
 
 \tableofcontents
 
+\section{Introduction}
+Bayesian particle filtering techniques provide a flexible toolkit for solving a wide array of data fusion problems. Here, a very specific motivating example is used to explore how effectively Bayesian particle filtering can be adapted to CUDA.
+
+The motivating problem is as follows: A submarine with a hydrophone (passive sonar) is following another ship and attempting to estimate that ship's location and speed using the direction of the sound from the ship's engine as recored by the hydrophone. However, the hydrophone is imperfect and the observed direction of the sound does not exactly corrispond to the true location of the ship. How can these errored bearing observations be used to develop an estimate of the ship's true position and velocity?
+
 \section{Background}\label{Background}
 A simple geographic tracking problem traditionally consists of estimating the state of a target using errored observations of some function of the target state. The problem explored here assumes a four-dimensional state space with two Cartesian position dimensions and two velocity dimensions. To simplify the problem, the possibility of false alarms (observations which do not correspond to an actual target) is ignored. Further, all observations are assumed to correspond to a single target of interest (associating observations with the correct target track is an additional complicating concern in multi-target tracking problems).
 
