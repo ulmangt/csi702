@@ -79,16 +79,16 @@ As the information about the target's state contained in observations is incorpo
 
 \[ C = \frac{n}{\sum_{i=0}^{n} w_{i}} \]
 \begin{equation}\label{resample1}
-w_{i}=C w_{j}
+\overline{w}_{i}=C w_{i}
 \end{equation}
 
 \begin{equation}\label{resample2}
-w_{i}=\verb!floor!(C\sum_{j=0}^{i} w_{j})
+\hat{w}_{i}=\operatorname{floor}(\sum_{j=0}^{i} \overline{w}_{j})
 \end{equation}
 
 When copying particles, we want each particle to have a likelihood of being copied proportional to its weight. Equation \ref{resample1} describes the transformation applied to particle weights \(w_{i}\) to obtain the number of copies to make of each particle. However, to implement the copy operation in parallel in CUDA, each particle must also know where in global memory its copies should be placed.
 
-Equation \ref{resample2} solves this problem by calculating a cumulative sum of weights. With the cumulative sum in hand, thread \(i\) simply makes \(w_{i}-w_{i-1}\) copies of the particle at index \(i\) and places them in the contiguous block of memory from \(w_{i-1}\) to \(w_{i}\).
+Equation \ref{resample2} solves this problem by calculating a cumulative sum of weights. With the cumulative sum in hand, thread \(i\) simply makes \(\hat{w}_{i}-\hat{w}_{i-1}\) copies of the particle at index \(i\) and places them in the contiguous block of memory from \(\hat{w}_{i-1}\) to \(\hat{w}_{i}\).
 
 \begin{figure}
 \centering
@@ -101,7 +101,7 @@ Unfortunately, as indicated by Figure \ref{profiler1}, this approach is very slo
 
 \subsubsection{Second Resampling Implementation}\label{resamplesection2}
 
-The second resampling algorithm implementation improves on the first dividing the work of duplicating particles more evenly among the threads. Instead of the copy-from thread making \(w_{i}-w_{i-1}\) copies of itself, it simply overwrites \(w_{i-1}\) through \(w_{i}\) with its index \(i\). Then, in a separate kernel, each copy-to thread duplicates the particle at the index stored in \(w{i}\) and perturbs it. This approach does not solve the uncoalesed memory access issues, but by evenly dividing the work of copying and perturbing among all threads, it still produces a significant speedup as shown in Figure \ref{profiler2}.
+The second resampling algorithm implementation improves on the first dividing the work of duplicating particles more evenly among the threads. Instead of the copy-from thread making \(\hat{w}_{i}-\hat{w}_{i-1}\) copies of itself, it simply overwrites \(\hat{w}_{i-1}\) through \(\hat{w}_{i}\) with its index \(i\). Then, in a separate kernel, each copy-to thread duplicates the particle at the index stored in \(\hat{w}_{i}\) and perturbs it. This approach does not solve the uncoalesed memory access issues, but by evenly dividing the work of copying and perturbing among all threads, it still produces a significant speedup as shown in Figure \ref{profiler2}.
 
 \begin{figure}
 \centering
