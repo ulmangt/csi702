@@ -4,6 +4,8 @@ all: filter_serial filter_cuda summation_test
 
 clean: clean_cuda clean_serial clean_summation_test
 
+clean_common:
+	rm src/cuda/filter_cuda_kernel.o
 
 #
 # CUDA Code
@@ -21,8 +23,8 @@ filter_cuda_util.o:
 filter_cuda_kernel.o:
 	nvcc -I hdr -lcuda -lcudart -lm -c src/cuda/filter_cuda_kernel.cu -o src/cuda/filter_cuda_kernel.o
 
-clean_cuda:
-	rm bin/filter_cuda src/cuda/filter_cuda_util.o src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o
+clean_cuda: clean_common
+	rm bin/filter_cuda src/cuda/filter_cuda_util.o src/cuda/filter_cuda.o
 
 #
 # Serial Code
@@ -49,7 +51,6 @@ convert.o:
 clean_serial:
 	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o
 
-
 #
 # Documentation
 #
@@ -59,27 +60,6 @@ docs:
 
 clean_docs:
 	rm docs/report.aux docs/report.log docs/report.pdf docs/report.toc
-
-#
-# CDUA SDK Examples
-#
-
-examples: cudaMallocAndMemcpy myFirstKernel reverseArray_singleblock reverseArray_multiblock
-
-reverseArray_multiblock:
-	nvcc src/examples/reverseArray_multiblock.cu -o bin/reverseArray_multiblock
-	
-reverseArray_singleblock:
-	nvcc src/examples/reverseArray_singleblock.cu -o bin/reverseArray_singleblock
-
-myFirstKernel:
-	nvcc src/examples/myFirstKernel.cu -o bin/myFirstKernel
-
-cudaMallocAndMemcpy:
-	nvcc src/examples/cudaMallocAndMemcpy.cu -o bin/cudaMallocAndMemcpy
-
-clean_examples:
-	rm bin/cudaMallocAndMemcpy bin/myFirstKernel bin/reverseArray_singleblock bin/reverseArray_multiblock
 
 
 #
@@ -95,6 +75,6 @@ summation_test.o:
 summation_test_thrust.o:
 	nvcc -I hdr -lcuda -lcudart -lm -c src/cuda/summation_test_thrust.cu -o src/cuda/summation_test_thrust.o
 
-clean_summation_test:
-	rm bin/summation_test bin/filter_cuda src/cuda/summation_test.o src/cuda/summation_test_thrust.o src/cuda/filter_cuda_kernel.o
+clean_summation_test: clean_common
+	rm bin/summation_test src/cuda/summation_test.o src/cuda/summation_test_thrust.o
 
