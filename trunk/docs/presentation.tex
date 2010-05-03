@@ -18,6 +18,20 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{frame}{Motivating Example}
+
+A submarine with a hydrophone (passive sonar) is following another
+ship using the direction of the sound from the ship's engine.
+
+\vspace{1cm}
+
+How can the series of bearing observations from the hydrophone be
+used to estimate the second ship's position and velocity?
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}{Likelihood Function}
 \begin{equation}
 L(y|x) = P( Y=y | X=x ) \hspace{0.5cm} \mbox{for} \hspace{0.5cm} x \in S
@@ -37,10 +51,62 @@ L(y|x) = P( Y=y | X=x ) \hspace{0.5cm} \mbox{for} \hspace{0.5cm} x \in S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}{Bayesian Inference}
+
 \begin{equation}
-P(x|y) = \frac{L(y|x)p(x)}{p(y)} = \frac{L(y|x)p(x)}{\int \! L(y|x)p(x) \, dx}
+P(x|y) = \frac{L(y|x)P(x)}{P(y)} = \frac{L(y|x)P(x)}{\int \! L(y|x)P(x) \, dx}
 \end{equation}
+
+\vspace{1cm}
+
+\begin{itemize}
+\item Observation \(y\) is fixed, \(x\) represents possible target states
+\item \(P(x)\) Prior probability density function on true target state
+\item \(P(x|y)\) Posterior distribution given observation \(y\)
+\end{itemize}
+
 \end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{frame}{Prior Distribution}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/particles_prior.png}
+\caption{Prior Particle Position Distribution}
+\end{figure}
+
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{frame}{Information Update}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/particles_azimuth_obs.png}
+\caption{Posterior Particle Position Distribution after Azimuth Observation}
+\end{figure}
+
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{frame}{Motion Model}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/particles_motion.png}
+\caption{Posterior Particle Position Distribution after Motion Update}
+\end{figure}
+
+\end{frame}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
