@@ -110,4 +110,24 @@ P(x|y) = \frac{L(y|x)P(x)}{P(y)} = \frac{L(y|x)P(x)}{\int \! L(y|x)P(x) \, dx}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+\begin{frame}{Resampling}
+
+\begin{equation}\label{resample1}
+C = \frac{n}{\sum_{i=0}^{n} w_{i}}
+\end{equation}
+
+\begin{equation}\label{resample2}
+w_{i}=C w_{j}
+\end{equation}
+
+\begin{equation}\label{resample3}
+w_{i}=\verb!floor!(C\sum_{j=0}^{i} w_{j})
+\end{equation}
+
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \end{document}
