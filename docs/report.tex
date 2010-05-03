@@ -72,11 +72,7 @@ Motion updating can be described much more generally and rigorously, but in our 
 \section{Design}
 Most portions of the Bayesian tracking recursion are embarrassingly parallel operations which map directly to CUDA without much trouble. Initialization of particle positions, time updating, and information updating are all operations on a single particle and are independent of each other particle. However, the CUDA implementation other portions of the algorithm, including particle weight summation (and more generally, particle resampling), and random number generation, provide interesting challenges.
 
-\subsection{Data Structures}
-
-\subsection{Code Organization}
-
-\subsection{Resampling}
+\subsection{Resampling}\label{Resampling}
 As the information about the target's state contained in observations is incorporated into the prior distribution using appropriate likelihood functions, some particles will match very poorly with the observations and have very low weight as a result. Eventually, keeping such particles around serves very little purpose, since the Bayesian tracker has already indicated that they matches poorly with the observations and are thus unlikely to represent the true target state. Resampling is a technique for remedying this situation by periodically replacing particles with low weight with slightly perturbed copies of particles with high weight.
 
 \subsubsection{First Resampling Implementation}
@@ -156,8 +152,19 @@ With properly chosen \(a\), \(c\) and \(m\) values linear congruential generator
 
 The recurrence relation in Equation \ref{lcgeq1} relies on the modulus operator, which is extremely slow on NVIDA hardware.\cite{oprc} However, this recurrence can be rewritten using the much faster shift and bitwise mask operations, avoiding the significant modulus performance hit.
 
-\section{Challenges}
-Text...
+\subsection{Effective Particle Count}
+When resampling is performed after each observation, every particle always has an equal weight and therefore an equal chance of representing the true target state. However, resampling every iteration is not necessary.
+
+Formula \ref{epc} calculates the effective particle count \(N_{eff}\) from a weight array \(w_{i}\).\cite{pf} This formula is best understood by considering two extreme cases. When all particles have the same weight (like after resampling is performed), we would expect the effective particle count \(N_{eff}\) to equal the actual particle count \(n\). In this case each normalized paricle weight \(\overline{w}_{i}\) will equal \(\frac{1}{n}\). \( Thus, \sum_{i=1}^{n} \overline{w}_{i}^2 \) will equal \(\frac{n}{n^{2}}\) and \(n_{eff}\) equals \(n\) as expected.
+
+Now consider the case where one particle has weight 1 and all other particles have weight 0. In this case we expect the effective particle count to be 1 and it is trivial to show that this is indeed the case.
+
+Because resampling is the slowest portion of the parallel particle filter code, as discussed in Section \ref{Resampling}, it makes sense to minimize the number of times it must be performed. The effective particle count metric provides a way to make that determination. Every iteration the effective particle count can be calculated relatively cheaply, and resampling can be performed only when the effective particle count falls below a given threshold.
+
+\[\overline{w}_{i} = \frac{w_{i}}{\sum_{i=1}^{n} w_{i}}\]
+\begin{equation}\label{epc}
+N_{eff} = \frac{1}{\sum_{i=1}^{n} \overline{w}_{i}^2}
+\end{equation}
 
 \section{Performance}
 The peak performance improvement using CUDA over the serial implementation was approximately 20 times. While this is nowhere near the theoretical performance gains which CUDA can achieve, it is respectable given the inherently uncoalesed nature of the memory accesses which the resampling strategy performs.
@@ -166,7 +173,9 @@ Figure \ref{final_timing1} displays a log-log plot of the overall execution time
 
 Both the serial and CUDA implementations scale roughly linearly with particle count. This makes intuitive sense because most operations are independent of other particles. The parts of the algorithm that do depend on other particles, like summation and cumulative summation, are performed once for all particles and scale linearly in time complexity with particle count.
 
+The speedup factors in Figure \ref{final_timing2} acheived by the version one, version two, and version two using effective particle count (EPC) all increase with problem size. Because GPUs do not have cached memory heirarchies to preload data, they rely on data parallelism instead of caching to hide memory latecncy. With smaller problem sets, there are fewer blocks which reduces the ability of the GPU to swap out blocks that are stalled waiting for memory access.
 
+It should also be noted that the CUDA version two test using EPC to determine when resampling is needed is not really a fair comparison. Its speedup factor was calculated compared to a serial problem with the same particle count. However, without resampling every iteration the results will be less accurate (although quantifying exactly how much less accurate is a difficult problem beyond the scope of this paper).
 
 \begin{figure}
 \centering
@@ -181,6 +190,9 @@ Both the serial and CUDA implementations scale roughly linearly with particle co
 \caption{CUDA Speedup Results with 40 Observations and Variable Particle Count}
 \label{final_timing2}
 \end{figure}
+
+\section{Challenges}
+Text...
 
 \begin{thebibliography}{9}
 
@@ -218,6 +230,10 @@ Both the serial and CUDA implementations scale roughly linearly with particle co
 \bibitem{lcg}
    Linear Congruential Generator \\
    http://en.wikipedia.org/wiki/Linear\_congruential\_generator
+
+\bibitem{pf}
+   Particle Filter \\
+   http://en.wikipedia.org/wiki/Particle\_filter
 
 \end{thebibliography}
 
