@@ -1,0 +1,54 @@
+===============
+=  Compiling  =
+===============
+
+In a console type:
+
+make
+
+This creates three executables in the bin/ directory.
+
+
+
+===============
+=   Running   =
+===============
+
+In a console type:
+
+bin/filter_cuda
+
+or
+
+bin/filter_serial
+
+
+
+======================
+=   Viewing Output   =
+======================
+
+In a console type:
+
+./plot_particles
+
+
+
+==============
+=   Report   =
+==============
+
+The final report and presenation slides are in the docs/ directory.
+
+
+==================
+=   Repository   =
+==================
+
+The source code is hosted on Google Code at:
+
+http://code.google.com/p/csi702/
+
+The latest version can be downloaded via subversion using:
+
+svn checkout http://csi702.googlecode.com/svn/trunk/ csi702-read-only
