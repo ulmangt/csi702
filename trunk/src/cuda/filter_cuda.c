@@ -205,7 +205,7 @@ int main( int argc, char** argv )
 #endif
     if ( effective_count < NUM_EFFECT_CUTOFF )
     {
-      resample( *device_particles, *device_particles_swap, NUM_PARTICLES );
+      resample_v2( *device_particles, *device_particles_swap, NUM_PARTICLES );
       swap_device_arrays( );
     }
   }
@@ -216,7 +216,7 @@ int main( int argc, char** argv )
   // write final sensor and target positions and particle values to output files
   write_positions( OWNSHIP_POS_NAME, waypoints1, current_time );
   write_positions( TARGET_POS_NAME, waypoints2, current_time );
-  write_particles( host_particles, OUTPUT_NAME, NUM_PARTICLES, 1000 );
+  write_particles( host_particles, OUTPUT_NAME, NUM_PARTICLES, 500 );
 
   // free host and device memory
   h_free_particles( );
