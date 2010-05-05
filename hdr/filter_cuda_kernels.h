@@ -2,7 +2,7 @@
 #ifndef FILTER_CUDA_KERNELS_H_INCLUDED
 #define FILTER_CUDA_KERNELS_H_INCLUDED
 
-#include "obs_math.h"
+#include "observation.h"
 #include "filter_cuda_data.h"
 
 extern void init_particles( struct particles device_particles, int num );

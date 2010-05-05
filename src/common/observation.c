@@ -1,53 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "obs_math.h"
+
+#include "observation.h"
 #include "filter_math.h"
 
-// interpolates between the waypoints in waypoint list to determine the x_pos and y_pos at the given tim
-// values are returned by setting the x_pos and y_pos pointers
-// a return value of 1 indicates success, a return value of 0 indicates an error
-int interpolate( struct waypoint_list *waypoint_list , float time , float *x_pos, float *y_pos )
-{
-  int i;
+/////////////////////////////////////////////////////
+// observation.c
+//
+// This file contains helper functions for dealing
+// with observation_list structs. These structures,
+// defined in observation.h, contain time ordered
+// lists of errored observations generated from a
+// target and sensor moving along paths prescribed
+// by waypoint_list structures.
+/////////////////////////////////////////////////////
 
-  struct waypoint *previous_waypoint;
 
-  for ( i = 0 ; i < waypoint_list->size ; i++ )
-  {
-    struct waypoint *current_waypoint = (waypoint_list->waypoints)+i;
 
-    if ( current_waypoint->time > time )
-    {
-      // the first waypoint timestamp is after the requested time thus
-      // we don't have two points to interpolate between
-      if ( i == 0 )
-        return 0;
 
-      return interpolate_waypoints( previous_waypoint, current_waypoint, time, x_pos, y_pos);
-    }
-
-    previous_waypoint = current_waypoint;
-  }
-
-  // the last waypoint timestamp is before the requested time
-  return 0;
-}
-
-// interpolates between two given waypoints
-// time should be between start->time and end->time
-int interpolate_waypoints( struct waypoint *start, struct waypoint *end, float time, float *x_pos, float *y_pos )
-{
-  float time_diff = end->time - start->time;
-  float weight = ( time - start->time ) / time_diff;
-
-  *x_pos = end->x_pos * ( weight ) + start->x_pos * ( 1 - weight );
-  *y_pos = end->y_pos * ( weight ) + start->y_pos * ( 1 - weight );
-
-  return 1;
-}
-
-// generates observations based on the given sensor and target positions
+// Generates observations based on the given sensor and target positions.
+//
 // sensor : a list of position waypoints for the sensor making the observations
 // target : a list of position waypoints for the target being observed
 // type : the type of observations being made (see observation_type enum)
@@ -89,6 +62,8 @@ struct observation_list *generate_observations(
   return observation_list;
 }
 
+// Takes two observation_list structures and combines the data contained in both
+// into a single combined observation_list.
 struct observation_list *combine_observations( struct observation_list *l1, struct observation_list *l2 )
 {
   int total_size = l1->size + l2->size;
@@ -116,6 +91,11 @@ struct observation_list *combine_observations( struct observation_list *l1, stru
   return observation_list;
 }
 
+// Generates a single observation of the specified type for the
+// given sensor and target positions. This function is not
+// usually called directly, but instead is used by generate_observations()
+// to automatically build observation_list structures from two
+// waypoint_list structures
 float generate_observation( int type, float error, float x_pos_sensor,
                             float y_pos_sensor, float x_pos_target, float y_pos_target )
 {
