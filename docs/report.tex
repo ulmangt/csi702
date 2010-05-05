@@ -14,18 +14,20 @@
 
 \tableofcontents
 
-\section{Introduction}
-Bayesian particle filtering techniques provide a flexible toolkit for solving a wide array of data fusion problems. Here, a very specific motivating example is used to explore how effectively Bayesian particle filtering can be adapted to CUDA.
+\section{Introduction}\label{Introduction}
+Bayesian particle filtering techniques provide a flexible toolkit for solving a wide array of data fusion problems. This paper uses a specific motivating example to explore how effectively Bayesian particle filtering can be adapted to CUDA.
 
 The motivating problem is as follows: A submarine with a hydrophone (passive sonar) is following another ship and attempting to estimate that ship's location and speed using the direction of the sound from the ship's engine as recored by the hydrophone. However, the hydrophone is imperfect and the observed direction of the sound does not exactly correspond to the true location of the ship. How can these errored bearing observations be used to develop an estimate of the ship's true position and velocity?
 
 \section{Background}\label{Background}
-A simple geographic tracking problem traditionally consists of estimating the state of a target using errored observations of some function of the target state. The problem explored here assumes a four-dimensional state space with two Cartesian position dimensions and two velocity dimensions. To simplify the problem, the possibility of false alarms (observations which do not correspond to an actual target) is ignored. Further, all observations are assumed to correspond to a single target of interest (associating observations with the correct target track is an additional complicating concern in multi-target tracking problems).
+At its core, Bayesian particle filtering is an iterative process by which a collection of particles aproximating a probability distribution are updated based on incoming data to better aproximate the true state of a target being observed.
 
-\subsection{Prior Distribution}
-Employing Bayesian tracking to estimate the true state \(x \in S\) of a target in state space \(S\) requires a prior distribution \(p(x)\). This probability density function describes knowledge about the target's true state \(x\) prior to receiving any observations. This prior distribution is generally based on engineering knowledge of the targets and of the sensors used to generate observations.
+Each particle represents a possible target state and the collection of particles aproximates a probability distribution, called a prior, which describes the possible states of the target (see Section \ref{Prior Distribution}). When a new observation arrives, the particles are time updated to reflect the time of the observation. Then, a likelihood function (see Section \ref{Likelihood Functions}) is used to updated the weights of the particles based on the new information contained in the observation. Finally, resampling is performed to replace low weight particles with randomly perturbed copies of high weight particles (see Section \ref{Resampling}).
 
-The simple priors used in this tracking problem assume the sensors have a maximum detection range and thus that targets will not be detected until they are inside that range. The velocity dimension of the target state is also restricted by the known maximum speed of the target being tracked. Together, these form a simple uniform bounded prior distribution on the two position and two velocity state space dimensions. Figure \ref{prior} displays the x and y position components of a random sample of particles drawn from this prior with a 20000 meter maximum detection range. Because all particles are initially weighted equally, any particle has an equal likelihood of being the true state of the target.
+\subsection{Prior Distribution}\label{Prior Distribution}
+Employing Bayesian tracking to estimate the true state \(x\) of a target in a state space \(S\) requires starting with a probability density function \(p(x)\) which is refered to as the prior distribution. The prior is a probability density function over the state space \(S\) which gives the probability that any given \(x \in S\) is the true target state. Because the prior must be provided before any observations are received, it is generally based on engineering knowledge of the targets and of the sensors used to generate observations.
+
+For example, the state space for the submarine tracking problem considered here is four-dimensional, consisting of two Cartesian position dimensions and two velocity dimensions. A simple uniform bounded distribution on the two position and two velocity state space dimensions is used as the prior (reflecting that we know very little initially about the true target state). Figure \ref{prior} displays the \(x\) and \(y\) position components of the prior. Because all particles are initially weighted equally, any particle has an equal likelihood of being the true state of the target.
 
 \begin{figure}
 \centering
@@ -34,22 +36,28 @@ The simple priors used in this tracking problem assume the sensors have a maximu
 \label{prior}
 \end{figure}
 
-\subsection{Likelihood Functions}
+\subsection{Likelihood Functions}\label{Likelihood Functions}
 Equation \ref{lfunc1} describes a likelihood function \(L\) for observation \(Y=y\) and random variable \(X\) which takes on values in a state space \(S\). The function \(P(\cdot|x)\) is a probability density function describing the probability of obtaining observations \(y\) from the sensor given a known target state \(x\).
 
-However, in Bayesian tracking, the function \(P(y|\cdot)\) is far more interesting. This is because once an observation \(y\) is received it is fixed and we wish to determine what that observation tells us about the true target state \(x\). The name likelihood function arises from the fact that if \(L(y|x_{1})>L(y|x_{2})\) then the observation \(y\) is more likely to have come from a target with state \(x_{1}\) than a target with state \(x_{2}\). Is should be noted that unlike \(P(\cdot|x)\), the likelihood function usually not a probability density function.\cite{bmtt}
+However, in Bayesian tracking, the function \(P(y|\cdot)\) is far more interesting. In tracking problems, observations \(y\) are fixed and the true target state \(x\) is unknown. When viewed as a function of \(x\), we call \(P(y|\cdot)\) a likelihood function. The likelihood function can be used in conjunction with Bayes' rule to modify our prior distribution \(p(x)\) (discussed in Section \ref{Background}) to incorporate the information from an observation \(y\).
+
+The name likelihood function arises from the fact that for \(x_{1},x_{2} \in S\), if \(L(y|x_{1})>L(y|x_{2})\), then the observation \(y\) is more likely to have come from a target with state \(x_{1}\) than a target with state \(x_{2}\). Is should also be noted that unlike \(P(\cdot|x)\), the likelihood function is usually not a probability density function.\cite{bmtt}
 
 \begin{equation}\label{lfunc1}
 L(y|x) = P( Y=y | X=x ) \verb! for ! x \in S
 \end{equation}
 
-The likelihood function, in conjunction with Bayes' rule, tells us how to modify our prior distribution \(p(x)\) (discussed in Section \ref{Background}) to incorporate the information from an observation \(y\). Applying Bayes' rule we arrive at Equation \ref{lfunc2}. The probability density function \(P(\cdot|y)\) is known as the posterior distribution and represents the prior adjusted to reflect the addition of the new information contained in the observation \(y\). This posterior distribution can have further likelihood functions applied to it using Equation \ref{lfunc2} to incorporate additional information. This iterative process is known as Bayesian tracking.
+Once we have the notion of a likelihood function, we can write Equation \ref{lfunc2} which is the core of Baysian tracking. It describes how to modify the prior \(P(x)\) to reflect the addition of the new information contained in the observation \(y\) and obtain a posterior distribution \(P(x|y)\). This posterior distribution can have further likelihood functions applied to it using Equation \ref{lfunc2} to incorporate additional information. This iterative process is known as Bayesian tracking.
+
+Particle filtering provides a convenient way to perform the calculations described by Equation \ref{lfunc2}. The likelihood function is evaluated for each particle and the result is multiplied by that particle's weight to obtain an updated weight. The updated particle weights are then normalized by the sum over all particle weights to obtain the posterior distribution.
 
 \begin{equation}\label{lfunc2}
 P(x|y) = \frac{L(y|x)P(x)}{\int \! L(y|x)P(x) \, dx}
 \end{equation}
 
-Figure \ref{posterior1} shows the posterior distribution after the likelihood for a single azimuth observation is applied to the prior distribution from Figure \ref{prior}. An azimuth observation is a single angle value indicating that the target is somewhere along the ray starting at the sensor's current position and continuing in the given angle. The likelihood function which we associate with such observations, shown in Equation \ref{lfunc3}, is a simple Gaussian distribution in azimuth space.\cite{bmtt} Here \(\theta\) is an azimuth observation, \(x \in S\) is an element of the state space, \(\sigma\) is the standard deviation assigned to the observation, and \(b(\alpha,x)\) is a function which gives the azimuth from the sensor position \(\alpha\) to the position \(x\). Applying this function to each particle gives us new weights for the particles with those particles closer to the observed azimuth receiving higher weight.
+Figure \ref{posterior1} shows the posterior distribution after the likelihood for a single azimuth observation is applied to the prior distribution from Figure \ref{prior}. An azimuth observation is a single angle value indicating that the target is somewhere along the ray starting at the sensor's current position and continuing in the given angle. The likelihood function which we associate with such observations, shown in Equation \ref{lfunc3}, is a simple Gaussian distribution in azimuth space.\cite{bmtt}
+
+In Equation \ref{lfunc3}, \(\theta\) is an azimuth observation, \(x \in S\) is an element of the state space, \(\sigma\) is the standard deviation assigned to the observation, and \(b(\alpha,x)\) is a function which gives the azimuth from the sensor position \(\alpha\) to the position \(x\).
 
 \begin{equation}\label{lfunc3}
 L(\theta|x)=(2\pi\sigma^{2})^{\frac{-1}{2}}e^{\frac{-(\theta-b(\alpha,x))^{2}}{2\sigma^{2}}}
@@ -63,9 +71,9 @@ L(\theta|x)=(2\pi\sigma^{2})^{\frac{-1}{2}}e^{\frac{-(\theta-b(\alpha,x))^{2}}{2
 \end{figure}
 
 \subsection{Motion Model}
-In kinematic tracking problems, observations often occur at different times. The existence of velocity components in the state space \(S\) indicates that the position components are changing over time. In addition, the possibility that the target might change its velocity must be modeled.
+In kinematic tracking problems observations often occur at different times. The existence of velocity components in the state space \(S\) indicates that the position components are changing over time. In addition, the possibility that the target might change its velocity must be modeled.
 
-Motion updating can be described much more generally and rigorously, but in our case the step is simple. The target is assumed to make instantaneous velocity adjustments with an exponentially distributed mean time between adjustments. During periods where no adjustment is made, the target travels at a constant velocity. If no observations are received for an extended period of time, as has happened in Figure \ref{posterior2}, the particles will drift apart on their constant velocity paths and the posterior distribution will become more diffuse to indicate our increasing uncertainty about the current location of the target.
+Motion updating can be described much more generally and rigorously, but in our case the step is simple. Particles make instantaneous velocity adjustments with an exponentially distributed mean time between adjustments. During periods where no adjustment is made, particles travel at a constant velocity. If no observations are received for an extended period of time, as has happened in Figure \ref{posterior2}, the particles will drift apart on their constant velocity paths and the posterior distribution will become more diffuse to indicate our increasing uncertainty about the current location of the target.
 
 \begin{figure}
 \centering
@@ -75,10 +83,10 @@ Motion updating can be described much more generally and rigorously, but in our 
 \end{figure}
 
 \section{Design}
-Most portions of the Bayesian tracking recursion are embarrassingly parallel operations which map directly to CUDA without much trouble. Initialization of particle positions, time updating, and information updating are all operations on a single particle and are independent of each other particle. However, the CUDA implementation other portions of the algorithm, including particle weight summation (and more generally, particle resampling), and random number generation, provide interesting challenges.
+Most portions of the Bayesian tracking recursion are embarrassingly parallel operations which map directly to CUDA without much trouble. Initialization of particle positions, time updating, and information updating are all performed on each particle individually. However, the CUDA implementation other portions of the algorithm, including resampling and random number generation, provide interesting challenges.
 
 \subsection{Resampling}\label{Resampling}
-As the information about the target's state contained in observations is incorporated into the prior distribution using appropriate likelihood functions, some particles will match very poorly with the observations and have very low weight as a result. Eventually, keeping such particles around serves very little purpose, since the Bayesian tracker has already indicated that they matches poorly with the observations and are thus unlikely to represent the true target state. Resampling is a technique for remedying this situation by periodically replacing particles with low weight with slightly perturbed copies of particles with high weight.
+As observations containing information about the target's state are incorporated into the prior distribution using appropriate likelihood functions, some particles will match very poorly with the observations and receive low weight as a result. Eventually, keeping such particles around serves very little purpose, since the Bayesian tracker has already indicated that they matches poorly with the observations and are thus unlikely to represent the true target state. Resampling is a technique for remedying this situation by periodically replacing particles with low weight with slightly perturbed copies of particles with high weight.
 
 \subsubsection{First Resampling Implementation}
 
