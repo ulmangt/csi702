@@ -9,6 +9,14 @@
 #include "convert.h"
 #include "filter_cuda_kernels.h"
 
+/////////////////////////////////////////////////////
+// filter_cuda_util.c
+//
+// Basic IO helper functions for writing output files.
+/////////////////////////////////////////////////////
+
+
+
 // writes the interpolated x and y positions at the given time along the waypoints list
 // this is used to record the position of the sensor and ownship at the end of the scenario
 // for graphical output purposes 

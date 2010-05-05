@@ -10,6 +10,23 @@
 #include "filter_math.h"
 #include "filter_constants.h"
 
+/////////////////////////////////////////////////////
+// filter_serial.c
+//
+// Entry point for filter_serial executable. This code
+// performs a single particle filter scenario. The
+// paths that the sensor and target follow are defined
+// in waypoint files as described in src/common/waypoint.c.
+//
+// Observations are randomly generated from the waypoints
+// as described in src/common/observation.c.
+//
+// After all observations have been processed, the particles
+// and the final positions of the target and sensor are
+// written to output files in the data directory in a format
+// which can be displayed by the plot_particles.sh script.
+/////////////////////////////////////////////////////
+
 float *x_pos; // meters
 float *y_pos; // meters
 float *x_vel; // meters/second
