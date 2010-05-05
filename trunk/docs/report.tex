@@ -20,12 +20,12 @@ Bayesian particle filtering techniques provide a flexible toolkit for solving a 
 The motivating problem is as follows: A submarine with a hydrophone (passive sonar) is following another ship and attempting to estimate that ship's location and speed using the direction of the sound from the ship's engine as recored by the hydrophone. However, the hydrophone is imperfect and the observed direction of the sound does not exactly correspond to the true location of the ship. How can these errored bearing observations be used to develop an estimate of the ship's true position and velocity?
 
 \section{Background}\label{Background}
-At its core, Bayesian particle filtering is an iterative process by which a collection of particles aproximating a probability distribution are updated based on incoming data to better aproximate the true state of a target being observed.
+At its core, Bayesian particle filtering is an iterative process by which a collection of particles approximating a probability distribution are updated based on incoming data to better approximate the true state of a target being observed.
 
-Each particle represents a possible target state and the collection of particles aproximates a probability distribution, called a prior, which describes the possible states of the target (see Section \ref{Prior Distribution}). When a new observation arrives, the particles are time updated to reflect the time of the observation. Then, a likelihood function (see Section \ref{Likelihood Functions}) is used to updated the weights of the particles based on the new information contained in the observation. Finally, resampling is performed to replace low weight particles with randomly perturbed copies of high weight particles (see Section \ref{Resampling}).
+Each particle represents a possible target state and the collection of particles approximates a probability distribution, called a prior, which describes the possible states of the target (see Section \ref{Prior Distribution}). When a new observation arrives, the particles are time updated to reflect the time of the observation. Then, a likelihood function (see Section \ref{Likelihood Functions}) is used to updated the weights of the particles based on the new information contained in the observation. Finally, resampling is performed to replace low weight particles with randomly perturbed copies of high weight particles (see Section \ref{Resampling}).
 
 \subsection{Prior Distribution}\label{Prior Distribution}
-Employing Bayesian tracking to estimate the true state \(x\) of a target in a state space \(S\) requires starting with a probability density function \(p(x)\) which is refered to as the prior distribution. The prior is a probability density function over the state space \(S\) which gives the probability that any given \(x \in S\) is the true target state. Because the prior must be provided before any observations are received, it is generally based on engineering knowledge of the targets and of the sensors used to generate observations.
+Employing Bayesian tracking to estimate the true state \(x\) of a target in a state space \(S\) requires starting with a probability density function \(p(x)\) which is referred to as the prior distribution. The prior is a probability density function over the state space \(S\) which gives the probability that any given \(x \in S\) is the true target state. Because the prior must be provided before any observations are received, it is generally based on engineering knowledge of the targets and of the sensors used to generate observations.
 
 For example, the state space for the submarine tracking problem considered here is four-dimensional, consisting of two Cartesian position dimensions and two velocity dimensions. A simple uniform bounded distribution on the two position and two velocity state space dimensions is used as the prior (reflecting that we know very little initially about the true target state). Figure \ref{prior} displays the \(x\) and \(y\) position components of the prior. Because all particles are initially weighted equally, any particle has an equal likelihood of being the true state of the target.
 
@@ -86,7 +86,7 @@ Motion updating can be described much more generally and rigorously, but in our 
 Most portions of the Bayesian tracking recursion are embarrassingly parallel operations which map directly to CUDA without much trouble. Initialization of particle positions, time updating, and information updating are all performed on each particle individually. However, the CUDA implementation other portions of the algorithm, including resampling and random number generation, provide interesting challenges.
 
 \subsection{Resampling}\label{Resampling}
-As observations containing information about the target's state are incorporated into the prior distribution using appropriate likelihood functions, some particles will match very poorly with the observations and receive low weight as a result. Eventually, keeping such particles around serves very little purpose, since the Bayesian tracker has already indicated that they matches poorly with the observations and are thus unlikely to represent the true target state. Resampling is a technique for remedying this situation by periodically replacing particles with low weight with slightly perturbed copies of particles with high weight.
+As observations containing information about the target's state are incorporated into the prior distribution using appropriate likelihood functions, some particles will match very poorly with the observations and receive low weight as a result. Eventually, keeping such particles around serves very little purpose, since the Bayesian tracker has already indicated that they match poorly with the observations and are thus unlikely to represent the true target state. Resampling is a technique for remedying this situation by periodically replacing particles with low weight with slightly perturbed copies of particles with high weight.
 
 \subsubsection{First Resampling Implementation}
 
@@ -124,14 +124,16 @@ The second resampling algorithm implementation improves on the first dividing th
 \end{figure}
 
 \subsubsection{Third Resampling Implementation}
-The third resampling algorithm optimization was based on the observation that once the copy-from indexes had been stored in the weight array at the copy-to index, the weights were equivalent to the gather map used in the thrust::gather algorithm. \cite{thrust} thrust::gather copies items from a source array \(s[i]\) into a destination array \(d[i]\) using a map array \(m[i]\) such that \(s[i]=d[m[i]]\).
+The third resampling algorithm optimization was based on the observation that once the copy-from indexes had been stored in the weight array at the copy-to index, the weight array was equivalent to the gather map used in the thrust::gather algorithm. Gather copies items from a source array \(s[i]\) into a destination array \(d[i]\) using a map array \(m[i]\) such that \(s[i]=d[m[i]]\).\cite{thrust}
 
-Surprisingly, especially given the amazing efficiency of thrust's reduction and scan algorithms, thrust::gather provided no speedup over my custom implementation from Section \ref{resamplesection2}. The inefficiency of the inherently uncoalesced nature of the memory access pattern must simply overwhelm any subtle performance tweaks that thrust::gather provides.
+Surprisingly, especially given the amazing efficiency of thrust's reduction and scan algorithms, thrust::gather provided no speedup over my custom implementation from Section \ref{resamplesection2}. The inefficiency of the inherently uncoalesced nature of the memory access pattern most likely overwhelms any subtle performance tweaks that thrust::gather provides.
 
 \subsection{Parallel Reduction}
-The resampling calculations in Equation \ref{resample1} and \ref{resample2} require calculating the sum and cumulative sum of an array of weights. The thrust library provides prewritten parallel algorithms for common CUDA tasks, including parallel reduction through repeated application of a binary reduction function.\cite{thrust}
+The resampling calculations in Equation \ref{resample1} and \ref{resample2} require calculating the sum and cumulative sum of an array of weights. The thrust library provides prewritten parallel algorithms for common CUDA tasks, including parallel reduction.\cite{thrust}
 
-However, before using thrust, a custom parallel array summation implementation was written based on the NVIDIA white paper on the subject included in the CUDA SDK.\cite{oprc} Understanding the overall summation algorithm requires first understanding the basic shared memory summation algorithm for a single block. Each block copies its values from global memory to shared memory and performs a simple fan-in reduction in shared memory. As Figure \ref{sum1} indicates, theads add their partial sums together in a tree pattern until a single partial sum for the entire block remains. Each iteration is synchronized using \verb!__syncthreads()!.
+However, before using thrust, a custom parallel array summation implementation was written based on the NVIDIA white paper on the subject included in the CUDA SDK.\cite{oprc} The core of this summation algorithm is a CUDA kernel which uses shared memory to calculate partial summations for each block.
+
+Within each block, global memory values are copied to shared memory and a simple fan-in reduction is performed. As Figure \ref{sum1} indicates, theads add their partial sums together in a tree pattern until a single partial sum for the entire block remains. Each iteration is synchronized using \verb!__syncthreads()!.
 
 \begin{figure}
 \centering
@@ -152,23 +154,25 @@ As each block completes its parallel summation, it writes its sum to an array in
 \label{summation_plot}
 \end{figure}
 
-However, as Figure \ref{summation_plot} indicates, writing complex parallel algorithms efficiently is very difficult in CUDA. For the largest arrays tested, the custom CUDA implementation was only about twice as fast as the serial implementation whereas the thrust implementation was 12.9 times faster. These results highlight cuda's sensitivity to subtle factors like uncoalesced memory access, shared memory bank conflicts (threads from multiple warps accessing the same sections of shared memory), and expensive gpu operations which can have significant impact on performance.\cite{bestprac}
+However, as Figure \ref{summation_plot} indicates, writing complex parallel algorithms efficiently is very difficult in CUDA. For the largest arrays tested, the custom CUDA implementation was only about twice as fast as the serial implementation whereas the thrust implementation was 12.9 times faster. These results highlight CUDA's sensitivity to subtle factors like uncoalesced memory access, shared memory bank conflicts (threads from multiple warps accessing the same sections of shared memory), and expensive gpu operations which can have significant impact on performance.\cite{bestprac}
 
 \subsection{Random Number Generation}
-Particle filter tracking is a stochastic process: as particles are time updated, they maneuver randomly according to their motion model; as particles are resampled, their replacements are randomly perturbed copies of existing particles. Thus, performing particle filter tracking using CUDA required generating random numbers efficiently on the GPU. The thrust library provides random number generation capabilities and the CUDA SDK provides a parallel MersenneTwister example. However, the random number generator implementation used for this problem is a much simpler linear congruential generator which relies on independent seeds stored for each particle.
+Particle filter tracking is a stochastic process: as particles are time updated, they maneuver randomly according to their motion model; as particles are resampled, their replacements are randomly perturbed copies of existing particles. Thus, performing particle filter tracking using CUDA required generating random numbers efficiently on the GPU.
+
+The thrust library provides random number generation capabilities and the CUDA SDK provides a parallel MersenneTwister example. However, the random number generator implementation used for this problem is a much simpler custom written linear congruential generator which relies on independent seeds stored for each particle. This approach is attractive because it is theoretically very fast and requires very little state, allowing each particle to generate its own independent stream of random values.
 
 \begin{equation}\label{lcgeq1}
 X_{n+1}=(aX_{n}+c \mod m)
 \end{equation}
 
-With properly chosen \(a\), \(c\) and \(m\) values linear congruential generator can provide sufficiently random values for particle filtering.\cite{lcg} The values I used are those used by the java.util.Random class. This approach is attractive because it is theoretically very fast and requires very little state, allowing each particle to generate its own independent stream of random values.
+With properly chosen \(a\), \(c\) and \(m\) values linear congruential generator can provide sufficiently random values for particle filtering.\cite{lcg} The values used are those used by the java.util.Random class.
 
 The recurrence relation in Equation \ref{lcgeq1} relies on the modulus operator, which is extremely slow on NVIDA hardware.\cite{oprc} However, this recurrence can be rewritten using the much faster shift and bitwise mask operations, avoiding the significant modulus performance hit.
 
 \subsection{Effective Particle Count}
 When resampling is performed after each observation, every particle always has an equal weight and therefore an equal chance of representing the true target state. However, resampling every iteration is not necessary.
 
-Formula \ref{epc} calculates the effective particle count \(N_{eff}\) from a weight array \(w_{i}\).\cite{pf} This formula is best understood by considering two extreme cases. When all particles have the same weight (like after resampling is performed), we would expect the effective particle count \(N_{eff}\) to equal the actual particle count \(n\). In this case each normalized paricle weight \(\overline{w}_{i}\) will equal \(\frac{1}{n}\). \( Thus, \sum_{i=1}^{n} \overline{w}_{i}^2 \) will equal \(\frac{n}{n^{2}}\) and \(n_{eff}\) equals \(n\) as expected.
+Formula \ref{epc} calculates the effective particle count \(N_{eff}\) from a weight array \(w_{i}\).\cite{pf} This formula is best understood by considering two extreme cases. When all particles have the same weight (like after resampling is performed), we would expect the effective particle count \(N_{eff}\) to equal the actual particle count \(n\). In this case each normalized paricle weight \(\overline{w}_{i}\) will equal \(\frac{1}{n}\). Thus, \( \sum_{i=1}^{n} \overline{w}_{i}^2 \) will equal \(\frac{n}{n^{2}}\) and \(n_{eff}\) equals \(n\) as expected.
 
 Now consider the case where one particle has weight 1 and all other particles have weight 0. In this case we expect the effective particle count to be 1 and it is trivial to show that this is indeed the case.
 
@@ -186,9 +190,9 @@ Figure \ref{final_timing1} displays a log-log plot of the overall execution time
 
 Both the serial and CUDA implementations scale roughly linearly with particle count. This makes intuitive sense because most operations are independent of other particles. The parts of the algorithm that do depend on other particles, like summation and cumulative summation, are performed once for all particles and scale linearly in time complexity with particle count.
 
-The speedup factors in Figure \ref{final_timing2} achieved by the version one, version two, and version two using effective particle count (EPC) all increase with problem size. Because GPUs do not have cached memory hierarchies to preload data, they rely on data parallelism instead of caching to hide memory latency. With smaller problem sets, there are fewer blocks which reduces the ability of the GPU to swap out blocks that are stalled waiting for memory access.
+The speedup factors in Figure \ref{final_timing2} achieved by the version 1, version 2, and version 2 using EPC all increase with problem size. This makes sense because GPUs do not have cached memory hierarchies to preload data, they rely on data parallelism instead of caching to hide memory latency. With smaller problem sets there are fewer blocks which reduces the ability of the GPU to swap out blocks that are stalled waiting for memory access.
 
-It should also be noted that the CUDA version two test using EPC to determine when resampling is needed is not really a fair comparison. Its speedup factor was calculated compared to a serial problem with the same particle count. However, without resampling every iteration the results will be less accurate (although quantifying exactly how much less accurate is a difficult problem beyond the scope of this paper).
+It should be noted, however, that the CUDA version two test using EPC to determine when resampling is needed is not a completely fair comparison. Its speedup factor was calculated compared to a serial problem with the same particle count. However, without resampling every iteration the results will be less accurate than a serial implementation with the same particle count (although quantifying exactly how much less accurate is a difficult problem beyond the scope of this paper).
 
 \begin{figure}
 \centering
