@@ -256,6 +256,35 @@ The observation \(y\) is more likely to have come from a target with state \(x_{
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{frame}{Likelihood Function}
+
+\[
+L(y|x_{1})>L(y|x_{2})
+\]
+
+\begin{figure}
+\centering
+\includegraphics[width=0.6\textwidth]{data/likelihood_function_diagram.png}
+\end{figure}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Bayes' Rule}
+
+Reverand Thomas Bayes (1702-1761):
+
+\vspace{1cm}
+
+\begin{equation}
+P(A|B)=\frac{P(B|A)P(A)}{P(B)}
+\end{equation}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}{Bayesian Inference}
 
 \begin{equation}
@@ -269,6 +298,10 @@ P(x|y) = \frac{L(y|x)P(x)}{P(y)} = \frac{L(y|x)P(x)}{\int \! L(y|x)P(x) \, dx}
 \item \(P(x)\) Prior probability density function on true target state
 \item \(P(x|y)\) Posterior distribution given observation \(y\)
 \end{itemize}
+
+\vspace{1cm}
+
+\emph{"Multiply each particle's weight by the likelihood function evaluated at the particle then normalize by the sum over all particle weights."}
 
 \end{frame}
 

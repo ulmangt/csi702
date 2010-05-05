@@ -4,13 +4,32 @@
 #include <math.h>
 #include <time.h>
 
-#include "obs_math.h"
+#include "observation.h"
 #include "convert.h"
-#include "filter_io.h"
+#include "waypoint.h"
 #include "filter_cuda_kernels.h"
 #include "filter_cuda_util.h"
 #include "filter_constants.h"
 #include "filter_cuda_data.h"
+
+
+/////////////////////////////////////////////////////
+// filter_cuda.c
+//
+// Entry point for filter_cuda executable. This code
+// performs a single particle filter scenario. The
+// paths that the sensor and target follow are defined
+// in waypoint files as described in src/common/waypoint.c.
+//
+// Observations are randomly generated from the waypoints
+// as described in src/common/observation.c.
+//
+// After all observations have been processed, the particles
+// and the final positions of the target and sensor are
+// written to output files in the data directory in a format
+// which can be displayed by the plot_particles.sh script.
+/////////////////////////////////////////////////////
+
 
 // uncomment to perform effective particle count calculation before resampling
 //#define CALC_EFFECTIVE_COUNT

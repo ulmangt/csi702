@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "obs_math.h"
+#include "observation.h"
 #include "filter_constants.h"
 #include "filter_cuda_data.h"
 
@@ -12,6 +12,18 @@
 #include <thrust/functional.h>
 #include <thrust/transform.h>
 #include <thrust/iterator/zip_iterator.h>
+
+
+/////////////////////////////////////////////////////
+// filter_cuda_kernel.cu
+//
+// This CUDA source file contained all the cuda specific
+// functions necessary for filter_cuda.c. It wraps them
+// in c functions so that filter_cuda.c does not
+// need to directly depend on CUDA.
+//
+/////////////////////////////////////////////////////
+
 
 #define MAX_RANGE 20000 // meters
 #define MAX_VEL 15 // meters per second
@@ -66,7 +78,8 @@ __device__ float device_erand( int seed, float inv_lambda )
   return -log( device_frand0( seed, 1.0 ) ) * inv_lambda;
 }
 
-
+// adapted from CUDA SDK examples
+// checks for errors in the last CUDA kernel invocation
 void checkCUDAError(const char *msg)
 {
     cudaError_t err = cudaGetLastError();

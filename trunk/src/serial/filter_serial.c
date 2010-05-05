@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include "obs_math.h"
-#include "filter_math.h"
-#include "filter_io.h"
+
+#include "observation.h"
+#include "waypoint.h"
 #include "convert.h"
+
+#include "filter_math.h"
 #include "filter_constants.h"
 
 float *x_pos; // meters

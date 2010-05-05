@@ -3,6 +3,16 @@
 #include <math.h>
 #include "convert.h"
 
+/////////////////////////////////////////////////////
+// convert.c
+//
+// This file contains helper functions for performing
+// basic unit conversions. It is not intended to be
+// a comprehensive unit conversion library, simply
+// to provide enough functionality for the quantities
+// this particular code deals with.
+/////////////////////////////////////////////////////
+
 // angle system units : radians
 // time system units : seconds
 // distance system units : meters

@@ -11,8 +11,8 @@ clean_common:
 # CUDA Code
 #
 
-filter_cuda: filter_cuda_kernel.o filter_cuda.o filter_math.o obs_math.o filter_io.o convert.o filter_cuda_util.o
-	nvcc -I hdr -lcuda -lcudart -lm src/cuda/filter_cuda_util.o src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o -o bin/filter_cuda
+filter_cuda: filter_cuda_kernel.o filter_cuda.o filter_math.o observation.o waypoint.o convert.o filter_cuda_util.o
+	nvcc -I hdr -lcuda -lcudart -lm src/cuda/filter_cuda_util.o src/cuda/filter_cuda_kernel.o src/cuda/filter_cuda.o src/common/filter_math.o src/common/observation.o src/common/waypoint.o src/common/convert.o -o bin/filter_cuda
 
 filter_cuda.o:
 	gcc -I hdr -c src/cuda/filter_cuda.c -o src/cuda/filter_cuda.o
@@ -30,8 +30,8 @@ clean_cuda: clean_common
 # Serial Code
 #
 
-filter_serial: filter_io.o obs_math.o filter_math.o filter_serial.o convert.o
-	gcc -I hdr -lm src/serial/filter_serial.o src/common/convert.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o -o bin/filter_serial
+filter_serial: waypoint.o observation.o filter_math.o filter_serial.o convert.o
+	gcc -I hdr -lm src/serial/filter_serial.o src/common/convert.o src/common/filter_math.o src/common/observation.o src/common/waypoint.o -o bin/filter_serial
 
 filter_serial.o:
 	gcc -I hdr -c -lm src/serial/filter_serial.c -o src/serial/filter_serial.o
@@ -39,17 +39,17 @@ filter_serial.o:
 filter_math.o:
 	gcc -I hdr -c -lm src/common/filter_math.c -o src/common/filter_math.o
 
-obs_math.o:
-	gcc -I hdr -c -lm src/common/obs_math.c -o src/common/obs_math.o
+observation.o:
+	gcc -I hdr -c -lm src/common/observation.c -o src/common/observation.o
 
-filter_io.o:
-	gcc -I hdr -c -lm src/common/filter_io.c -o src/common/filter_io.o
+waypoint.o:
+	gcc -I hdr -c -lm src/common/waypoint.c -o src/common/waypoint.o
 
 convert.o:
 	gcc -I hdr -c -lm src/common/convert.c -o src/common/convert.o
 
 clean_serial:
-	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o src/common/obs_math.o src/common/filter_io.o src/common/convert.o
+	rm bin/filter_serial src/serial/filter_serial.o src/common/filter_math.o src/common/observation.o src/common/waypoint.o src/common/convert.o
 
 #
 # Documentation

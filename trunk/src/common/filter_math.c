@@ -4,6 +4,14 @@
 #include "filter_math.h"
 #include "convert.h"
 
+/////////////////////////////////////////////////////
+// filter_math.c
+//
+// This file contains mathematics helper functions,
+// mainly dealing with drawing random numbers with
+// various properties.
+/////////////////////////////////////////////////////
+
 // return a random float value evenly distributed between 0 and max
 float frand0( float max )
 {
