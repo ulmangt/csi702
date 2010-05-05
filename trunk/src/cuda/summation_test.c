@@ -9,6 +9,13 @@
 
 #define NUM_TRIALS 1
 
+/////////////////////////////////////////////////////
+// summation_test.c
+//
+// A simple test function for comparing the speed
+// of various parallel reduction (summation) algorithms.
+/////////////////////////////////////////////////////
+
 extern void run_thrust_tests( float *data, int N, int reps );
 
 void run_test( float *data, int N, int reps )

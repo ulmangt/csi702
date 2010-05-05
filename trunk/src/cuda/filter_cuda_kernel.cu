@@ -41,6 +41,7 @@
 // bit mask the least significant m bits
 const long mask = ( 1L << mask_bits ) - 1;
 
+// largest value that device_lcf_rand() can generate
 const long LCG_RAND_MAX = ( 1L << result_bits ) - 1;
 
 // implementation based on examples from:
@@ -284,6 +285,7 @@ __global__ void sum_weight_final_kernel( float *d_weight_in, float *d_weight_out
   }
 }
 
+// wrapper function for sum_weight_kernel
 extern "C" float sum_weight( float *d_weights, float *d_temp_weight_in, float *d_temp_weight_out, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -345,6 +347,7 @@ extern "C" float sum_weight( float *d_weights, float *d_temp_weight_in, float *d
   return final_sum;
 }
 
+// wrapper function for sum_weight using thrust::reduce
 extern "C" float sum_weight_thrust( float *d_weights, int num )
 {
   thrust::device_ptr<float> device_data( d_weights );
@@ -443,6 +446,7 @@ __global__ void multiply_kernel( float *array, float factor )
   array[index] = array[index] * factor;
 }
 
+// wrapper function for multiply kernel
 extern "C" void multiply( float *array, float factor, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -459,14 +463,15 @@ extern "C" void multiply( float *array, float factor, int num )
 }
 
 
-
-
+// CUDA kernel function : initializes all entries
+// in an array to a constant value
 __global__ void init_array_kernel( float *array, float value )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   array[index] = value;
 }
 
+// wrapper function for init_array_kernel
 extern "C" void init_array( float *array, float value, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -484,13 +489,15 @@ extern "C" void init_array( float *array, float value, int num )
 
 
 
-
+// CUDA kernel function : applies floor() funciton to each
+// value in an array
 __global__ void floor_array_kernel( float *array )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   array[index] = floor(array[index]);
 }
 
+// wrapper function for floor_array_kernel
 extern "C" void floor_array( float *array, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -506,7 +513,8 @@ extern "C" void floor_array( float *array, int num )
   checkCUDAError("floor_array");
 }
 
-
+// CUDA kernel function : applies slight random perturbation
+// to particles in an array (used by resample version 3)
 __global__ void perturb_particles_v3_kernel( float *seeds, struct particles device_array_swap )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -523,6 +531,7 @@ __global__ void perturb_particles_v3_kernel( float *seeds, struct particles devi
   device_array_swap.seed[index] = seed;
 }
 
+// wrapper function for perturb_particles_v3_kernel
 extern "C" void perturb_particles_v3( float *seeds, struct particles device_array_swap, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -538,7 +547,9 @@ extern "C" void perturb_particles_v3( float *seeds, struct particles device_arra
   checkCUDAError("perturb_particles_v3");
 }
 
-
+// CUDA kernel function : compares each entry in the given
+// array with given value. Entries larger than value are
+// overwritten with 0.
 __global__ void cap_array_v3_kernel( float *device_array, float value )
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -550,6 +561,7 @@ __global__ void cap_array_v3_kernel( float *device_array, float value )
   
 }
 
+// wrapper function for cap_array_v3_kernel
 extern "C" void cap_array_v3( float *device_array, float value, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;
@@ -564,8 +576,6 @@ extern "C" void cap_array_v3( float *device_array, float value, int num )
   // check if the kernel generated errors
   checkCUDAError("cap_array_v");
 }
-
-
 
 // device function to copy and perturb a single particle
 __device__ void copy_particle( int from_index, int to_index,
@@ -638,6 +648,7 @@ __global__ void copy_particles_kernel( struct particles device_array,
   }  
 }
 
+// wrapper function for copy_particles_kernel
 extern "C" void copy_particles( struct particles device_array,
                                 struct particles device_array_swap,
                                 int num )
@@ -672,6 +683,7 @@ __global__ void copy_indexes_kernel( struct particles device_array,
   }  
 }
 
+// wrapper function for copy_indexes_kernel
 extern "C" void copy_indexes( struct particles device_array,
                               struct particles device_array_swap,
                               int num )
@@ -701,6 +713,7 @@ __global__ void copy_particles_v2_kernel( struct particles device_array,
     copy_particle_v2( copy_from_index, index, device_array, device_array_swap );
 }
 
+// wrapper function for copy_particles_v2_kernel
 extern "C" void copy_particles_v2(  struct particles device_array,
                                     struct particles device_array_swap,
                                     int num )
@@ -725,6 +738,7 @@ __global__ void copy_float_to_int_kernel( float *from, int *to )
   to[index] = (int) from[index];
 }
 
+// wrapper function for copy_float_to_int_kernel
 extern "C" void copy_float_to_int(  float *from, int *to, int num )
 {
   int numBlocks = num / THREADS_PER_BLOCK;

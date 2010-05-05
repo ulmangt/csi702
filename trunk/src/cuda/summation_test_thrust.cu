@@ -9,6 +9,13 @@
 #include <thrust/scan.h>
 #include <cstdlib>
 
+/////////////////////////////////////////////////////
+// summation_test_thrust.c
+//
+// A simple test function for comparing the speed
+// of various parallel reduction (summation) algorithms.
+/////////////////////////////////////////////////////
+
 int small_rand( )
 {
   return rand() % 10;
