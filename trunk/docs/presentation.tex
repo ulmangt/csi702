@@ -4,6 +4,7 @@
 \usepackage{algorithmic}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{verbatim}
 
 \title{Bayesian Particle Filter Tracking with CUDA}
 \author{Geoffrey Ulman}
@@ -442,6 +443,69 @@ Floor:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{frame}[containsverbatim]{Parallel Summation}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{data/summation.png}
+\caption{Prior Particle Position Distribution}
+\end{figure}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[containsverbatim]{Parallel Summation}
+
+
+ \begin{verbatim}
+  __shared__ float s_shared[ blockDim.x ];
+  int tid = threadIdx.x;
+  unsigned int offset = blockDim.x / 2;
+
+  while ( offset > 0 )
+  {
+    if ( tid < offset )
+    {
+      s_shared[ tid ] += s_shared[ tid + offset ];
+    }
+
+    offset = offset >> 1; // divide offset by 2
+
+    __syncthreads();
+  }
+ \end{verbatim}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[containsverbatim]{Parallel Summation Improved}
+
+ \begin{verbatim}
+  ...
+
+  while ( offset > 32 )
+  {
+    ...
+  }
+
+  if ( tid < 32 )
+  {
+    s_shared[ tid ] += s_shared[ tid + 32 ];
+    s_shared[ tid ] += s_shared[ tid + 16 ];
+    s_shared[ tid ] += s_shared[ tid + 8 ];
+    s_shared[ tid ] += s_shared[ tid + 4 ];
+    s_shared[ tid ] += s_shared[ tid + 2 ];
+    s_shared[ tid ] += s_shared[ tid + 1 ];
+  }
+
+ \end{verbatim}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}{Resampling Results}
 
 \begin{figure}
@@ -485,6 +549,39 @@ Floor:
 \includegraphics[width=0.85\textwidth]{data/timing_results_speedup.png}
 \label{final_timing2}
 \end{figure}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Lessons Learned}
+
+\begin{itemize}
+\item CUDA optimization is \emph{hard}
+\begin{itemize}
+\item Uncoalesced memory access
+\item Shared memory bank conflicts
+\item Slow operators (like modulus)
+\end{itemize}
+\item However, even codes with the above problems can achieve significant speedup
+\item CUDA Visual Profiler
+\begin{itemize}
+\item useful and user friendly
+\end{itemize}
+\item thrust
+\begin{itemize}
+\item fast and well documented
+\end{itemize}
+\end{itemize}
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Backup Slides}
+
+Backup Slides
 
 \end{frame}
 
